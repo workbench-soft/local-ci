@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Spec dates for 2026 moved back one year, to 2025.
+
 - **TODO** lists what stays on the Mac and what to check after CI moved to the local runner.
 
 - **Fixed** jobs on the Windows runner got CRLF scripts and the Store stub for `python`. Git now uses `core.autocrlf input`, and `start.cmd` and `.path` put Git Bash and the installed Python first.
