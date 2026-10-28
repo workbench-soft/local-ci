@@ -59,23 +59,26 @@ if [ -z "$(git config --global user.email || true)" ]; then
 	git config --global user.email "$git_email"
 fi
 
+# --- GitHub CLI --------------------------------------------------------------
+# The repos below are private in workbench-soft, so the login comes first.
+if ! gh auth status >/dev/null 2>&1; then
+	say "Logging into GitHub"
+	gh auth login
+fi
+
 # --- My repos ----------------------------------------------------------------
 mkdir -p "$dev_dir"
 for repo in git-aliases agent-skills gh-review-notify; do
 	dir="$dev_dir/$repo"
 	if [ ! -d "$dir" ]; then
 		say "Cloning $repo"
-		git clone "https://github.com/oleg-chibikov/$repo.git" "$dir"
+		gh repo clone "workbench-soft/$repo" "$dir"
 	fi
 	say "Running $repo/install.sh"
 	"$dir/install.sh"
 done
 
-# --- GitHub CLI --------------------------------------------------------------
-if ! gh auth status >/dev/null 2>&1; then
-	say "Logging into GitHub"
-	gh auth login
-fi
+# --- gh extensions -----------------------------------------------------------
 if ! gh extension list 2>/dev/null | grep -q gh-stack; then
 	say "Installing gh-stack"
 	gh extension install github/gh-stack

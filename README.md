@@ -4,11 +4,14 @@ The tools and customizations I put on a Mac myself, with one script that
 installs them all. IT-managed software stays out.
 
 ```sh
-git clone https://github.com/oleg-chibikov/mac-setup.git
+git clone https://github.com/workbench-soft/mac-setup.git
 ./mac-setup/install.sh
 ```
 
 The script is idempotent: run it again and it skips what is already there.
+
+The repo is private in the `workbench-soft` org. On a new Mac, `git clone` asks
+for your GitHub user name and a token as the password.
 
 ## Homebrew
 
@@ -61,7 +64,7 @@ git config --global push.autosetupremote true
 no personal data.
 
 Aliases come from
-[oleg-chibikov/git-aliases](https://github.com/oleg-chibikov/git-aliases). Its
+[workbench-soft/git-aliases](https://github.com/workbench-soft/git-aliases). Its
 own `install.sh` wires the `include.path` and offers to source `git-sb.zsh`.
 That wrapper is separate from the aliases on purpose: `git sb` can land on a
 branch in another worktree, and only a shell function can `cd` the parent
@@ -76,13 +79,15 @@ shell there.
 
 ## My repos
 
-Cloned into `~/Documents/Dev`, each installed by its own `install.sh`:
+Private in `workbench-soft`, so the script logs into `gh` first. Then
+`gh repo clone` puts each one in `~/Documents/Dev`, and its own `install.sh`
+installs it:
 
 | Repo | What it gives |
 | --- | --- |
-| [git-aliases](https://github.com/oleg-chibikov/git-aliases) | short git commands: `git sb`, `git db`, `git m` and the rest |
-| [agent-skills](https://github.com/oleg-chibikov/agent-skills) | Copilot skills: writing-style, review, create-pr, implement-ticket, address-comments |
-| [gh-review-notify](https://github.com/oleg-chibikov/gh-review-notify) | macOS notification for every new PR review comment, runs as a LaunchAgent |
+| [git-aliases](https://github.com/workbench-soft/git-aliases) | short git commands: `git sb`, `git db`, `git m` and the rest |
+| [agent-skills](https://github.com/workbench-soft/agent-skills) | Copilot skills: writing-style, review, create-pr, implement-ticket, address-comments |
+| [gh-review-notify](https://github.com/workbench-soft/gh-review-notify) | macOS notification for every new PR review comment, runs as a LaunchAgent |
 
 ## GitHub CLI
 
