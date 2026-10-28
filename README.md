@@ -64,7 +64,8 @@ Mac only, so `install.ps1` skips them:
 - **twg** its installer is a bash script for macOS.
 
 Repos go to `C:\Programming\WorkbenchSoft`. Set `DEV_DIR` for another folder.
-Git gets `core.autocrlf true` on top of the Mac config.
+Git gets `core.autocrlf input` on top of the Mac config, so checkouts keep LF
+and bash scripts run on the Windows runner.
 
 ## Homebrew (Mac)
 

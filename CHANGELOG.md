@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Fixed** jobs on the Windows runner got CRLF scripts and the Store stub for `python`. Git now uses `core.autocrlf input`, and `start.cmd` and `.path` put Git Bash and the installed Python first.
+
 - **Fixed** the Windows runner ran `shell: bash` in WSL. `start.cmd` puts Git Bash first, a rerun stops the old listener, and jobs get `ANDROID_HOME` when the SDK is in its default folder.
 
 - **Runner** the Windows runner starts at boot, before anyone logs in. Both runners carry the `local` label, so a workflow on `[self-hosted, local]` runs on whichever machine is on.
