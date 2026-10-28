@@ -6,7 +6,8 @@ set -euo pipefail
 
 org="${RUNNER_ORG:-workbench-soft}"
 dir="$HOME/actions-runner/$org"
-labels="macOS,ARM64,android"
+# local: the machine you develop on, Mac or Windows. Workflows ask for it.
+labels="macOS,ARM64,android,local"
 export GH_PAGER=cat
 
 say() { printf '\n==> %s\n' "$*"; }

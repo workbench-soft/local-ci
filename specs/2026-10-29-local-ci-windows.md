@@ -15,7 +15,7 @@ on the Windows PC for 0 minutes.
 - **Runner on a Mac** `./runner/install.sh` registers the runner with labels
   `self-hosted, macOS, ARM64, android` and starts it under launchd.
 - **Runner on Windows** `.\runner\install.ps1` registers the runner with labels
-  `self-hosted, Windows, X64` and starts it at logon under the current user.
+  `self-hosted, Windows, X64, local` and starts it at logon under the current user.
 
 ## Changes
 

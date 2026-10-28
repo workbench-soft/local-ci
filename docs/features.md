@@ -19,5 +19,6 @@ Actions runner for `workbench-soft`. Private repos then build on it for 0
 minutes.
 
 - **Labels** `macOS, ARM64, android` on the Mac, `Windows, X64` on Windows.
-- **Limit** the runner works only while the user is logged in.
+- **Labels** both carry `local`, for jobs that run on either machine.
+- **Limit** the Mac runner works only while the user is logged in. The Windows one starts at boot.
 - **Limit** one runner takes one job at a time.

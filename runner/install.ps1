@@ -1,22 +1,27 @@
 # Registers this PC as a self-hosted GitHub Actions runner for the org and
-# starts it at logon. Safe to run again: a configured runner is left alone.
+# starts it at boot. Safe to run again: a configured runner keeps its
+# registration and only gets its start task refreshed.
 # runner/install.sh does the same on a Mac.
 $ErrorActionPreference = 'Stop'
 
+# A task that starts at boot without a password needs admin to register.
+$admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $admin) {
+	Write-Host 'Asking Windows for admin rights in a new window'
+	$p = Start-Process powershell -Verb RunAs -Wait -PassThru -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`""
+	exit $p.ExitCode
+}
+
 $org = if ($env:RUNNER_ORG) { $env:RUNNER_ORG } else { 'workbench-soft' }
 $dir = Join-Path $HOME "actions-runner\$org"
-$labels = 'Windows,X64'
+# local: the machine you develop on, Mac or Windows. Workflows ask for it.
+$labels = 'Windows,X64,local'
 $taskName = "GitHub Actions runner ($org)"
 $env:GH_PAGER = 'cat'
 
 function Say([string]$text) { Write-Host "`n==> $text" }
 
-if (Test-Path -LiteralPath (Join-Path $dir '.runner')) {
-	Say "The runner in $dir is already registered"
-	Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue | Format-Table TaskName, State
-	return
-}
-
+function Register-Runner {
 Say 'Finding the latest runner release'
 $release = gh api repos/actions/runner/releases/latest | ConvertFrom-Json
 $version = $release.tag_name.TrimStart('v')
@@ -48,13 +53,25 @@ if ($LASTEXITCODE -ne 0) { throw 'config.cmd failed' }
 if ($env:ANDROID_HOME) {
 	Add-Content -LiteralPath (Join-Path $dir '.env') -Value "ANDROID_HOME=$env:ANDROID_HOME`nANDROID_SDK_ROOT=$env:ANDROID_HOME"
 }
+}
 
-# A Windows service runs as NETWORK SERVICE, without the user's mise, gh login
-# and ~/.gitconfig. A task at logon runs as the user, like launchd on the Mac.
-Say 'Starting the runner at logon'
+if (Test-Path -LiteralPath (Join-Path $dir '.runner')) {
+	Say "The runner in $dir is already registered"
+} else {
+	Register-Runner
+}
+
+# A Windows service runs as NETWORK SERVICE, without the user's mise and
+# ~/.gitconfig. The task runs as the user from boot, before anyone logs in.
+# S4U needs no stored password, but it can't read the Windows credential
+# store, so a job gets GitHub access from its GITHUB_TOKEN.
+Say 'Starting the runner at boot'
+$user = "$env:USERDOMAIN\$env:USERNAME"
 $action = New-ScheduledTaskAction -Execute (Join-Path $dir 'run.cmd') -WorkingDirectory $dir
-$trigger = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
-$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero)-RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Force | Out-Null
+$triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn -User $user))
+$principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel Limited
+$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew
+Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Principal $principal -Settings $settings -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
 Get-ScheduledTask -TaskName $taskName | Format-Table TaskName, State
