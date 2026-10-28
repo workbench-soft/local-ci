@@ -1,7 +1,8 @@
 # Architecture
 
-local-ci is a set of scripts with no server. Each script runs on the machine
-it sets up and talks to package managers and GitHub.
+local-ci is a set of scripts, plus one local web page. Each script runs on the
+machine it sets up and talks to package managers and GitHub. The page in
+`dashboard/` shows the runner and the latest runs.
 
 ## Modules
 
@@ -9,6 +10,8 @@ it sets up and talks to package managers and GitHub.
 - **`install.ps1`** sets up Windows with winget, mise and the repos.
 - **`runner/install.sh`** registers a Mac as a GitHub Actions runner.
 - **`runner/install.ps1`** registers a Windows PC as a GitHub Actions runner.
+- **`dashboard/`** a Next.js app with the CI status page, started at boot by
+  `dashboard/install.ps1`.
 - **Data files** `mcp-config.json` and `claude/MEMORY.md`, copied into the home
   folder when missing.
 
@@ -30,7 +33,7 @@ flowchart LR
 | --- | --- |
 | Homebrew, winget | tools and apps |
 | npm through mise | the Copilot CLI and agent-browser |
-| GitHub API | the clones, the runner release and its registration token |
+| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page |
 | `github.com/actions/runner` releases | the runner download and its SHA256 |
 
 ## How a runner gets a job
@@ -45,4 +48,22 @@ sequenceDiagram
   S->>R: config with labels, then launchd or a logon task
   R->>G: long poll for jobs
   G-->>R: a job whose runs-on matches the labels
+```
+
+## How the status page gets its data
+
+The page renders on the server for each request. `lib/local.ts` reads this PC,
+`lib/github.ts` reads GitHub with the token from `.env.local`. GitHub answers
+stay in memory for 20 seconds.
+
+```mermaid
+sequenceDiagram
+  participant B as browser
+  participant N as next start (dashboard)
+  participant W as Windows
+  participant G as GitHub API
+  B->>N: GET / every 15 s
+  N->>W: Get-ScheduledTask, tasklist, _diag/Worker_*.log
+  N->>G: org runners, org repos, 5 runs per repo
+  N-->>B: HTML with the headline, cards and runs
 ```

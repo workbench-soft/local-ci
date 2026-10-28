@@ -1,0 +1,16 @@
+import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
+import './globals.css';
+
+export const metadata: Metadata = {
+	title: 'Local CI',
+	description: 'The self-hosted runner and the latest workflow runs of the org',
+};
+
+export default function RootLayout({ children }: { children: ReactNode }) {
+	return (
+		<html lang="en">
+			<body>{children}</body>
+		</html>
+	);
+}
