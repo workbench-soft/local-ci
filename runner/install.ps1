@@ -49,10 +49,6 @@ if (-not $token) {
 Say 'Registering the runner'
 & (Join-Path $dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $env:COMPUTERNAME --labels $labels
 if ($LASTEXITCODE -ne 0) { throw 'config.cmd failed' }
-
-if ($env:ANDROID_HOME) {
-	Add-Content -LiteralPath (Join-Path $dir '.env') -Value "ANDROID_HOME=$env:ANDROID_HOME`nANDROID_SDK_ROOT=$env:ANDROID_HOME"
-}
 }
 
 if (Test-Path -LiteralPath (Join-Path $dir '.runner')) {
@@ -61,17 +57,34 @@ if (Test-Path -LiteralPath (Join-Path $dir '.runner')) {
 	Register-Runner
 }
 
+# shell: bash takes the first bash on the runner's PATH, and the one in
+# WindowsApps is WSL. start.cmd puts Git's bash first, then runs the runner.
+Say 'Writing start.cmd and the variables jobs see'
+$git = Get-Command git -CommandType Application -ErrorAction SilentlyContinue | Where-Object { $_.Source -like '*\Git\cmd\git.exe' } | Select-Object -First 1
+$gitRoot = if ($git) { Split-Path (Split-Path $git.Source) } else { Join-Path $env:ProgramFiles 'Git' }
+$start = Join-Path $dir 'start.cmd'
+Set-Content -LiteralPath $start -Encoding ascii -Value "@echo off`r`nset `"PATH=$gitRoot\bin;$gitRoot\usr\bin;%PATH%`"`r`ncall `"%~dp0run.cmd`""
+# The runner keeps PATH from .path when it exists, so a stale one would win.
+Remove-Item -LiteralPath (Join-Path $dir '.path') -ErrorAction SilentlyContinue
+
+$android = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
+$vars = [ordered]@{ LANG = 'en_US.UTF-8' }
+if (Test-Path -LiteralPath $android) { $vars.ANDROID_HOME = $android; $vars.ANDROID_SDK_ROOT = $android }
+Set-Content -LiteralPath (Join-Path $dir '.env') -Encoding ascii -Value ($vars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
+
 # A Windows service runs as NETWORK SERVICE, without the user's mise and
 # ~/.gitconfig. The task runs as the user from boot, before anyone logs in.
 # S4U needs no stored password, but it can't read the Windows credential
 # store, so a job gets GitHub access from its GITHUB_TOKEN.
 Say 'Starting the runner at boot'
 $user = "$env:USERDOMAIN\$env:USERNAME"
-$action = New-ScheduledTaskAction -Execute (Join-Path $dir 'run.cmd') -WorkingDirectory $dir
+$action = New-ScheduledTaskAction -Execute $start -WorkingDirectory $dir
 $triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn -User $user))
 $principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel Limited
 $settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew
 Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+# Stopping the task leaves the listener it started running, with the old PATH.
+Get-Process Runner.Listener, Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$dir\*" } | Stop-Process -Force
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $triggers -Principal $principal -Settings $settings -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
 Get-ScheduledTask -TaskName $taskName | Format-Table TaskName, State
