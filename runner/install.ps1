@@ -57,15 +57,24 @@ if (Test-Path -LiteralPath (Join-Path $dir '.runner')) {
 	Register-Runner
 }
 
-# shell: bash takes the first bash on the runner's PATH, and the one in
-# WindowsApps is WSL. start.cmd puts Git's bash first, then runs the runner.
-Say 'Writing start.cmd and the variables jobs see'
+# WindowsApps holds a WSL bash and a Store stub for python, and both come
+# before the real ones. The runner picks the bash for shell: bash from its own
+# PATH, set in start.cmd. Steps get PATH from .path. Both put Git's bash and
+# the installed Python first. Rerun this script after installing a tool.
+Say 'Writing start.cmd, .path and the variables jobs see'
 $git = Get-Command git -CommandType Application -ErrorAction SilentlyContinue | Where-Object { $_.Source -like '*\Git\cmd\git.exe' } | Select-Object -First 1
 $gitRoot = if ($git) { Split-Path (Split-Path $git.Source) } else { Join-Path $env:ProgramFiles 'Git' }
+$first = @("$gitRoot\bin", "$gitRoot\usr\bin")
+$python = Get-Command python -All -CommandType Application -ErrorAction SilentlyContinue | Where-Object { $_.Source -notlike '*\WindowsApps\*' } | Select-Object -First 1
+# The python.org installer leaves PATH alone unless asked, so look in its folder too.
+$pythonDir = if ($python) { Split-Path $python.Source } else {
+	Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Programs\Python') -Directory -Filter 'Python3*' -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
+}
+if ($pythonDir) { $first += $pythonDir }
 $start = Join-Path $dir 'start.cmd'
-Set-Content -LiteralPath $start -Encoding ascii -Value "@echo off`r`nset `"PATH=$gitRoot\bin;$gitRoot\usr\bin;%PATH%`"`r`ncall `"%~dp0run.cmd`""
-# The runner keeps PATH from .path when it exists, so a stale one would win.
-Remove-Item -LiteralPath (Join-Path $dir '.path') -ErrorAction SilentlyContinue
+Set-Content -LiteralPath $start -Encoding ascii -Value "@echo off`r`nset `"PATH=$($first -join ';');%PATH%`"`r`ncall `"%~dp0run.cmd`""
+$path = $first + ([Environment]::GetEnvironmentVariable('Path', 'Machine') -split ';') + ([Environment]::GetEnvironmentVariable('Path', 'User') -split ';')
+Set-Content -LiteralPath (Join-Path $dir '.path') -Encoding ascii -Value (($path | Where-Object { $_ } | Select-Object -Unique) -join ';')
 
 $android = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
 $vars = [ordered]@{ LANG = 'en_US.UTF-8' }

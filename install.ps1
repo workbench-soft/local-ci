@@ -79,7 +79,8 @@ if ($LASTEXITCODE -ne 0) { throw 'npm install failed' }
 Say 'Setting git config'
 git config --global color.ui true
 git config --global push.autosetupremote true
-git config --global core.autocrlf true
+# input keeps LF on checkout, so bash scripts run in Git Bash and on the runner.
+git config --global core.autocrlf input
 if (-not (git config --global user.name)) { git config --global user.name (Read-Host 'git user.name') }
 if (-not (git config --global user.email)) { git config --global user.email (Read-Host 'git user.email') }
 
