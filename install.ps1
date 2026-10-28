@@ -18,13 +18,20 @@ function Update-Path {
 	$env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
-# Windows PowerShell 5.1 and PowerShell 7 read profiles from different folders.
-function Add-ProfileLine([string]$line) {
-	$docs = [Environment]::GetFolderPath('MyDocuments')
-	foreach ($file in "$docs\WindowsPowerShell\profile.ps1", "$docs\PowerShell\profile.ps1") {
-		New-Item -ItemType Directory -Force -Path (Split-Path $file) | Out-Null
-		$text = if (Test-Path -LiteralPath $file) { Get-Content -Raw -LiteralPath $file } else { '' }
-		if ($text -notlike "*$line*") { Add-Content -LiteralPath $file -Value $line }
+$docs = [Environment]::GetFolderPath('MyDocuments')
+$profile51 = "$docs\WindowsPowerShell\profile.ps1"
+$profile7 = "$docs\PowerShell\profile.ps1"
+
+function Add-ProfileLine([string]$file, [string]$line) {
+	New-Item -ItemType Directory -Force -Path (Split-Path $file) | Out-Null
+	$text = if (Test-Path -LiteralPath $file) { Get-Content -Raw -LiteralPath $file } else { '' }
+	if ($text -notlike "*$line*") { Add-Content -LiteralPath $file -Value $line }
+}
+
+function Add-UserPath([string]$dir) {
+	$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+	if (($userPath -split ';') -notcontains $dir) {
+		[Environment]::SetEnvironmentVariable('Path', "$dir;$userPath", 'User')
 	}
 }
 
@@ -52,19 +59,21 @@ Update-Path
 Say 'Updating PATH and the PowerShell profile'
 $localBin = Join-Path $HOME '.local\bin'
 New-Item -ItemType Directory -Force -Path $localBin | Out-Null
-$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
-if (($userPath -split ';') -notcontains $localBin) {
-	[Environment]::SetEnvironmentVariable('Path', "$localBin;$userPath", 'User')
-	Update-Path
-}
-Add-ProfileLine '(&mise activate pwsh) | Out-String | Invoke-Expression'
+Add-UserPath $localBin
+# mise activate needs PowerShell 7. Windows PowerShell 5.1 gets the shims.
+Add-UserPath (Join-Path $env:LOCALAPPDATA 'mise\shims')
+Update-Path
+Add-ProfileLine $profile7 '(&mise activate pwsh) | Out-String | Invoke-Expression'
 
 # --- Node toolchain ----------------------------------------------------------
 Say 'Installing node, pnpm and yarn through mise'
 mise use -g node@22 pnpm@latest yarn@1
+if ($LASTEXITCODE -ne 0) { throw 'mise use failed' }
 
 Say 'Installing the Copilot CLI and agent-browser'
-mise exec -- npm install -g @github/copilot agent-browser
+# Windows PowerShell drops a bare -- before it reaches mise, so it stays quoted.
+mise exec '--' npm install -g @github/copilot agent-browser
+if ($LASTEXITCODE -ne 0) { throw 'npm install failed' }
 
 # --- Git config --------------------------------------------------------------
 Say 'Setting git config'
@@ -93,7 +102,12 @@ foreach ($repo in 'git-aliases', 'agent-skills') {
 		gh repo clone "workbench-soft/$repo" $dir
 	}
 	Say "Running $repo\install.ps1"
-	& (Join-Path $dir 'install.ps1')
+	# With no console, agent-skills can't ask for the language, so it gets one.
+	if ($repo -eq 'agent-skills' -and [Console]::IsInputRedirected) {
+		& (Join-Path $dir 'install.ps1') -Lang English -Yes
+	} else {
+		& (Join-Path $dir 'install.ps1')
+	}
 }
 
 # --- gh extensions -----------------------------------------------------------
@@ -128,7 +142,8 @@ if (-not (Test-Path -LiteralPath (Join-Path $claudeDir 'MEMORY.md'))) {
 $claudeMd = Join-Path $claudeDir 'CLAUDE.md'
 $claudeText = if (Test-Path -LiteralPath $claudeMd) { Get-Content -Raw -LiteralPath $claudeMd } else { '' }
 if ($claudeText -notmatch '(?m)^@~/\.claude/MEMORY\.md\s*$') {
-	Set-Content -LiteralPath $claudeMd -Encoding utf8 -Value "@~/.claude/MEMORY.md`n`n$claudeText"
+	# Set-Content in Windows PowerShell writes a BOM, and the import has to open the file.
+	[IO.File]::WriteAllText($claudeMd, "@~/.claude/MEMORY.md`n`n$claudeText", [Text.UTF8Encoding]::new($false))
 }
 
 # --- MCP servers -------------------------------------------------------------
