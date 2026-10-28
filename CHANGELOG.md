@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **TODO** lists what stays on the Mac and what to check after CI moved to the local runner.
+
 - **Fixed** jobs on the Windows runner got CRLF scripts and the Store stub for `python`. Git now uses `core.autocrlf input`, and `start.cmd` and `.path` put Git Bash and the installed Python first.
 
 - **Fixed** the Windows runner ran `shell: bash` in WSL. `start.cmd` puts Git Bash first, a rerun stops the old listener, and jobs get `ANDROID_HOME` when the SDK is in its default folder.
