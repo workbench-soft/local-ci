@@ -125,4 +125,10 @@ if [ ! -f "$HOME/.copilot/mcp-config.json" ]; then
 	cp "$script_dir/mcp-config.json" "$HOME/.copilot/mcp-config.json"
 fi
 
+# --- CI runner ---------------------------------------------------------------
+read -rp "Register this Mac as a GitHub Actions runner for workbench-soft? [y/N] " runner_answer
+if [[ $runner_answer =~ ^(y|yes)$ ]]; then
+	"$script_dir/runner/install.sh"
+fi
+
 say "Done. Open a new terminal to pick up the PATH and mise."
