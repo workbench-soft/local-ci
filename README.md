@@ -54,7 +54,7 @@ mkcert, VS Code, Docker Desktop, Claude and the Android platform tools.
 
 Mac only, so `install.ps1` skips them:
 
-- **Oh My Zsh** the PowerShell profile gets `mise activate pwsh` instead.
+- **Oh My Zsh** the PowerShell 7 profile gets `mise activate pwsh` instead. Windows PowerShell 5.1 finds node and pnpm through the mise shims on PATH.
 - **Maccy** Windows keeps clipboard history under Win+V.
 - **terminal-notifier and gh-review-notify** both need macOS notifications.
 - **twg** its installer is a bash script for macOS.
