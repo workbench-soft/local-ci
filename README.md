@@ -32,18 +32,20 @@ The runner scripts also run on their own:
 
 | Machine | Script | Labels | Starts |
 | --- | --- | --- | --- |
-| Mac | `runner/install.sh` | `self-hosted, macOS, ARM64, android` | launchd service while logged in |
-| Windows | `runner/install.ps1` | `self-hosted, Windows, X64` | scheduled task at logon |
+| Mac | `runner/install.sh` | `self-hosted, macOS, ARM64, android, local` | launchd service while logged in |
+| Windows | `runner/install.ps1` | `self-hosted, Windows, X64, local` | scheduled task at boot, before anyone logs in |
 
 - **Token** the script asks `gh api` for a registration token. Without the
   `admin:org` scope it prints the runner settings URL, and you paste the token.
 - **Checksum** the download is checked against the SHA256 in the runner
   release notes.
-- **As the user** the Windows runner runs as you, so jobs see mise, the `gh`
-  login and `~/.gitconfig`. A Windows service would run as NETWORK SERVICE.
+- **After a reboot** the Windows runner starts at boot as you, before anyone
+  logs in. The script asks Windows for admin rights once to set that up.
+- **GitHub access** jobs on Windows see mise and `~/.gitconfig`, but not the
+  `gh` login in the Windows credential store. Use the job's `GITHUB_TOKEN`.
 - **Folder** `~/actions-runner/workbench-soft`. Set `RUNNER_ORG` for another org.
-- **In a workflow** `runs-on: [self-hosted, Windows]` or
-  `runs-on: [self-hosted, macOS]`.
+- **In a workflow** `runs-on: [self-hosted, local]` runs on whichever machine
+  is on. A job that needs macOS asks for `[self-hosted, macOS]`.
 
 ## Windows
 
