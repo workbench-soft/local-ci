@@ -1,19 +1,68 @@
-# mac-setup
+# local-ci
 
-The tools and customizations I put on a Mac myself, with one script that
-installs them all. IT-managed software stays out.
+Sets up a dev machine, Mac or Windows, with the same tools. Then it can
+register the machine as a self-hosted GitHub Actions runner, so CI of the
+`workbench-soft` repos builds on it for free. IT-managed software stays out.
+
+On a Mac:
 
 ```sh
-git clone https://github.com/workbench-soft/mac-setup.git
-./mac-setup/install.sh
+git clone https://github.com/workbench-soft/local-ci.git
+./local-ci/install.sh
 ```
 
-The script is idempotent: run it again and it skips what is already there.
+On Windows, in PowerShell:
 
-The repo is private in the `workbench-soft` org. On a new Mac, `git clone` asks
-for your GitHub user name and a token as the password.
+```powershell
+git clone https://github.com/workbench-soft/local-ci.git
+.\local-ci\install.ps1
+```
 
-## Homebrew
+Both scripts are idempotent: run one again and it skips what is already there.
+A fresh Windows needs Git first: `winget install Git.Git`.
+
+The repo is private in the `workbench-soft` org. On a new machine, `git clone`
+asks for your GitHub user name and a token as the password. The old
+`mac-setup` address redirects here.
+
+## CI runner
+
+Each installer asks at the end whether to register the machine as a runner.
+The runner scripts also run on their own:
+
+| Machine | Script | Labels | Starts |
+| --- | --- | --- | --- |
+| Mac | `runner/install.sh` | `self-hosted, macOS, ARM64, android` | launchd service while logged in |
+| Windows | `runner/install.ps1` | `self-hosted, Windows, X64` | scheduled task at logon |
+
+- **Token** the script asks `gh api` for a registration token. Without the
+  `admin:org` scope it prints the runner settings URL, and you paste the token.
+- **Checksum** the download is checked against the SHA256 in the runner
+  release notes.
+- **As the user** the Windows runner runs as you, so jobs see mise, the `gh`
+  login and `~/.gitconfig`. A Windows service would run as NETWORK SERVICE.
+- **Folder** `~/actions-runner/workbench-soft`. Set `RUNNER_ORG` for another org.
+- **In a workflow** `runs-on: [self-hosted, Windows]` or
+  `runs-on: [self-hosted, macOS]`.
+
+## Windows
+
+[winget](https://learn.microsoft.com/windows/package-manager/winget/) installs
+what Homebrew gives the Mac: git, gh, mise, fzf, jq, shellcheck, shfmt,
+mkcert, VS Code, Docker Desktop, Claude and the Android platform tools.
+`agent-browser` comes from npm.
+
+Mac only, so `install.ps1` skips them:
+
+- **Oh My Zsh** the PowerShell profile gets `mise activate pwsh` instead.
+- **Maccy** Windows keeps clipboard history under Win+V.
+- **terminal-notifier and gh-review-notify** both need macOS notifications.
+- **twg** its installer is a bash script for macOS.
+
+Repos go to `C:\Programming\WorkbenchSoft`. Set `DEV_DIR` for another folder.
+Git gets `core.autocrlf true` on top of the Mac config.
+
+## Homebrew (Mac)
 
 Source: [brew.sh](https://brew.sh). The script installs Homebrew itself when
 missing.
