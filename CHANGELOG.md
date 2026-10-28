@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Fixed** the Windows runner ran `shell: bash` in WSL. `start.cmd` puts Git Bash first, a rerun stops the old listener, and jobs get `ANDROID_HOME` when the SDK is in its default folder.
+
 - **Runner** the Windows runner starts at boot, before anyone logs in. Both runners carry the `local` label, so a workflow on `[self-hosted, local]` runs on whichever machine is on.
 
 - **Fixed** `install.ps1` on Windows PowerShell 5.1: the Copilot CLI installs again, mise works through its shims, agent-skills installs without a console, and `CLAUDE.md` is written without a BOM.

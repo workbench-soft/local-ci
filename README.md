@@ -41,6 +41,8 @@ The runner scripts also run on their own:
   release notes.
 - **After a reboot** the Windows runner starts at boot as you, before anyone
   logs in. The script asks Windows for admin rights once to set that up.
+- **Git Bash** the task starts `start.cmd`, which puts Git Bash first on PATH.
+  Otherwise `shell: bash` takes the WSL one from WindowsApps.
 - **GitHub access** jobs on Windows see mise and `~/.gitconfig`, but not the
   `gh` login in the Windows credential store. Use the job's `GITHUB_TOKEN`.
 - **Folder** `~/actions-runner/workbench-soft`. Set `RUNNER_ORG` for another org.
