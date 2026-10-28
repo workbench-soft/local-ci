@@ -56,3 +56,22 @@ flowchart TD
   E --> F
   F --> G[start: launchd or logon task]
 ```
+
+## See the CI status
+
+1. Run `.\dashboard\install.ps1` once, from the main checkout.
+2. Approve the admin prompt. The script builds the page and registers the
+   `local-ci dashboard` task.
+3. Open `http://localhost:4280`. After a reboot the page is there again.
+4. The headline says whether the runner is up, builds or has a queue. The
+   cards below show this PC, the org runners and the latest runs.
+
+```mermaid
+flowchart TD
+  A[dashboard/install.ps1] --> B[pnpm install, pnpm build]
+  B --> C[gh auth token into .env.local]
+  C --> D[task at boot: start.cmd]
+  D --> E[next start on 127.0.0.1:4280]
+  E --> F[person opens localhost:4280]
+  F --> G[page refreshes every 15 s]
+```

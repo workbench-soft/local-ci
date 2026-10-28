@@ -49,6 +49,21 @@ The runner scripts also run on their own:
 - **In a workflow** `runs-on: [self-hosted, local]` runs on whichever machine
   is on. A job that needs macOS asks for `[self-hosted, macOS]`.
 
+## CI status page
+
+A page at `http://localhost:4280` shows whether the runner is up and what it
+builds. It starts with Windows. Set it up once, from the main checkout:
+
+```powershell
+.\dashboard\install.ps1
+```
+
+- **What it shows** this PC's runner task and job, the org runners, and the latest runs of each org repo.
+- **Token** the script copies `gh auth token` into `dashboard\.env.local`, since the boot task can't read the gh login.
+- **Rerun** after a `git pull` or a new gh login. It rebuilds and restarts the page.
+- **Develop** `mise x -- pnpm dev` in `dashboard` serves it on port 4281.
+- **Logs** `dashboard\dashboard.log`.
+
 ## Windows
 
 [winget](https://learn.microsoft.com/windows/package-manager/winget/) installs
