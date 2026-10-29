@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import type { GitHubStatus, Run, Runner } from './github.ts';
+import type { GitHubStatus, Run, Runner } from './org-status.ts';
 import { ago, runTone, verdict } from './headline.ts';
-import type { LocalStatus } from './local.ts';
+import type { LocalStatus } from './this-pc.ts';
 
 const now = Date.parse('2025-10-29T12:00:00Z');
 const secondsBefore = (s: number) => new Date(now - s * 1000).toISOString();

@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { org } from './org';
+import { org } from './settings';
 
 const run = promisify(execFile);
 const cacheMs = 20_000;

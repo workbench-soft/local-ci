@@ -1,8 +1,8 @@
-import { githubStatus, type GitHubStatus, type Run } from '@/lib/github';
-import { localStatus, runnerTask, type LocalStatus } from '@/lib/local';
-import { org } from '@/lib/org';
-import { active, ago, runTone, verdict, type Tone } from '@/lib/headline';
-import { Refresh } from './refresh';
+import { githubStatus, type GitHubStatus, type Run } from '@/status/org-status';
+import { localStatus, runnerTask, type LocalStatus } from '@/status/this-pc';
+import { org } from '@/status/settings';
+import { active, ago, runTone, verdict, type Tone } from '@/status/headline';
+import { Refresh } from '@/cards/auto-refresh';
 
 export const dynamic = 'force-dynamic';
 

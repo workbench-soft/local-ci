@@ -1,5 +1,5 @@
-import type { GitHubStatus, Run } from './github';
-import type { LocalStatus } from './local';
+import type { GitHubStatus, Run } from './org-status';
+import type { LocalStatus } from './this-pc';
 
 export const active = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
 
