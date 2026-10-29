@@ -66,3 +66,8 @@ test('a PR run that started after the last read of the open PRs gets a fresh rea
 	assert.deepEqual(prListsToRead(runs, readAt, at + 40_000, 60_000), ['app', 'new']);
 	assert.deepEqual(prListsToRead(runs, readAt, at + 60_000, 60_000), ['app', 'old', 'new']);
 });
+
+test('a newer workflow_run or schedule run leaves the older one to its own concurrency rule', () => {
+	const runs = [run(4, 'queued', { event: 'workflow_run' }), run(3, 'in_progress', { event: 'workflow_run' }), run(2, 'queued', { event: 'schedule' }), run(1, 'in_progress', { event: 'schedule' })];
+	assert.deepEqual(supersededRuns(runs, noPrs), []);
+});
