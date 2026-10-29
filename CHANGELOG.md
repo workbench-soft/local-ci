@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The Runners card spans the page and lists its runners in columns. It sat
+  in a narrow cell beside empty space before.
+
 - The runner script turns on long paths for git and, in an admin run, for
   Windows. git clean failed on the deep `.open-next` cache before.
 

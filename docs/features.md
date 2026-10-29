@@ -79,12 +79,13 @@ icon: a white loop arrow around a green play sign on blue.
   oldest out, so more fast runs lower the time and more slow ones raise it. A
   job past that time turns yellow and says how long over. A workflow with no
   finished run yet fills the bar by finished steps.
-- **Runners** one row per runner of the org. Each row says whether the
+- **Runners** a full width card with one entry per runner of the org, in
+  columns at least 240 px wide. Each entry says whether the
   runner lives on this PC or another machine, and its state on each side:
-  `this PC` from the runner folder and processes, `GitHub` from the API. A row
+  `this PC` from the runner folder and processes, `GitHub` from the API. An entry
   whose sides disagree turns yellow, with a hint on what to check. Runners of
   this PC also show their boot task and when their last job started. The
-  list stops at 420 px and scrolls. Each row names the job its runner
+  list stops at 420 px and scrolls. Each entry names the job its runner
   builds, linked to the log, or says `No job`.
 - **Running now** a card with a blue frame right above the runs table. Each
   job that builds right now gets a large row: the runner, repo, workflow and

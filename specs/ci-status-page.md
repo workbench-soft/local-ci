@@ -513,7 +513,7 @@ browser at each logon.
   300px cell beside two empty ones and scrolled its list in a narrow box.
 - **Changes**
   - **Width** the card spans the full row, like the other cards.
-  - **Columns** the runners sit in a grid of columns at least 300px wide, so
+  - **Columns** the runners sit in a grid of columns at least 240px wide, so
     four runners fit in one or two rows on a desktop and one column on a
     phone.
 - **Steps**
