@@ -69,8 +69,9 @@ runner. The runner scripts also work alone:
 
 ## Start the CI
 
-Double click `START.cmd` in the repo root. It starts each runner and the
-status page that isn't running, then opens `http://localhost:4280`.
+Double click `START.cmd` in the repo root. It pulls the latest code, rebuilds
+the status page when its code changed, starts each runner and the page that
+isn't running, then opens `http://localhost:4280`.
 
 - **Admin prompt** shows only when Windows refuses to start a task.
 - **First run** without the page task, it runs `dashboard\install.ps1`. Without
