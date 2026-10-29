@@ -25,6 +25,9 @@
 - CI runs the page checks and lints the installers on each PR, and
   Dependabot proposes updates.
 
+- `START.cmd` pulls the default branch and rebuilds the status page when its
+  code changed, so a double click runs the latest version.
+
 - Runner jobs share the machine's pnpm store. Before, each job kept its
   store in `_temp`, lost it at the end and downloaded every package again.
 

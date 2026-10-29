@@ -1,6 +1,7 @@
 # Builds the CI status page and starts it at boot on http://127.0.0.1:4280.
-# Running it again stops the page, rebuilds it and starts it again. Run it from
-# the checkout the task should serve, not from a worktree.
+# Running it again stops the page, rebuilds it and starts it again. START.cmd
+# runs it when dashboard/ changed. Run it from the checkout the task should
+# serve, not from a worktree.
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\windows\boot-task.ps1')
 
@@ -48,6 +49,8 @@ try {
 	if ($LASTEXITCODE -ne 0) { throw 'pnpm install failed' }
 	& $mise x -- pnpm build
 	if ($LASTEXITCODE -ne 0) { throw 'pnpm build failed' }
+	# START.cmd rebuilds when dashboard/ moves past this commit.
+	git -C (Split-Path $appDir -Parent) log -1 --format=%H -- dashboard | Set-Content -LiteralPath (Join-Path $appDir '.built-commit') -Encoding ascii
 } finally { Pop-Location }
 
 Write-Step 'Writing the GitHub token to .env.local'

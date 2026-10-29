@@ -483,6 +483,30 @@ browser at each logon.
   3. The column and the breakdown row.
   4. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 START.cmd runs the latest version
+
+- **Why** after each merge the person had to run `dashboard\install.ps1` as
+  admin to see the new page. They asked for one script that pulls, installs
+  and starts the latest version.
+- **Changes**
+  - **`windows/start.ps1`** pulls the default branch first with
+    `git pull --ff-only`, when the checkout sits on it. A pull that fails,
+    such as with local edits in the way, says so and goes on with the code
+    on disk.
+  - **Rebuild** `dashboard\install.ps1` writes the commit of `dashboard/` it
+    built to `dashboard/.built-commit`. `start.ps1` compares that commit
+    with the latest one that touched `dashboard/`. A mismatch, or no file,
+    runs `install.ps1`, which asks for admin, rebuilds and restarts the
+    page. Otherwise the page task starts as before.
+- **Limits** a checkout on another branch skips the pull. Runner scripts
+  don't rerun, since a runner update needs its own install.
+- **Steps**
+  1. This spec.
+  2. The pull and the rebuild check.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
 ### 2026-10-29 Audit fixes: safer sweep, a host check, faster renders
 
 - **Why** an audit of the whole repo found that the sweep could cancel the
