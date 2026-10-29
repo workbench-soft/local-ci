@@ -19,11 +19,11 @@ export function LiveJobsCard({ jobs, slots, now }: { jobs: LiveJob[]; slots: Run
 			<div className="live">
 				{columns.map(({ place, empty }) => {
 					const inPlace = jobs.filter((job) => job.place === place);
-					const { icon, text } = placeIcons[place];
+					const { icon, text, hint } = placeIcons[place];
 					const rows = place === 'local' ? slots.length : inPlace.length;
 					return (
 						<div key={place} className={`live-column ${place}`}>
-							<h3>
+							<h3 title={hint}>
 								<Icon name={icon} />
 								{text}
 								<span className="count">{place === 'local' ? `${inPlace.length} / ${slots.length}` : inPlace.length}</span>

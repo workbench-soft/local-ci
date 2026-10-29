@@ -40,10 +40,15 @@ export function Icon({ name, label, className = '' }: { name: IconName; label?: 
 	);
 }
 
-export const placeIcons: Record<Exclude<Place, 'done'>, { icon: IconName; text: string }> = {
-	local: { icon: 'local', text: 'On this PC' },
-	waiting: { icon: 'cloud', text: 'Waiting on GitHub' },
-	elsewhere: { icon: 'server', text: 'On another runner' },
+/** The label of each place, and a hint on who builds the job there. A finished run has no place. */
+export const placeIcons: Record<Exclude<Place, 'done'>, { icon: IconName; text: string; hint: string }> = {
+	local: { icon: 'local', text: 'Building on this PC', hint: 'A runner of this PC builds a job of this run right now.' },
+	waiting: { icon: 'cloud', text: 'Queued on GitHub', hint: 'No runner took the job yet. GitHub holds it until a runner with its labels is free.' },
+	elsewhere: {
+		icon: 'server',
+		text: 'Building on another runner',
+		hint: 'A GitHub hosted runner or a runner on another machine builds a job of this run right now.',
+	},
 };
 
 /** The icon and the words for the result of a run. */
