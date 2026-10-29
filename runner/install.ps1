@@ -1,21 +1,35 @@
-# Registers this PC as a self-hosted GitHub Actions runner for the org and
-# starts it at boot. Running it again keeps the registration and only rewrites
-# the start files and the boot task. runner/install.sh is the Mac version.
+# Registers this PC as self-hosted GitHub Actions runners for the org and
+# starts each at boot. A runner takes one job at a time, so RUNNER_COUNT runners
+# build that many jobs at once. Running it again keeps the registrations and
+# only rewrites the start files and the boot tasks. runner/install.sh is the Mac
+# version.
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\windows\boot-task.ps1')
 
 if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath) }
 
 $org = if ($env:RUNNER_ORG) { $env:RUNNER_ORG } else { 'workbench-soft' }
-$runnerDir = Join-Path $HOME "actions-runner\$org"
+$count = if ($env:RUNNER_COUNT) { [int]$env:RUNNER_COUNT } else { 4 }
+if ($count -lt 1) { throw 'RUNNER_COUNT must be 1 or more' }
 # local marks the machine you develop on, Mac or Windows. Workflows ask for it.
 $labels = 'Windows,X64,local'
-$taskName = "GitHub Actions runner ($org)"
 $env:GH_PAGER = 'cat'
 
 function Write-Step([string]$text) { Write-Host "`n==> $text" }
 
-function Install-Runner {
+# The first runner keeps the folder, name and task it had before runners got numbers.
+function Get-Runner([int]$number) {
+	$suffix = if ($number -eq 1) { '' } else { "-$number" }
+	$taskSuffix = if ($number -eq 1) { '' } else { " $number" }
+	return [pscustomobject]@{
+		Dir = Join-Path $HOME "actions-runner\$org$suffix"
+		Name = "$env:COMPUTERNAME$suffix"
+		Task = "GitHub Actions runner ($org$taskSuffix)"
+	}
+}
+
+# Downloads the latest runner once and returns the zip.
+function Get-RunnerArchive {
 	Write-Step 'Finding the latest runner release'
 	$release = gh api repos/actions/runner/releases/latest | ConvertFrom-Json
 	$version = $release.tag_name.TrimStart('v')
@@ -25,17 +39,18 @@ function Install-Runner {
 	$file = "actions-runner-win-x64-$version.zip"
 
 	Write-Step "Downloading $file"
-	New-Item -ItemType Directory -Force -Path $runnerDir | Out-Null
 	$zip = Join-Path $env:TEMP $file
 	Invoke-WebRequest -UseBasicParsing -OutFile $zip "https://github.com/actions/runner/releases/download/v$version/$file"
 	if ((Get-FileHash -Algorithm SHA256 $zip).Hash -ne $expectedHash) { throw "SHA256 of $file does not match the release notes" }
-	Expand-Archive -Force -Path $zip -DestinationPath $runnerDir
-	Remove-Item $zip
+	return $zip
+}
 
-	$token = Get-RegistrationToken
-	Write-Step 'Registering the runner'
-	& (Join-Path $runnerDir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $env:COMPUTERNAME --labels $labels
-	if ($LASTEXITCODE -ne 0) { throw 'config.cmd failed' }
+function Install-Runner($runner, [string]$zip, [string]$token) {
+	Write-Step "Registering $($runner.Name) in $($runner.Dir)"
+	New-Item -ItemType Directory -Force -Path $runner.Dir | Out-Null
+	Expand-Archive -Force -Path $zip -DestinationPath $runner.Dir
+	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $labels
+	if ($LASTEXITCODE -ne 0) { throw "config.cmd failed for $($runner.Name)" }
 }
 
 # GitHub hands out a token only to an org admin whose login has the admin:org scope.
@@ -64,9 +79,8 @@ function Get-ToolDirs {
 	return $dirs
 }
 
-function Write-RunnerEnvironment([string]$startScript) {
-	$toolDirs = Get-ToolDirs
-	Set-Content -LiteralPath $startScript -Encoding ascii -Value "@echo off`r`nset `"PATH=$($toolDirs -join ';');%PATH%`"`r`ncall `"%~dp0run.cmd`""
+function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs) {
+	Set-Content -LiteralPath (Join-Path $runnerDir 'start.cmd') -Encoding ascii -Value "@echo off`r`nset `"PATH=$($toolDirs -join ';');%PATH%`"`r`ncall `"%~dp0run.cmd`""
 	$path = $toolDirs + ([Environment]::GetEnvironmentVariable('Path', 'Machine') -split ';') + ([Environment]::GetEnvironmentVariable('Path', 'User') -split ';')
 	Set-Content -LiteralPath (Join-Path $runnerDir '.path') -Encoding ascii -Value (($path | Where-Object { $_ } | Select-Object -Unique) -join ';')
 
@@ -76,19 +90,30 @@ function Write-RunnerEnvironment([string]$startScript) {
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
 
-if (Test-Path -LiteralPath (Join-Path $runnerDir '.runner')) {
-	Write-Step "The runner in $runnerDir is already registered"
-} else {
-	Install-Runner
+function Start-Runner($runner) {
+	Stop-ScheduledTask -TaskName $runner.Task -ErrorAction SilentlyContinue
+	# Stopping the task leaves its listener running, still with the old PATH.
+	Get-Process Runner.Listener, Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } | Stop-Process -Force
+	# Jobs reach GitHub through their GITHUB_TOKEN, since the task can't read the gh login.
+	Register-BootTask $runner.Task (Join-Path $runner.Dir 'start.cmd') $runner.Dir
 }
 
-Write-Step 'Writing start.cmd, .path and the variables jobs see'
-$startScript = Join-Path $runnerDir 'start.cmd'
-Write-RunnerEnvironment $startScript
+$runners = 1..$count | ForEach-Object { Get-Runner $_ }
+$missing = @($runners | Where-Object { -not (Test-Path -LiteralPath (Join-Path $_.Dir '.runner')) })
+foreach ($runner in $runners | Where-Object { $missing -notcontains $_ }) {
+	Write-Step "$($runner.Name) in $($runner.Dir) is already registered"
+}
+if ($missing.Count) {
+	$zip = Get-RunnerArchive
+	# One token registers every runner within its hour.
+	$token = Get-RegistrationToken
+	foreach ($runner in $missing) { Install-Runner $runner $zip $token }
+	Remove-Item $zip
+}
 
-Write-Step 'Starting the runner at boot'
-Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-# Stopping the task leaves its listener running, still with the old PATH.
-Get-Process Runner.Listener, Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$runnerDir\*" } | Stop-Process -Force
-# Jobs reach GitHub through their GITHUB_TOKEN, since the task can't read the gh login.
-Register-BootTask $taskName $startScript $runnerDir
+$toolDirs = Get-ToolDirs
+foreach ($runner in $runners) {
+	Write-Step "Writing start.cmd, .path and the job variables for $($runner.Name), and starting it at boot"
+	Write-RunnerEnvironment $runner.Dir $toolDirs
+	Start-Runner $runner
+}
