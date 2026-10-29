@@ -51,6 +51,12 @@ runner. The runner scripts also work alone:
   runners and a Mac 1, so Windows builds 4 jobs at once. `RUNNER_COUNT` picks
   another number. Jobs speed up only when the workflow splits its work into
   jobs or a `matrix`.
+- **Count from the page** on Windows the Runners card of the status page
+  sets the count and shows the count this PC suits: 1 runner per 4 logical
+  processors and per 4 GB of memory past 8 GB. Apply saves it in
+  `~/actions-runner/runner-count` and starts the task
+  `GitHub Actions runner count (workbench-soft)`. The task runs
+  `runner\install.ps1` as admin in a window on your desktop.
 - **Tool cache** the runners share `~/actions-runner/_tool`, so a `setup-*`
   action downloads node, Java or Python once per machine. A rerun of the
   script moves old runners onto it.
@@ -64,9 +70,10 @@ runner. The runner scripts also work alone:
   and the `.open-next` cache hold paths over 260 characters.
 - **Folders** the first runner sits in `~/actions-runner/workbench-soft`, the
   next in `workbench-soft-2` and up. `RUNNER_ORG` picks another org.
-- **Fewer runners** a lower `RUNNER_COUNT` leaves the extra ones registered.
-  Remove one with `.\config.cmd remove` in its folder, then delete its boot
-  task.
+- **Fewer runners** on Windows a lower count removes the runners above it
+  from GitHub, with their boot tasks and folders. A runner on a job goes once
+  the job ends. Removal needs `gh` with the `admin:org` scope. On a Mac a
+  lower `RUNNER_COUNT` leaves the extra ones registered.
 - **In a workflow** `runs-on: [self-hosted, local]` takes whichever machine is
   on. A job that needs macOS asks for `[self-hosted, macOS]`.
 

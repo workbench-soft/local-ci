@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- The Runners card sets the number of runners on this PC and suggests a
+  count from the logical processors and the memory. `runner\install.ps1`
+  keeps the count in `~/actions-runner/runner-count` and removes the runners
+  above it.
+
 - The status page shows one Running now card at the top in place of the
   Now card and the Running now card, which listed the same jobs.
 
