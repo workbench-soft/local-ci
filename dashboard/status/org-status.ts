@@ -67,38 +67,63 @@ const runsPerRepo = 5;
 const runsRead = 30;
 const queuedJobsTtlMs = 60_000;
 
+// An expired status still shows while the next load runs, up to this age.
+const staleMaxMs = 120_000;
+
 type Store = {
 	cached: { at: number; status: Promise<OrgStatus> } | null;
+	refreshing: Promise<OrgStatus> | null;
 	etagged: Map<string, { etag: string; body: string }>;
 	queuedJobs: Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>;
 	finishedJobs: Map<number, Promise<RunJob[]>>;
 };
 
-/** The key of the store on globalThis. Tests delete it to start empty. */
-export const storeKey = Symbol.for('local-ci.org-status');
-
 // Next bundles this module once for the page and once for the sweep. One store on globalThis
 // lets both share the loads, and a cancel by the sweep drops the status the page shows.
-const store: Store = ((globalThis as Record<symbol, Store | undefined>)[storeKey] ??= {
+// Tests delete it to start empty.
+const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.for('local-ci.org-status')] ??= {
 	cached: null,
+	refreshing: null,
 	etagged: new Map(),
 	queuedJobs: new Map(),
 	finishedJobs: new Map(),
 });
 let ghToken: string | null = null;
 
-/** The org's runners and the latest runs of its repos, kept for 20 s so open tabs and the sweep share one set of calls. */
+/**
+ * The org's runners and the latest runs of its repos, kept for 20 s so open tabs and the sweep share one set of calls.
+ * After that the kept status still answers at once while a new load runs in the background.
+ */
 export function fetchOrgStatus(): Promise<OrgStatus> {
-	if (store.cached && Date.now() - store.cached.at < cacheTtlMs) return store.cached.status;
+	const kept = store.cached;
+	const age = kept ? Date.now() - kept.at : Number.POSITIVE_INFINITY;
+	if (kept && age < cacheTtlMs) return kept.status;
+	if (kept && age < staleMaxMs) {
+		refreshOrgStatus();
+		return kept.status;
+	}
 	// The promise goes in the cache before it settles, so requests that arrive meanwhile wait for the same load.
 	const status = loadOrgStatus();
 	store.cached = { at: Date.now(), status };
 	return status;
 }
 
+function refreshOrgStatus(): void {
+	if (store.refreshing) return;
+	const status = loadOrgStatus();
+	store.refreshing = status;
+	void status.then(() => {
+		// A forget meanwhile dropped this load, since a run changed after it began.
+		if (store.refreshing !== status) return;
+		store.cached = { at: Date.now(), status };
+		store.refreshing = null;
+	});
+}
+
 /** Drops the cached status, so the next render reads GitHub after a run changed. */
 export function forgetOrgStatus(): void {
 	store.cached = null;
+	store.refreshing = null;
 }
 
 async function loadOrgStatus(): Promise<OrgStatus> {
