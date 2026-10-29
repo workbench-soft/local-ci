@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Runner jobs share the machine's pnpm store. Before, each job kept its
+  store in `_temp`, lost it at the end and downloaded every package again.
+
 - Latest runs gets a Took column with the length of each run, sortable. A
   click on the time opens the time of each job and step.
 
