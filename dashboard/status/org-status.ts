@@ -282,22 +282,37 @@ async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 	}
 }
 
+// A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.
+const etagged = new Map<string, { etag: string; body: string }>();
+const etaggedMax = 500;
+
 async function getJson<T>(path: string): Promise<T> {
-	return (await callGitHub(path)).json() as Promise<T>;
+	const kept = etagged.get(path);
+	const response = await callGitHub(path, 'GET', kept ? { 'If-None-Match': kept.etag } : {});
+	if (response.status === 304 && kept) return JSON.parse(kept.body) as T;
+	const body = await response.text();
+	const etag = response.headers.get('etag');
+	if (etag) {
+		etagged.delete(path);
+		etagged.set(path, { etag, body });
+		if (etagged.size > etaggedMax) etagged.delete(etagged.keys().next().value as string);
+	}
+	return JSON.parse(body) as T;
 }
 
-/** One GitHub API call with the page's token. A status outside 2xx throws with the path in the message. */
-export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET'): Promise<Response> {
+/** One GitHub API call with the page's token. A status outside 2xx and 304 throws with the path in the message. */
+export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', extra: Record<string, string> = {}): Promise<Response> {
 	const response = await fetch(`https://api.github.com${path}`, {
 		method,
 		headers: {
 			Authorization: `Bearer ${await resolveToken()}`,
 			Accept: 'application/vnd.github+json',
 			'X-GitHub-Api-Version': '2022-11-28',
+			...extra,
 		},
 		cache: 'no-store',
 	});
-	if (!response.ok) throw new Error(`GitHub answered ${response.status} to ${method} ${path}`);
+	if (!response.ok && response.status !== 304) throw new Error(`GitHub answered ${response.status} to ${method} ${path}`);
 	return response;
 }
 
