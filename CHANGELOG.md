@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Each running job on the status page gets a progress bar with its current
+  step and the time left, from the 3 latest successful runs of its workflow.
+
 - The status page shows one Runners card in place of This PC and Runners of
   workbench-soft. Each runner says where it lives and its state on this PC and
   on GitHub, with a hint when the two disagree.

@@ -282,9 +282,10 @@ browser at each logon.
 - **Changes**
   - **`status/org-status.ts`** each job keeps its step count, its current
     step and its end time. For a workflow with a running job, the page also
-    reads the jobs of its latest successful runs among the 5 it already has.
-    A finished run doesn't change, so its jobs stay in memory for good, up to
-    200 runs.
+    asks `GET /repos/{repo}/actions/workflows/{id}/runs?status=success` for
+    its 3 latest successful runs and reads their jobs. The latest 5 runs of a
+    busy repo are often all queued, so they can't serve here. A finished run
+    doesn't change, so its jobs stay in memory for good, up to 200 runs.
   - **`status/progress.ts`** the typical time of a job is the median time of
     the same job name in those successful runs. The bar fills by elapsed
     time over the typical time, capped at 99 %. Without a past run it fills
@@ -296,8 +297,8 @@ browser at each logon.
     once it runs long.
   - **`cards/live-jobs-card.tsx`** the bar on the jobs of this PC and of other
     runners. A queued job gets none.
-- **Limits** the estimate needs a successful run of the same workflow among
-  the latest 5 of the repo. Steps come from GitHub, which updates them every
+- **Limits** the estimate needs a successful run of the same workflow with a
+  job of the same name. Steps come from GitHub, which updates them every
   few seconds, and the page reads them every 15 to 20 seconds.
 - **Steps**
   1. This spec.

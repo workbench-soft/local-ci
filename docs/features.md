@@ -54,6 +54,11 @@ icon: a white loop arrow around a green play sign on blue.
   the job it builds, or idle, or stopped, and counts busy runners out of all.
   Then the jobs waiting on GitHub with the labels they ask for, and the jobs on
   another runner. Each job links to its GitHub log.
+- **Progress** a running job gets a bar with its step, such as
+  `step 4 of 9: Build`, and `about 3 min left`. The time comes from the
+  median of the same job in the 3 latest successful runs of its workflow. A
+  job past that time turns yellow and says how long over. A workflow with no
+  successful run yet fills the bar by finished steps.
 - **Runners** one row per runner of the org. Each row says whether the
   runner lives on this PC or another machine, and its state on each side:
   `this PC` from the runner folder and processes, `GitHub` from the API. A row

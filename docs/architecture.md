@@ -69,6 +69,10 @@ The server renders the page for each request.
 - **Place** `status/placement.ts` puts each job on this PC, on another runner
   or in the GitHub queue. A job is local when its runner name matches the
   `agentName` in a runner folder's `.runner` file.
+- **Progress** for a workflow with a running job, `status/org-status.ts`
+  reads the jobs of its 3 latest successful runs and keeps them in memory.
+  `status/progress.ts` turns their median time and the job's steps into the
+  bar and the time left.
 - **Runners** `status/runners.ts` joins the runner folders of this PC with
   the org runners on GitHub by name, and adds a hint where the two disagree.
 - **Headline** `status/headline.ts` turns all that into the headline and the
