@@ -35,9 +35,14 @@ export function prListsToRead(runs: (RunKey & Pick<WorkflowRun, 'createdAt'>)[],
 	return reposWithPrRuns(runs).filter((repo) => {
 		const at = readAt.get(repo);
 		if (at === undefined || now - at >= maxAgeMs) return true;
-		return runs.some((run) => run.repo === repo && activeStatuses.has(run.status) && prEvents.has(run.event) && Date.parse(run.createdAt) >= at);
+		// created_at drops the milliseconds and comes from GitHub's clock, and the PR list can lag the new PR.
+		return runs.some(
+			(run) => run.repo === repo && activeStatuses.has(run.status) && prEvents.has(run.event) && Date.parse(run.createdAt) >= at - prListLagMs,
+		);
 	});
 }
+
+const prListLagMs = 30_000;
 
 /** Repos with an unfinished PR run, the only ones whose open PRs need reading. */
 export function reposWithPrRuns(runs: RunKey[]): string[] {

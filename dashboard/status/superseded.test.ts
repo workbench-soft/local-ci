@@ -71,3 +71,11 @@ test('a newer workflow_run or schedule run leaves the older one to its own concu
 	const runs = [run(4, 'queued', { event: 'workflow_run' }), run(3, 'in_progress', { event: 'workflow_run' }), run(2, 'queued', { event: 'schedule' }), run(1, 'in_progress', { event: 'schedule' })];
 	assert.deepEqual(supersededRuns(runs, noPrs), []);
 });
+
+test('a PR run stamped in the same second as the read, or by a clock behind this PC, still gets a fresh read', () => {
+	const at = Date.parse('2026-10-29T10:00:00.700Z');
+	const runs = [{ ...run(1, 'queued', { event: 'pull_request' }), createdAt: '2026-10-29T10:00:00Z' }];
+	assert.deepEqual(prListsToRead(runs, new Map([['app', at]]), at + 10_000, 60_000), ['app']);
+	const old = [{ ...run(1, 'queued', { event: 'pull_request' }), createdAt: '2026-10-29T09:59:00Z' }];
+	assert.deepEqual(prListsToRead(old, new Map([['app', at]]), at + 10_000, 60_000), []);
+});
