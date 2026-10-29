@@ -350,3 +350,35 @@ browser at each logon.
   3. The bar.
   4. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 A Running now banner, and every unfinished run on the page
+
+- **Why** the Now card showed a long waiting list and no running job, while
+  all 4 runners of this PC were busy. The page read only the latest 5 runs of
+  each repo. A busy repo queues 5 newer runs on top of the one that builds,
+  so that run dropped off the page. The cancel loop read the same 5 runs, so
+  older replaced runs stayed in the queue and took runners.
+- **Changes**
+  - **`status/org-status.ts`** each repo call asks for 30 runs, at the same
+    cost of 1 call. The page keeps every unfinished run of those 30, and the
+    latest 5 of the rest. Failed runs get their jobs read only among those 5.
+    The jobs of a run in `queued` state stay in memory while the run's
+    `updated_at` stays the same, for up to 60 seconds, since 20 queued runs
+    cost 20 calls each load.
+  - **`status/headline.ts`** a runner of this PC sits idle while a job waits
+    for `self-hosted`: the headline turns red and says so.
+  - **`cards/running-now-card.tsx`** a wide card right above Latest runs.
+    Each running job gets a large row: runner, repo, workflow, job, progress
+    bar, start time and Stop. With no job running and a queue, the card says
+    how many jobs wait and that no runner takes them.
+  - **`cards/runners-card.tsx`** each runner row names the job it builds,
+    with a link to its log.
+- **Limits** a repo with over 30 runs since its oldest unfinished one hides
+  that run. The idle check uses the labels `self-hosted` and `local`. A job
+  that asks for macOS waits for the Mac and doesn't count.
+- **Steps**
+  1. This spec.
+  2. The run window, the jobs cache and the idle check, with tests.
+  3. The Running now card and the jobs in the Runners card.
+  4. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
