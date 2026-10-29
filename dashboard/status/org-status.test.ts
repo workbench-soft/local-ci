@@ -60,3 +60,9 @@ test('a failing repo list still makes the whole status fail', async () => {
 	const status = await (await freshModule()).fetchOrgStatus();
 	assert.deepEqual(status, { ok: false, error: 'GitHub answered 401 to /orgs/workbench-soft/repos?per_page=100&sort=pushed' });
 });
+
+test('tabs that load at the same moment share one set of GitHub calls', async () => {
+	const { fetchOrgStatus } = await freshModule();
+	await Promise.all([fetchOrgStatus(), fetchOrgStatus(), fetchOrgStatus()]);
+	assert.equal(calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length, 1);
+});

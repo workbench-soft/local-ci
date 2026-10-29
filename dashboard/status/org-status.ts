@@ -33,13 +33,14 @@ const execFileAsync = promisify(execFile);
 const cacheTtlMs = 20_000;
 const runsPerRepo = 5;
 
-let cached: { at: number; status: OrgStatus } | null = null;
+let cached: { at: number; status: Promise<OrgStatus> } | null = null;
 let ghToken: string | null = null;
 
 /** The org's runners and the latest runs of its repos, kept for 20 s so open tabs share one set of calls. */
-export async function fetchOrgStatus(): Promise<OrgStatus> {
+export function fetchOrgStatus(): Promise<OrgStatus> {
 	if (cached && Date.now() - cached.at < cacheTtlMs) return cached.status;
-	const status = await loadOrgStatus();
+	// The promise goes in the cache before it settles, so requests that arrive meanwhile wait for the same load.
+	const status = loadOrgStatus();
 	cached = { at: Date.now(), status };
 	return status;
 }
