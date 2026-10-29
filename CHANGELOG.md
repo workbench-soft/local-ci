@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **CI** runs on pushes to main only. PR runs are off, and the workflow says how to turn them back on.
 - A `fix-stuck-ci` agent skill lists the runners and the waiting runs across the org. It sits in `.agents/skills`, linked for Claude Code and Copilot.
 - `runner/install.ps1` installs the Android SDK parts the apps build with,
   and jobs no longer download SDK parts. Two Release builds at once broke NDK
