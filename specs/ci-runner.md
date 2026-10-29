@@ -60,3 +60,30 @@ machine with several runners builds several jobs at once.
   4. Docs and changelog.
 - **Docs** `README.md`, `docs/architecture.md`, `docs/user-flows.md`,
   `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Faster jobs on the runners
+
+- **Why** each runner downloads its own copy of node, Java and Python through
+  the `setup-*` actions. On Windows, Defender scans each file a job writes,
+  and `pnpm install` writes tens of thousands of them.
+- **Changes**
+  - **Shared tool cache** both scripts point `RUNNER_TOOL_CACHE` and
+    `AGENT_TOOLSDIRECTORY` of each runner at `~/actions-runner/_tool`. A tool
+    the `setup-*` actions download once then serves every runner.
+  - **Defender exclusions** `runner/install.ps1` adds the runner folders and
+    the pnpm, npm, mise and Gradle caches to the Defender exclusions.
+    `RUNNER_DEFENDER_EXCLUSIONS=off` skips the step.
+  - **Mac rerun** `runner/install.sh` rewrites `.env` of each registered
+    runner too, and restarts the runner once its job ends.
+- **Limits**
+  - **Excluded folders** Defender no longer scans the code jobs check out.
+    The runners build only `workbench-soft` repos.
+  - **Same tool at once** 2 jobs that download the same new tool version at
+    the same moment both download it. The `setup-*` actions mark a finished
+    copy, so neither job takes a half written one.
+- **Steps**
+  1. This spec.
+  2. Both runner scripts.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/architecture.md`, `docs/features.md`,
+  `CHANGELOG.md`.
