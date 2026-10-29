@@ -3,7 +3,8 @@
 ## Unreleased
 
 - Purge all clears every run the filter and search match, the older runs
-  behind the 5 a repo shows included. It grays each row it purges at once.
+  behind the 5 a repo shows included. It grays each row it purges at once,
+  and a single Purge grays its row too.
 
 - The status page shows one Running now card at the top in place of the
   Now card and the Running now card, which listed the same jobs.

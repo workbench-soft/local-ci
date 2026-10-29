@@ -110,7 +110,8 @@ icon: a white loop arrow around a green play sign on blue.
   stays in the history, and steps with `if: always()` still run. A queued
   run gets Stop too, so it leaves the queue before a runner takes it. Purge
   is for a run you want gone: it force cancels, skipping `if: always()`
-  steps, then deletes the run with its logs and artifacts.
+  steps, then deletes the run with its logs and artifacts. Its row turns
+  gray the moment Purge starts.
 - **Purge all** a button in the Latest runs toolbar with the count of runs
   the filter and search match, past the 60 rows the table shows too. It asks
   to confirm, grays each row it purges, and purges 5 at a time. The table

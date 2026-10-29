@@ -386,7 +386,8 @@ browser at each logon.
     are left. A run it tried once stays out, so a run GitHub refuses can't
     loop. A load that still lists a deleted run is read again, up to 6 times.
   - **`cards/latest-runs-table.tsx`** grays each row the purge takes, and
-    swaps its buttons for "Purging".
+    swaps its buttons for "Purging". A single Purge grays its row the moment
+    it starts, and an error brings the row back.
   - **`status/run-actions.ts`** the result names the runs that failed.
 - **Limits** a run that starts while the purge runs and matches goes too.
 - **Docs** `docs/features.md`, `docs/user-flows.md`, `docs/architecture.md`,

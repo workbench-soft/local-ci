@@ -143,11 +143,14 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
 	const result = resultOf(run.status, run.conclusion);
 	const place = run.place === 'done' ? null : placeIcons[run.place];
 	const [open, setOpen] = useState(false);
+	// A Purge of this row alone grays it too, until the next load drops it.
+	const [purgingSelf, setPurgingSelf] = useState(false);
 	const active = run.status !== 'completed';
-	const rowClass = [run.place === 'local' && 'local-row', purging && 'purging-row'].filter(Boolean).join(' ');
+	const gray = purging || purgingSelf;
+	const rowClass = [run.place === 'local' && 'local-row', gray && 'purging-row'].filter(Boolean).join(' ');
 	return (
 		<Fragment>
-		<tr className={rowClass || undefined} aria-busy={purging || undefined}>
+		<tr className={rowClass || undefined} aria-busy={gray || undefined}>
 			<td className="nowrap">
 				<span className={`result ${toneOfRun(run)}`}>
 					<Icon name={result.icon} />
@@ -207,7 +210,7 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
 				{purging ? (
 					<span className="muted small nowrap">Purging</span>
 				) : (
-					<RunControls repo={run.repo} runId={run.id} active={active} label={`the ${run.repo} / ${run.workflow} run`} />
+					<RunControls repo={run.repo} runId={run.id} active={active} label={`the ${run.repo} / ${run.workflow} run`} onPurging={setPurgingSelf} />
 				)}
 			</td>
 		</tr>
