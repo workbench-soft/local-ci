@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { callGitHub, forgetOrgStatus } from './org-status.ts';
+import { callGitHub, forgetOrgStatus, githubStatus } from './org-status.ts';
 import { purgeRun, purgeRuns } from './purge.ts';
 import { orgName } from './settings.ts';
 
@@ -62,8 +62,9 @@ async function runAction(repo: string, runId: number, act: (path: string) => Pro
 		return { ok: true };
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);
-		// GitHub answers 409 to a cancel of a run that has already finished.
-		return { ok: false, error: message.includes(' 409 ') ? 'The run has already finished.' : message };
+		// GitHub answers 409 to a cancel of a run that has already finished, and 404 to a run deleted meanwhile.
+		const status = githubStatus(error);
+		return { ok: false, error: status === 409 ? 'The run has already finished.' : status === 404 ? 'The run is already gone.' : message };
 	} finally {
 		forgetOrgStatus();
 		revalidatePath('/');

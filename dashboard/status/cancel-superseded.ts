@@ -1,4 +1,4 @@
-import { callGitHub, fetchOrgStatus, forgetOrgStatus, type WorkflowRun } from './org-status.ts';
+import { callGitHub, fetchOrgStatus, forgetOrgStatus, githubStatus, type WorkflowRun } from './org-status.ts';
 import { orgName } from './settings.ts';
 import { type OpenPrBranches, prListsToRead, reposWithPrRuns, supersededRuns } from './superseded.ts';
 
@@ -40,7 +40,7 @@ async function cancelSuperseded(): Promise<void> {
 		const what = `${run.repo} ${run.workflow} on ${run.branch}, run ${run.id}`;
 		// GitHub answers 409 to a run that finished meanwhile, so that one needs no line.
 		if (result.status === 'fulfilled') console.log(`Cancelled ${what}: a newer run replaced it, or its PR is closed.`);
-		else if (!String(result.reason).includes(' 409 ')) console.error(`Couldn't cancel ${what}: ${result.reason}`);
+		else if (githubStatus(result.reason) !== 409) console.error(`Couldn't cancel ${what}: ${result.reason}`);
 	});
 	forgetOrgStatus();
 }

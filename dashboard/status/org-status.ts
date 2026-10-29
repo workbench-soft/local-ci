@@ -317,6 +317,15 @@ async function getJson<T>(path: string): Promise<T> {
 	return JSON.parse(body) as T;
 }
 
+// Node waits 5 min for a stalled answer, and the sweep and the page would wait with it.
+const githubTimeoutMs = 20_000;
+
+/** The HTTP status of an error from callGitHub, or null for any other error. */
+export function githubStatus(error: unknown): number | null {
+	const status = (error as { githubStatus?: unknown } | null)?.githubStatus;
+	return typeof status === 'number' ? status : null;
+}
+
 /** One GitHub API call with the page's token. A status outside 2xx and 304 throws with the path in the message. */
 export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', extra: Record<string, string> = {}): Promise<Response> {
 	const response = await fetch(`https://api.github.com${path}`, {
@@ -328,9 +337,23 @@ export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE'
 			...extra,
 		},
 		cache: 'no-store',
+		signal: AbortSignal.timeout(githubTimeoutMs),
 	});
-	if (!response.ok && response.status !== 304) throw new Error(`GitHub answered ${response.status} to ${method} ${path}`);
+	if (!response.ok && response.status !== 304) {
+		// A plain property, so the check works across the bundle copies of this module.
+		throw Object.assign(new Error(`GitHub answered ${response.status} to ${method} ${path}.${githubHint(response)}`), { githubStatus: response.status });
+	}
 	return response;
+}
+
+// What a person can do about the two answers that stop the whole page.
+function githubHint(response: Response): string {
+	if (response.status === 401) return ' The token was refused. Run gh auth login, then dashboard\\install.ps1.';
+	const reset = Number(response.headers.get('x-ratelimit-reset'));
+	if ((response.status === 403 || response.status === 429) && response.headers.get('x-ratelimit-remaining') === '0' && reset) {
+		return ` The rate limit is used up until ${new Date(reset * 1000).toLocaleTimeString()}.`;
+	}
+	return '';
 }
 
 // The boot task can't reach the gh login, so install.ps1 leaves GITHUB_TOKEN in .env.local.

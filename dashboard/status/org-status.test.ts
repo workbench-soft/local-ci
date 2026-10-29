@@ -70,7 +70,26 @@ test('a repo whose runs call fails drops out, the other repos still show', async
 test('a failing repo list still makes the whole status fail', async () => {
 	route = (path) => (path.includes('/orgs/workbench-soft/repos') ? { status: 401 } : healthyOrg(path));
 	const status = await (await freshModule()).fetchOrgStatus();
-	assert.deepEqual(status, { ok: false, error: 'GitHub answered 401 to GET /orgs/workbench-soft/repos?per_page=100&sort=pushed' });
+	assert.deepEqual(status, {
+		ok: false,
+		error: 'GitHub answered 401 to GET /orgs/workbench-soft/repos?per_page=100&sort=pushed. The token was refused. Run gh auth login, then dashboard\\install.ps1.',
+	});
+});
+
+test('a GitHub error carries its status, and a used up rate limit says until when', async () => {
+	const realFetch = globalThis.fetch;
+	const reset = Math.floor(Date.parse('2026-10-29T15:00:00Z') / 1000);
+	globalThis.fetch = (async () =>
+		new Response('{}', { status: 403, headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(reset) } })) as unknown as typeof fetch;
+	try {
+		const { callGitHub, githubStatus } = await freshModule();
+		const error = await callGitHub('/rate').catch((caught: unknown) => caught);
+		assert.equal(githubStatus(error), 403);
+		assert.equal((error as Error).message, `GitHub answered 403 to GET /rate. The rate limit is used up until ${new Date(reset * 1000).toLocaleTimeString()}.`);
+		assert.equal(githubStatus(new Error('GitHub answered 409')), null);
+	} finally {
+		globalThis.fetch = realFetch;
+	}
 });
 
 test('tabs that load at the same moment share one set of GitHub calls', async () => {

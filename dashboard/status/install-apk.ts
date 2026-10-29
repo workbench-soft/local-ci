@@ -6,13 +6,14 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { promisify } from 'node:util';
-import { callGitHub } from './org-status.ts';
+import { callGitHub, githubStatus } from './org-status.ts';
 import { type ApiRelease, releasesRepo, toRelease } from './releases.ts';
 
 export type InstallResult = { ok: true; device: string } | { ok: false; error: string };
 
 const execFileAsync = promisify(execFile);
 const adbName = process.platform === 'win32' ? 'adb.exe' : 'adb';
+const apkTimeoutMs = 180_000;
 
 /** Downloads the APK of a release and installs it with adb on the phone plugged in over USB. */
 export async function installRelease(tag: string): Promise<InstallResult> {
@@ -26,11 +27,12 @@ export async function installRelease(tag: string): Promise<InstallResult> {
 		if (devices.length === 0) return { ok: false, error: 'No phone in adb devices. Plug it in over USB and allow USB debugging.' };
 		if (devices.length > 1) return { ok: false, error: `${devices.length} phones in adb devices: ${devices.join(', ')}. Leave one plugged in.` };
 		const found = await callGitHub(`/repos/${releasesRepo}/releases/tags/${tag}`).catch((error: Error) => {
-			throw new Error(error.message.includes(' 404 ') ? `${tag} is gone from ${releasesRepo}. The repo keeps the last 3 releases of each app.` : error.message);
+			throw new Error(githubStatus(error) === 404 ? `${tag} is gone from ${releasesRepo}. The repo keeps the last 3 releases of each app.` : error.message);
 		});
 		const release = toRelease((await found.json()) as ApiRelease);
 		if (!release.apk) return { ok: false, error: `${release.name} has no APK.` };
-		const response = await fetch(release.apk.url);
+		// A stalled download would keep the button spinning for 5 min.
+		const response = await fetch(release.apk.url, { signal: AbortSignal.timeout(apkTimeoutMs) });
 		if (!response.ok) return { ok: false, error: `GitHub answered ${response.status} to the APK download.` };
 		const folder = join(tmpdir(), 'local-ci-apk');
 		await mkdir(folder, { recursive: true });
