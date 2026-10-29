@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 	description: 'The self-hosted runner and the latest workflow runs of the org',
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function AppShell({ children }: { children: ReactNode }) {
 	return (
 		<html lang="en">
 			<body>{children}</body>

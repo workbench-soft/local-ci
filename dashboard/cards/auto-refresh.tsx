@@ -3,17 +3,18 @@
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-const everyMs = 15_000;
+const refreshMs = 15_000;
 
-export function Refresh({ at }: { at: string }) {
+/** Asks the server for a fresh page every 15 s and says when the shown one was made. */
+export function AutoRefresh({ renderedAt }: { renderedAt: string }) {
 	const router = useRouter();
 	useEffect(() => {
-		const id = setInterval(() => router.refresh(), everyMs);
-		return () => clearInterval(id);
+		const timer = setInterval(() => router.refresh(), refreshMs);
+		return () => clearInterval(timer);
 	}, [router]);
 	return (
 		<span className="muted">
-			Updated {new Date(at).toLocaleTimeString()}, refreshes every {everyMs / 1000} s
+			Updated {new Date(renderedAt).toLocaleTimeString()}, refreshes every {refreshMs / 1000} s
 		</span>
 	);
 }

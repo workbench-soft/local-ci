@@ -3,14 +3,9 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { org } from './settings';
+import { orgName } from './settings';
 
-const run = promisify(execFile);
-
-export const runnerDir = join(homedir(), 'actions-runner', org);
-export const runnerTask = `GitHub Actions runner (${org})`;
-
-export type LocalStatus =
+export type ThisPcStatus =
 	| { supported: false }
 	| {
 			supported: true;
@@ -21,19 +16,37 @@ export type LocalStatus =
 			lastJobAt: string | null;
 	  };
 
-// tasklist prints the image name in quotes, whatever the Windows language.
-async function running(image: string): Promise<boolean> {
-	const { stdout } = await run('tasklist', ['/FI', `IMAGENAME eq ${image}`, '/FO', 'CSV', '/NH']);
+export const runnerFolder = join(homedir(), 'actions-runner', orgName);
+export const runnerTaskName = `GitHub Actions runner (${orgName})`;
+
+const execFileAsync = promisify(execFile);
+
+/** The runner on this PC: its boot task, its processes and its last job. The checks need Windows. */
+export async function readThisPc(): Promise<ThisPcStatus> {
+	if (process.platform !== 'win32') return { supported: false };
+	const [name, task, listener, worker, lastJobAt] = await Promise.all([
+		readRunnerName(),
+		readBootTaskState(),
+		isProcessRunning('Runner.Listener.exe'),
+		isProcessRunning('Runner.Worker.exe'),
+		readLastJobTime(),
+	]);
+	return { supported: true, name, task, listener, worker, lastJobAt };
+}
+
+// tasklist quotes the image name in CSV in every Windows language.
+async function isProcessRunning(image: string): Promise<boolean> {
+	const { stdout } = await execFileAsync('tasklist', ['/FI', `IMAGENAME eq ${image}`, '/FO', 'CSV', '/NH']);
 	return stdout.includes(`"${image}"`);
 }
 
-// schtasks prints the state in the Windows language, the PowerShell enum doesn't.
-async function taskState(): Promise<string | null> {
+// The PowerShell enum stays English, while schtasks prints the state in the Windows language.
+async function readBootTaskState(): Promise<string | null> {
 	try {
-		const { stdout } = await run('powershell', [
+		const { stdout } = await execFileAsync('powershell', [
 			'-NoProfile',
 			'-Command',
-			`(Get-ScheduledTask -TaskName '${runnerTask}' -ErrorAction Stop).State`,
+			`(Get-ScheduledTask -TaskName '${runnerTaskName}' -ErrorAction Stop).State`,
 		]);
 		return stdout.trim() || null;
 	} catch {
@@ -41,36 +54,25 @@ async function taskState(): Promise<string | null> {
 	}
 }
 
-async function runnerName(): Promise<string | null> {
+async function readRunnerName(): Promise<string | null> {
 	try {
-		// The runner writes .runner with a BOM.
-		const text = await readFile(join(runnerDir, '.runner'), 'utf8');
-		return JSON.parse(text.replace(/^﻿/, '')).agentName ?? null;
+		const text = await readFile(join(runnerFolder, '.runner'), 'utf8');
+		// The runner saves .runner with a byte order mark.
+		return JSON.parse(text.replace(/^\uFEFF/, '')).agentName ?? null;
 	} catch {
 		return null;
 	}
 }
 
-// The runner starts a Worker_*.log for each job it takes.
-async function lastJobAt(): Promise<string | null> {
+// Each job the runner takes opens a new _diag/Worker_*.log.
+async function readLastJobTime(): Promise<string | null> {
 	try {
-		const diag = join(runnerDir, '_diag');
-		const logs = (await readdir(diag)).filter((f) => f.startsWith('Worker_'));
-		const times = await Promise.all(logs.map(async (f) => (await stat(join(diag, f))).mtimeMs));
-		return times.length ? new Date(Math.max(...times)).toISOString() : null;
+		const diag = join(runnerFolder, '_diag');
+		const logs = (await readdir(diag)).filter((file) => file.startsWith('Worker_'));
+		if (!logs.length) return null;
+		const times = await Promise.all(logs.map(async (file) => (await stat(join(diag, file))).mtimeMs));
+		return new Date(Math.max(...times)).toISOString();
 	} catch {
 		return null;
 	}
-}
-
-export async function localStatus(): Promise<LocalStatus> {
-	if (process.platform !== 'win32') return { supported: false };
-	const [name, task, listener, worker, lastJob] = await Promise.all([
-		runnerName(),
-		taskState(),
-		running('Runner.Listener.exe'),
-		running('Runner.Worker.exe'),
-		lastJobAt(),
-	]);
-	return { supported: true, name, task, listener, worker, lastJobAt: lastJob };
 }

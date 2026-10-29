@@ -1,12 +1,8 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { org } from './settings';
+import { orgName } from './settings';
 
-const run = promisify(execFile);
-const cacheMs = 20_000;
-const runsPerRepo = 5;
-
-export type Runner = {
+export type OrgRunner = {
 	id: number;
 	name: string;
 	os: string;
@@ -15,7 +11,7 @@ export type Runner = {
 	labels: string[];
 };
 
-export type Run = {
+export type WorkflowRun = {
 	id: number;
 	repo: string;
 	workflow: string;
@@ -29,36 +25,41 @@ export type Run = {
 	url: string;
 };
 
-export type GitHubStatus =
-	| { ok: true; runners: Runner[] | null; runnersError: string | null; runs: Run[] }
+export type OrgStatus =
+	| { ok: true; runners: OrgRunner[] | null; runnersError: string | null; runs: WorkflowRun[] }
 	| { ok: false; error: string };
 
-let cache: { at: number; data: GitHubStatus } | null = null;
-let token: string | null = null;
+const execFileAsync = promisify(execFile);
+const cacheTtlMs = 20_000;
+const runsPerRepo = 5;
 
-// The boot task can't read the gh login, so install.ps1 puts the token in .env.local.
-async function getToken(): Promise<string> {
-	if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-	if (token) return token;
-	const { stdout } = await run('gh', ['auth', 'token']);
-	token = stdout.trim();
-	return token;
+let cached: { at: number; status: OrgStatus } | null = null;
+let ghToken: string | null = null;
+
+/** The org's runners and the latest runs of its repos, kept for 20 s so open tabs share one set of calls. */
+export async function fetchOrgStatus(): Promise<OrgStatus> {
+	if (cached && Date.now() - cached.at < cacheTtlMs) return cached.status;
+	const status = await loadOrgStatus();
+	cached = { at: Date.now(), status };
+	return status;
 }
 
-async function api<T>(path: string): Promise<T> {
-	const res = await fetch(`https://api.github.com${path}`, {
-		headers: {
-			Authorization: `Bearer ${await getToken()}`,
-			Accept: 'application/vnd.github+json',
-			'X-GitHub-Api-Version': '2022-11-28',
-		},
-		cache: 'no-store',
-	});
-	if (!res.ok) throw new Error(`GitHub answered ${res.status} to ${path}`);
-	return res.json() as Promise<T>;
+async function loadOrgStatus(): Promise<OrgStatus> {
+	try {
+		const [runners, runs] = await Promise.allSettled([listRunners(), listLatestRuns()]);
+		if (runs.status === 'rejected') throw runs.reason;
+		// Runners need admin:org. Without it the runs still show.
+		if (runners.status === 'rejected') {
+			return { ok: true, runners: null, runnersError: String(runners.reason?.message ?? runners.reason), runs: runs.value };
+		}
+		return { ok: true, runners: runners.value, runnersError: null, runs: runs.value };
+	} catch (error) {
+		return { ok: false, error: error instanceof Error ? error.message : String(error) };
+	}
 }
 
-type ApiRunner = { id: number; name: string; os: string; status: 'online' | 'offline'; busy: boolean; labels: { name: string }[] };
+type ApiRunner = Omit<OrgRunner, 'labels'> & { labels: { name: string }[] };
+
 type ApiRun = {
 	id: number;
 	name: string;
@@ -72,54 +73,51 @@ type ApiRun = {
 	html_url: string;
 };
 
-async function runners(): Promise<Runner[]> {
-	const { runners } = await api<{ runners: ApiRunner[] }>(`/orgs/${org}/actions/runners?per_page=100`);
-	return runners.map((r) => ({ id: r.id, name: r.name, os: r.os, status: r.status, busy: r.busy, labels: r.labels.map((l) => l.name) }));
+async function listRunners(): Promise<OrgRunner[]> {
+	const { runners } = await getJson<{ runners: ApiRunner[] }>(`/orgs/${orgName}/actions/runners?per_page=100`);
+	return runners.map(({ id, name, os, status, busy, labels }) => ({ id, name, os, status, busy, labels: labels.map((label) => label.name) }));
 }
 
-async function runs(): Promise<Run[]> {
-	const repos = await api<{ full_name: string; archived: boolean }[]>(`/orgs/${org}/repos?per_page=100&sort=pushed`);
-	const lists = await Promise.all(
-		repos
-			.filter((r) => !r.archived)
-			.map(async (repo) => {
-				const { workflow_runs } = await api<{ workflow_runs: ApiRun[] }>(
-					`/repos/${repo.full_name}/actions/runs?per_page=${runsPerRepo}`,
-				);
-				return workflow_runs.map((r) => ({
-					id: r.id,
-					repo: repo.full_name.split('/')[1],
-					workflow: r.name,
-					title: r.display_title,
-					branch: r.head_branch,
-					event: r.event,
-					status: r.status,
-					conclusion: r.conclusion,
-					createdAt: r.created_at,
-					updatedAt: r.updated_at,
-					url: r.html_url,
-				}));
-			}),
-	);
-	return lists.flat();
+async function listLatestRuns(): Promise<WorkflowRun[]> {
+	const repos = await getJson<{ full_name: string; archived: boolean }[]>(`/orgs/${orgName}/repos?per_page=100&sort=pushed`);
+	const perRepo = await Promise.all(repos.filter((repo) => !repo.archived).map((repo) => listRepoRuns(repo.full_name)));
+	return perRepo.flat();
 }
 
-async function load(): Promise<GitHubStatus> {
-	try {
-		const [runnerList, runList] = await Promise.allSettled([runners(), runs()]);
-		if (runList.status === 'rejected') throw runList.reason;
-		// Listing runners needs admin:org, so runs still show without it.
-		return runnerList.status === 'fulfilled'
-			? { ok: true, runners: runnerList.value, runnersError: null, runs: runList.value }
-			: { ok: true, runners: null, runnersError: String(runnerList.reason?.message ?? runnerList.reason), runs: runList.value };
-	} catch (e) {
-		return { ok: false, error: e instanceof Error ? e.message : String(e) };
-	}
+async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
+	const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(`/repos/${fullName}/actions/runs?per_page=${runsPerRepo}`);
+	const repo = fullName.split('/')[1];
+	return workflow_runs.map((run) => ({
+		id: run.id,
+		repo,
+		workflow: run.name,
+		title: run.display_title,
+		branch: run.head_branch,
+		event: run.event,
+		status: run.status,
+		conclusion: run.conclusion,
+		createdAt: run.created_at,
+		updatedAt: run.updated_at,
+		url: run.html_url,
+	}));
 }
 
-export async function githubStatus(): Promise<GitHubStatus> {
-	if (cache && Date.now() - cache.at < cacheMs) return cache.data;
-	const data = await load();
-	cache = { at: Date.now(), data };
-	return data;
+async function getJson<T>(path: string): Promise<T> {
+	const response = await fetch(`https://api.github.com${path}`, {
+		headers: {
+			Authorization: `Bearer ${await resolveToken()}`,
+			Accept: 'application/vnd.github+json',
+			'X-GitHub-Api-Version': '2022-11-28',
+		},
+		cache: 'no-store',
+	});
+	if (!response.ok) throw new Error(`GitHub answered ${response.status} to ${path}`);
+	return response.json() as Promise<T>;
+}
+
+// The boot task can't reach the gh login, so install.ps1 leaves GITHUB_TOKEN in .env.local.
+async function resolveToken(): Promise<string> {
+	if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+	if (!ghToken) ghToken = (await execFileAsync('gh', ['auth', 'token'])).stdout.trim();
+	return ghToken;
 }
