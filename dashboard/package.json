@@ -6,7 +6,8 @@
     "dev": "next dev -H 127.0.0.1 -p 4281",
     "build": "next build",
     "start": "next start -H 127.0.0.1 -p 4280",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"lib/*.test.ts\""
   },
   "dependencies": {
     "next": "^16.4.3",
