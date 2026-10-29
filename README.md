@@ -61,15 +61,18 @@ runner. The runner scripts also work alone:
 
 ## CI status page
 
-`http://localhost:4280` shows whether the runner is up and what it builds. The
-page starts with Windows. Set it up once, from the main checkout:
+`http://localhost:4280` shows what builds on this PC and what waits on GitHub.
+The page starts with Windows and opens in the browser at each logon. Set it up
+once, from the main checkout:
 
 ```powershell
 .\dashboard\install.ps1
 ```
 
-- **Shows** this PC's runner task and job, the org runners, and the latest
-  runs of each org repo.
+- **Shows** the jobs on this PC, the jobs waiting on GitHub for a runner, the
+  org runners, and the latest runs with a filter and sorting.
+- **Opens** after the install build, and at logon through a shortcut in the
+  Startup folder. Delete `local-ci dashboard.lnk` there to stop it.
 - **Token** the boot task can't read the gh login, so the script copies
   `gh auth token` into `dashboard\.env.local`.
 - **Rerun** after a `git pull` or a new gh login. The script rebuilds the page

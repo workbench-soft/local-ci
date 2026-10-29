@@ -63,9 +63,12 @@ flowchart TD
 1. From the main checkout, run `.\dashboard\install.ps1` once.
 2. Approve the admin prompt. The script builds the page and registers the
    `local-ci dashboard` task.
-3. Open `http://localhost:4280`. The page comes back after each reboot.
-4. Read the headline: the runner is up, builds or has a queue. The cards
-   below show this PC, the org runners and the latest runs.
+3. The browser opens `http://localhost:4280` once the page answers. It opens
+   again at each logon.
+4. Read the headline: how many jobs build on this PC and how many wait on
+   GitHub. The Now card lists those jobs.
+5. In Latest runs, pick a filter chip, type in the search box or click a
+   column head to sort.
 
 ```mermaid
 flowchart TD
@@ -73,6 +76,9 @@ flowchart TD
   B --> C[gh auth token into .env.local]
   C --> D[task at boot: start.cmd]
   D --> E[next start on 127.0.0.1:4280]
-  E --> F[person opens localhost:4280]
+  A --> S[shortcut in the Startup folder]
+  A & S --> O[open.ps1 waits for the port]
+  E --> O
+  O --> F[browser shows localhost:4280]
   F --> G[page refreshes every 15 s]
 ```

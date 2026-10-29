@@ -32,14 +32,19 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 ## CI status page
 
 `http://localhost:4280` shows the local CI at a glance. `dashboard\install.ps1`
-sets it up, and it starts with Windows.
+sets it up. The page starts with Windows and opens in the browser after the
+install build and at each logon.
 
-- **Headline** green when idle, blue while a run builds, amber when runs wait
-  in the queue, red when a runner of this PC is down.
-- **This PC** a row per runner: running, idle or stopped, its boot task, and
-  when its last job started.
-- **Runners** each org runner online or offline, busy or idle, with its labels.
-- **Runs** the latest 5 runs of each org repo, queued runs on top, each linked
-  to GitHub. A repo GitHub refuses drops out, and the rest still show.
-- **Limit** the This PC card needs Windows. After a new gh login, run the
-  install script again.
+- **Headline** counts jobs on this PC first, then jobs on other runners, then
+  jobs waiting on GitHub. Red when a runner of this PC is down.
+- **Now** a column per place: on this PC, waiting on GitHub with the labels the
+  job asks for, and on another runner. Each job links to its GitHub log.
+- **This PC** a row per runner: the job it runs, idle or stopped, its boot
+  task, and when its last job started.
+- **Runs** the latest 5 runs of each org repo, with an icon for the result and
+  for the place. Filter chips pick this PC, waiting, other runners, failed or
+  passed. A search box matches repo, workflow and branch. A click on a column
+  head sorts by it.
+- **Limits** a job counts as local when its runner name matches a runner
+  folder of this PC, so the This PC parts need Windows. After a new gh login,
+  run the install script again.

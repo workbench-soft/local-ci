@@ -2,16 +2,18 @@
 
 ## What it does for the person
 
-`http://localhost:4280` shows whether the local CI works and what it builds.
-The page starts with Windows, so it is back after each reboot.
+`http://localhost:4280` shows whether the local CI works, what builds on this
+PC and what waits on GitHub. The page starts with Windows and opens in the
+browser at each logon.
 
 ## User flows
 
 1. The person runs `.\dashboard\install.ps1` once.
 2. The script builds the app. Then it registers a scheduled task that starts
    the app at boot.
-3. The person opens `http://localhost:4280`. The page refreshes every 15
-   seconds on its own.
+3. The browser opens `http://localhost:4280` after the build and at each
+   logon. The page refreshes every 15 seconds on its own.
+4. The person filters, searches and sorts the runs table.
 
 ## How it works: modules, files, data
 
@@ -27,7 +29,14 @@ The page starts with Windows, so it is back after each reboot.
 - **Org runners** `GET /orgs/workbench-soft/actions/runners` gives each runner
   online or offline, busy or idle, with its labels.
 - **Runs** `GET /repos/{repo}/actions/runs` gives the latest runs of each org
-  repo. Queued runs go on top, since they wait for a runner.
+  repo. `GET /repos/{repo}/actions/runs/{id}/jobs` gives the jobs of each
+  unfinished run, with the runner name of each job.
+- **Place** a job is local when its runner name matches the `agentName` in a
+  runner folder's `.runner` file. A started job on another runner is
+  elsewhere, and a job without a runner waits on GitHub. Local runs go on top
+  of the table, then the waiting ones.
+- **Open at logon** a shortcut in the Startup folder runs `open.ps1`. The
+  script waits for the port, then opens the page through `explorer.exe`.
 - **Token** `GITHUB_TOKEN` comes from `dashboard/.env.local`, which the install
   script writes from `gh auth token`. The task runs at boot without a
   password, so the gh login in the Windows credential store is out of its
