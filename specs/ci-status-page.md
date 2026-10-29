@@ -17,9 +17,13 @@ The page starts with Windows, so it is back after each reboot.
 
 - **`dashboard/`** a Next.js app with one page, rendered on the server.
 - **This PC** the page finds each runner folder of the org under
-  `~/actions-runner`. For each runner it reads the boot task state and checks
-  for a `Runner.Listener` and a `Runner.Worker` process started from that
-  folder. A worker process means a job is running right now.
+  `~/actions-runner`. For each runner it reads the boot task state. A live
+  listener holds its newest `_diag/Runner_*.log` open, and a live worker its
+  newest `_diag/Worker_*.log`. The page tries to open each log for read only.
+  A refusal means the process runs. A worker means a job is running right now.
+- **Why the logs** the boot task starts the runner without a login, so
+  Windows hides its process path from the page. The path is the only link
+  from a process to its folder.
 - **Org runners** `GET /orgs/workbench-soft/actions/runners` gives each runner
   online or offline, busy or idle, with its labels.
 - **Runs** `GET /repos/{repo}/actions/runs` gives the latest runs of each org

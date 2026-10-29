@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { OrgRunner, OrgStatus, WorkflowRun } from './org-status.ts';
 import { formatAge, summarizeCi, toneOfRun } from './headline.ts';
-import type { ThisPcStatus } from './this-pc.ts';
+import type { PcRunner, ThisPcStatus } from './this-pc.ts';
 
 const now = Date.parse('2025-10-29T12:00:00Z');
 const secondsBefore = (s: number) => new Date(now - s * 1000).toISOString();
@@ -23,8 +23,17 @@ const run = (status: string, conclusion: string | null = null): WorkflowRun => (
 
 const runner = (status: 'online' | 'offline'): OrgRunner => ({ id: 1, name: 'pc', os: 'Windows', status, busy: false, labels: [] });
 
-const pcUp: ThisPcStatus = { supported: true, name: 'pc', task: 'Running', listener: true, worker: false, lastJobAt: null };
-const pcDown: ThisPcStatus = { ...pcUp, listener: false };
+const pcRunner = (listener: boolean): PcRunner => ({
+	folder: 'workbench-soft',
+	name: 'pc',
+	taskName: 't',
+	task: 'Running',
+	listener,
+	worker: false,
+	lastJobAt: null,
+});
+const pcUp: ThisPcStatus = { supported: true, runners: [pcRunner(true), pcRunner(true)] };
+const pcDown: ThisPcStatus = { supported: true, runners: [pcRunner(false)] };
 const noPc: ThisPcStatus = { supported: false };
 const orgWith = (runs: WorkflowRun[], runners: OrgRunner[] | null = [runner('online')]): OrgStatus => ({ ok: true, runners, runnersError: null, runs });
 
@@ -57,6 +66,12 @@ test('toneOfRun maps status and conclusion to a color', () => {
 
 test('summarizeCi puts a stopped listener first', () => {
 	assert.deepEqual(summarizeCi(pcDown, { ok: false, error: 'x' }), { tone: 'bad', text: 'The runner on this PC is down' });
+});
+
+test('summarizeCi counts the runners down when this PC has several', () => {
+	const pc: ThisPcStatus = { supported: true, runners: [pcRunner(true), pcRunner(false), pcRunner(false)] };
+	assert.deepEqual(summarizeCi(pc, orgWith([])), { tone: 'bad', text: '2 of 3 runners on this PC are down' });
+	assert.deepEqual(summarizeCi({ supported: true, runners: [] }, orgWith([])), { tone: 'bad', text: 'No runner is installed on this PC' });
 });
 
 test('summarizeCi reports GitHub out of reach', () => {
