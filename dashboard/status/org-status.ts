@@ -103,8 +103,10 @@ export function fetchOrgStatus(): Promise<OrgStatus> {
 		return kept.status;
 	}
 	// The promise goes in the cache before it settles, so requests that arrive meanwhile wait for the same load.
+	// A background refresh still running would land older data over it, so it is dropped.
 	const status = loadOrgStatus();
 	store.cached = { at: Date.now(), status };
+	store.refreshing = null;
 	return status;
 }
 

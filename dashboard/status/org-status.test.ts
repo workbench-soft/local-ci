@@ -91,6 +91,19 @@ test('an expired status answers at once while a new load runs, then the new one 
 	assert.equal(repoCalls(), 2);
 });
 
+test('a background refresh that ends after a newer full load leaves the newer status in place', async () => {
+	const { fetchOrgStatus } = await freshModule();
+	await fetchOrgStatus();
+	const store = (globalThis as Record<symbol, { cached: { at: number; status: unknown }; refreshing: unknown }>)[Symbol.for('local-ci.org-status')];
+	store.cached.at -= 30_000;
+	fetchOrgStatus();
+	assert.ok(store.refreshing);
+	store.cached.at -= 200_000;
+	const full = fetchOrgStatus();
+	await new Promise((resolve) => setTimeout(resolve, 20));
+	assert.equal(store.cached.status, full);
+});
+
 test('a GitHub error carries its status, and a used up rate limit says until when', async () => {
 	const realFetch = globalThis.fetch;
 	const reset = Math.floor(Date.parse('2026-10-29T15:00:00Z') / 1000);
