@@ -28,6 +28,8 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   Windows runner starts at boot.
 - **Several runners** a runner takes one job at a time. `RUNNER_COUNT` sets
   how many runners the machine gets: 4 on Windows and 1 on a Mac by default.
+  On Windows the count stays in `~/actions-runner/runner-count` for the next
+  run, and a lower count removes the extra runners.
 - **Limit** extra runners speed up only work split into jobs. Jobs at the
   same time share ports, the Android emulator and the Gradle cache.
 - **Shared tool cache** the runners of a machine keep `setup-*` downloads in
@@ -89,6 +91,16 @@ icon: a white loop arrow around a green play sign on blue.
   this PC also show their boot task and when their last job started. The
   list stops at 420 px and scrolls. Each entry names the job its runner
   builds, linked to the log, or says `No job`.
+- **Runner count** on Windows the top of the Runners card has a field for
+  the number of runners and the count this PC suits, such as
+  `16 logical processors and 31 GB of memory suit 4 runners`. Use 4 fills the
+  field with it. Apply runs `runner\install.ps1` as admin in a window on the
+  desktop, which adds or removes runners. A runner on a job leaves once the
+  job ends. The suggestion is 1 runner per 4 logical processors and per
+  4 GB of memory past 8 GB, and heavy Gradle builds may want fewer.
+- **Limit** Apply needs a person logged on, and one run of
+  `runner\install.ps1` after this change to add the task it starts. Mac
+  runners change only through `RUNNER_COUNT`.
 - **Runs** the latest 5 runs of each org repo and every unfinished one, with
   an icon for the result and for the place. An unfinished run says where it builds: Building on this
   PC, Queued on GitHub or Building on another runner. A finished run shows
@@ -103,15 +115,16 @@ icon: a white loop arrow around a green play sign on blue.
   a row with each job and step, its time and a bar in scale with the longest
   step. The row of an unfinished run updates on each refresh.
 - **Stop and Purge** buttons on each run and each live job. Stop cancels the
-  run on GitHub. Purge asks to confirm, force cancels the run and deletes it
+  run on GitHub. The button reads Stopping at once, then Stopped when GitHub
+  ends the run, and stays disabled the whole time. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's
   buttons act on its whole run, since GitHub cancels runs only.
-- **Stop or Purge** Stop is GitHub's Cancel: the run ends as cancelled and
-  stays in the history, and steps with `if: always()` still run. A queued
-  run gets Stop too, so it leaves the queue before a runner takes it. Purge
-  is for a run you want gone: it force cancels, skipping `if: always()`
-  steps, then deletes the run with its logs and artifacts. Its row turns
-  gray the moment Purge starts.
+- **Stop or Purge** Stop force cancels: the run ends as cancelled and stays
+  in the history. It skips steps with `if: always()`, so the runner takes the
+  next job as soon as the run ends. A queued run gets Stop too, so it leaves
+  the queue before a runner takes it. Purge is for a run you want gone: it
+  force cancels, then deletes the run with its logs and artifacts. Its row
+  turns gray the moment Purge starts.
 - **Purge all** a button in the Latest runs toolbar with the count of runs
   the filter and search match, past the 60 rows the table shows too. It asks
   to confirm, grays each row it purges, and purges 5 at a time. The table

@@ -93,8 +93,9 @@ flowchart TD
    GitHub. The Running now card lists those jobs.
 5. In Latest runs, pick a filter chip, type in the search box or click a
    column head to sort.
-6. Press Stop on a run or a job to cancel its run. Press Purge and confirm to
-   stop the run and delete it from GitHub. An error shows beside the buttons.
+6. Press Stop on a run or a job to cancel its run. The button reads
+   Stopping, then Stopped, and its runner takes the next job. Press Purge
+   and confirm to stop the run and delete it from GitHub. An error shows beside the buttons.
    To clear many runs, pick a filter or type a search, press Purge all and
    confirm. Its rows turn gray, and older runs move up and go too, until none
    match. The count of purged runs and the first error show beside it.
@@ -103,6 +104,9 @@ flowchart TD
 8. Plug the phone in over USB with USB debugging on. Press Install in the
    Release column. The button says the device, or shows adb's error in red.
 9. Click the branch or the PR link to open it on GitHub.
+10. To change the number of runners, type it in Runners on this PC, or press
+    Use with the suggested count. Press Apply, and watch
+    `runner\install.ps1` add or remove runners in its window.
 
 ```mermaid
 flowchart TD
@@ -116,10 +120,12 @@ flowchart TD
   O --> F[browser shows localhost:4280]
   F --> G[page refreshes every 15 s]
   F --> H{button}
-  H -- Stop --> I[GitHub cancels the run]
+  H -- Stop --> I[Stopping: force cancel] --> I2[Stopped: the runner takes the next job]
   H -- Purge, confirmed --> J[force cancel, wait, delete the run]
   H -- Purge all, confirmed --> P[gray the rows, purge them 5 at a time, reload, repeat until none match]
   H -- Install --> K[adb devices, download the APK, adb install]
   K --> L[installed on the device, or adb's error in red]
-  I & J & P --> G
+  H -- Apply runner count --> R[write runner-count, start the count task]
+  R --> T[runner/install.ps1 as admin adds or removes runners]
+  I & J & P & T --> G
 ```

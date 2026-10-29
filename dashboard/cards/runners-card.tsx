@@ -1,17 +1,20 @@
 import { formatAge } from '@/status/headline';
 import type { OrgStatus } from '@/status/org-status';
 import type { LiveJob } from '@/status/placement';
+import type { RunnerCountInfo } from '@/status/runner-count';
 import { githubState, mergeRunners, pcState, type RunnerRow } from '@/status/runners';
 import type { ThisPcStatus } from '@/status/this-pc';
+import { RunnerCountForm } from './runner-count-form';
 import { StatusDot } from './status-dot';
 
 /** Every runner once, with what this PC and GitHub each say about it. */
-export function RunnersCard({ pc, org, jobs, now }: { pc: ThisPcStatus; org: OrgStatus; jobs: LiveJob[]; now: number }) {
+export function RunnersCard({ pc, org, jobs, count, now }: { pc: ThisPcStatus; org: OrgStatus; jobs: LiveJob[]; count: RunnerCountInfo; now: number }) {
 	const githubRunners = org.ok ? org.runners : null;
 	const rows = mergeRunners(pc.supported ? pc.runners : [], githubRunners);
 	return (
 		<section className="card wide">
 			<h2>Runners</h2>
+			{pc.supported && <RunnerCountForm installed={pc.runners.length} info={count} />}
 			{rows.length ? (
 				<ul className="runners">
 					{rows.map((row) => (

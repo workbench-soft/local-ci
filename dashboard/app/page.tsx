@@ -8,13 +8,13 @@ import { summarizeCi } from '@/status/headline';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { releasesByRun } from '@/status/releases';
-import { readThisPc } from '@/status/this-pc';
+import { readRunnerCount, readThisPc } from '@/status/this-pc';
 
 // Each visit reads the runner afresh, so Next must not prerender the page.
 export const dynamic = 'force-dynamic';
 
 export default async function StatusPage() {
-	const [pc, org] = await Promise.all([readThisPc(), fetchOrgStatus()]);
+	const [pc, org, count] = await Promise.all([readThisPc(), fetchOrgStatus(), readRunnerCount()]);
 	const now = Date.now();
 	const local = localRunnerNames(pc);
 	const runs = org.ok ? org.runs : [];
@@ -39,7 +39,7 @@ export default async function StatusPage() {
 			</header>
 			<div className="grid">
 				{org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />}
-				<RunnersCard pc={pc} org={org} jobs={live} now={now} />
+				<RunnersCard pc={pc} org={org} jobs={live} count={count} now={now} />
 				{org.ok && <LatestRunsTable runs={rows} now={now} />}
 			</div>
 		</main>

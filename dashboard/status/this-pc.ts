@@ -1,8 +1,9 @@
 import { execFile } from 'node:child_process';
 import { readdir, readFile, stat } from 'node:fs/promises';
-import { homedir } from 'node:os';
+import { availableParallelism, homedir, totalmem } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { parseCount, type RunnerCountInfo, recommendRunners } from './runner-count.ts';
 import { orgName } from './settings.ts';
 
 /** One runner folder on this PC, its boot task, its processes and its last job. */
@@ -25,6 +26,10 @@ export type ProcessSnapshot = {
 };
 
 const runnersRoot = join(homedir(), 'actions-runner');
+/** runner/install.ps1 reads the count from this file and saves the count it used there. */
+export const countFile = join(runnersRoot, 'runner-count');
+// runner/install.ps1 registers this task, and the page starts it to apply a new count.
+export const countTaskName = `GitHub Actions runner count (${orgName})`;
 const execFileAsync = promisify(execFile);
 const pcCacheTtlMs = 5_000;
 const powershellTimeoutMs = 15_000;
@@ -70,6 +75,14 @@ export function readThisPc(): Promise<ThisPcStatus> {
 	});
 	pcCache = entry;
 	return entry.status;
+}
+
+/** The saved runner count, and the count this PC's processors and memory suit. */
+export async function readRunnerCount(): Promise<RunnerCountInfo> {
+	const cpus = availableParallelism();
+	const memoryGb = Math.round(totalmem() / 2 ** 30);
+	const saved = await readFile(countFile, 'utf8').then(parseCount, () => null);
+	return { saved, cpus, memoryGb, recommended: recommendRunners(cpus, memoryGb) };
 }
 
 async function loadThisPc(): Promise<ThisPcStatus> {

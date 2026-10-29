@@ -1,16 +1,28 @@
 # Registers this PC as self-hosted GitHub Actions runners for the org and
 # starts each at boot. A runner takes one job at a time, so RUNNER_COUNT runners
-# build that many jobs at once. Running it again keeps the registrations and
-# only rewrites the start files and the boot tasks. runner/install.sh is the Mac
-# version.
+# build that many jobs at once. Running it again keeps the registrations,
+# removes the runners above the count and rewrites the start files and the boot
+# tasks. runner/install.sh is the Mac version.
+param(
+	# The count task passes it, so its window stays open on an error.
+	[switch]$PauseOnError
+)
 $ErrorActionPreference = 'Stop'
+trap {
+	if ($PauseOnError) { Write-Host "`n$_" -ForegroundColor Red; Read-Host 'Press Enter to close' | Out-Null }
+	break
+}
 . (Join-Path $PSScriptRoot '..\windows\boot-task.ps1')
 
 if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath) }
 
 $org = if ($env:RUNNER_ORG) { $env:RUNNER_ORG } else { 'workbench-soft' }
-$count = if ($env:RUNNER_COUNT) { [int]$env:RUNNER_COUNT } else { 4 }
+# The status page writes the count it wants to this file, and the script saves the count it used there.
+$countFile = Join-Path $HOME 'actions-runner\runner-count'
+$count = if ($env:RUNNER_COUNT) { [int]$env:RUNNER_COUNT } elseif (Test-Path -LiteralPath $countFile) { [int](Get-Content -LiteralPath $countFile -TotalCount 1) } else { 4 }
 if ($count -lt 1) { throw 'RUNNER_COUNT must be 1 or more' }
+# The status page starts this task to apply a new count.
+$countTask = "GitHub Actions runner count ($org)"
 # local marks the machine you develop on, Mac or Windows. Workflows ask for it.
 $labels = 'Windows,X64,local'
 $env:GH_PAGER = 'cat'
@@ -113,17 +125,53 @@ function Add-DefenderExclusions {
 	}
 }
 
-function Start-Runner($runner) {
-	# A restart would kill the job this runner builds now.
+# A restart or a removal would kill the job this runner builds now.
+function Stop-RunnerWhenIdle($runner) {
 	$ownWorker = { Get-Process Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } }
 	if (& $ownWorker) { Write-Host "$($runner.Name) is running a job, waiting for it to finish" }
 	while (& $ownWorker) { Start-Sleep -Seconds 10 }
 	Stop-ScheduledTask -TaskName $runner.Task -ErrorAction SilentlyContinue
-	# Stopping the task leaves its listener running, still with the old PATH.
+	# Stopping the task leaves its listener running.
 	Get-Process Runner.Listener, Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } | Stop-Process -Force
+}
+
+function Start-Runner($runner) {
+	Stop-RunnerWhenIdle $runner
 	# Jobs reach GitHub through their GITHUB_TOKEN, since the task can't read the gh login.
 	Register-BootTask $runner.Task (Join-Path $runner.Dir 'start.cmd') $runner.Dir
 }
+
+# The runners above the count, from the folders runner n leaves in actions-runner.
+function Get-ExtraRunners {
+	Get-ChildItem -Directory -LiteralPath (Join-Path $HOME 'actions-runner') -Filter "$org-*" -ErrorAction SilentlyContinue |
+		Where-Object { $_.Name.Substring($org.Length + 1) -match '^\d+$' -and [int]$Matches[0] -gt $count } |
+		ForEach-Object { Get-Runner ([int]$_.Name.Substring($org.Length + 1)) }
+}
+
+function Remove-Runner($runner, [string]$token) {
+	Write-Step "Removing $($runner.Name) from GitHub and $($runner.Dir)"
+	Stop-RunnerWhenIdle $runner
+	Unregister-ScheduledTask -TaskName $runner.Task -Confirm:$false -ErrorAction SilentlyContinue
+	if (Test-Path -LiteralPath (Join-Path $runner.Dir '.runner')) {
+		& (Join-Path $runner.Dir 'config.cmd') remove --token $token
+		if ($LASTEXITCODE -ne 0) { throw "config.cmd remove failed for $($runner.Name)" }
+	}
+	# node_modules in _work holds paths over 260 characters.
+	Remove-Item -LiteralPath "\\?\$($runner.Dir)" -Recurse -Force
+}
+
+# The task runs this script as admin in the person's session, so gh keeps its login and UAC asks nothing.
+function Register-CountTask {
+	$user = "$env:USERDOMAIN\$env:USERNAME"
+	$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -PauseOnError" -WorkingDirectory $PSScriptRoot
+	$principal = New-ScheduledTaskPrincipal -UserId $user -LogonType Interactive -RunLevel Highest
+	$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 4) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew
+	Register-ScheduledTask -TaskName $countTask -Action $action -Principal $principal -Settings $settings -Force | Out-Null
+}
+
+New-Item -ItemType Directory -Force -Path (Split-Path $countFile) | Out-Null
+Set-Content -LiteralPath $countFile -Encoding ascii -Value $count
+Write-Step "Setting up $count runners"
 
 $runners = 1..$count | ForEach-Object { Get-Runner $_ }
 $missing = @($runners | Where-Object { -not (Test-Path -LiteralPath (Join-Path $_.Dir '.runner')) })
@@ -136,6 +184,13 @@ if ($missing.Count) {
 	$token = Get-RegistrationToken
 	foreach ($runner in $missing) { Install-Runner $runner $zip $token }
 	Remove-Item $zip
+}
+
+$extra = @(Get-ExtraRunners)
+if ($extra.Count) {
+	$removeToken = try { gh api -X POST "orgs/$org/actions/runners/remove-token" --jq .token 2>$null } catch { $null }
+	if (-not $removeToken) { throw "gh got no removal token. Removing a runner takes an org admin login with the admin:org scope: gh auth refresh -s admin:org" }
+	foreach ($runner in $extra) { Remove-Runner $runner $removeToken }
 }
 
 Write-Step 'Adding the runner folders and the package caches to the Defender exclusions'
@@ -173,3 +228,6 @@ foreach ($runner in $runners) {
 	Write-RunnerEnvironment $runner.Dir $toolDirs $toolCache
 	Start-Runner $runner
 }
+
+Write-Step "Registering the task the status page starts to change the count"
+Register-CountTask

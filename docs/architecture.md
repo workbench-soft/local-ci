@@ -9,7 +9,9 @@ machine it sets up, and it talks to package managers and GitHub. The page in
 - **Machine setup** `install.sh` sets up a Mac with Homebrew, mise, Oh My Zsh
   and the repos. `install.ps1` sets up Windows with winget, mise and the repos.
 - **Runner setup** `runner/install.sh` registers a Mac as a GitHub Actions
-  runner, and `runner/install.ps1` does the same for a Windows PC.
+  runner, and `runner/install.ps1` does the same for a Windows PC. On
+  Windows it keeps the count in `~/actions-runner/runner-count`, removes the
+  runners above it and registers the count task the status page starts.
 - **Boot task** `windows/boot-task.ps1` holds the admin check and the
   scheduled task that both Windows boot scripts use.
 - **Start button** `START.cmd` runs `windows/start.ps1`. The script pulls
@@ -58,6 +60,23 @@ sequenceDiagram
   G-->>R: a job whose runs-on matches the labels
 ```
 
+## How the page changes the runner count
+
+```mermaid
+sequenceDiagram
+  participant P as status page
+  participant F as runner-count file
+  participant T as count task
+  participant S as runner/install.ps1
+  participant G as GitHub
+  P->>F: write the new count
+  P->>T: Start-ScheduledTask
+  T->>S: run as admin on the desktop
+  S->>F: read the count
+  S->>G: register the missing runners
+  S->>G: remove the runners above the count, after their jobs
+```
+
 ## How the status page gets its data
 
 The server renders the page for each request.
@@ -65,6 +84,12 @@ The server renders the page for each request.
 - **Host check** `proxy.ts` answers 421 to a request whose Host isn't
   `localhost`, `127.0.0.1` or `[::1]`, so a rebound site name can't reach the
   server actions. `next.config.ts` forbids framing.
+- **Runner count** `status/this-pc.ts` reads `runner-count`, the logical
+  processors and the memory. `status/runner-count.ts` turns them into the
+  recommended count. The Apply button calls `status/runner-count-action.ts`,
+  which writes `runner-count` and starts the task
+  `GitHub Actions runner count (<org>)`. That task runs `runner/install.ps1`
+  as admin in the session of the logged on person.
 - **This PC** `status/this-pc.ts` finds each runner folder of the org. For
   each it reads the boot task and which `_diag` logs a live process holds open.
   One PowerShell call reads them all, gives up after 15 s and keeps its
@@ -101,7 +126,9 @@ The server renders the page for each request.
   Startup folder runs `dashboard/open.ps1`, which waits for the port and opens
   the page.
 - **Stop and Purge** the buttons call server actions in
-  `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/cancel`. Purge
+  `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/force-cancel`,
+  then the button asks `runFinished` every 2 seconds until the run is
+  completed. Purge
   runs `status/purge.ts`: it posts to `force-cancel`, polls the run until it
   is completed, then sends `DELETE` on the run. Purge all sends the run ids
   the table matches, and `purgeRuns` purges them 5 at a time. The page holds

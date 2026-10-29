@@ -6,12 +6,21 @@
   and jobs no longer download SDK parts. Two Release builds at once broke NDK
   27.1 for every runner before.
 
+- The Runners card sets the number of runners on this PC and suggests a
+  count from the logical processors and the memory. `runner\install.ps1`
+  keeps the count in `~/actions-runner/runner-count` and removes the runners
+  above it.
+
 - Purge all clears every run the filter and search match, the older runs
   behind the 5 a repo shows included. It grays each row it purges at once,
   and a single Purge grays its row too.
 
 - Latest runs has a PR column with the PR number of each run, linked to the
   PR and sortable.
+
+- Stop on the status page reads Stopping at once and Stopped when GitHub
+  ends the run, disabled the whole time. Stop force cancels now, so the
+  runner takes the next release without waiting for `if: always()` steps.
 
 - The status page shows one Running now card at the top in place of the
   Now card and the Running now card, which listed the same jobs.

@@ -172,6 +172,26 @@ h1 .dot {
 	gap: 12px 24px;
 }
 
+/* The count field sits above the runner rows, with the count this PC suits beside it. */
+.runner-count {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 10px;
+	margin-bottom: 12px;
+}
+
+.runner-count input {
+	font: inherit;
+	font-size: 14px;
+	width: 4.5em;
+	padding: 3px 6px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	background: var(--bg);
+	color: var(--text);
+}
+
 .runner-row > div {
 	margin-left: 18px;
 }

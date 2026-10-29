@@ -16,8 +16,15 @@ machine with several runners builds several jobs at once.
 
 ## How it works: modules, files, data
 
-- **Count** `RUNNER_COUNT` sets how many runners the machine gets. The default
-  is 4 on Windows and 1 on a Mac.
+- **Count** `RUNNER_COUNT` sets how many runners the machine gets. On
+  Windows the script saves it in `~/actions-runner/runner-count`, and a run
+  without `RUNNER_COUNT` reads that file. The default is 4 on Windows and 1
+  on a Mac.
+- **Count from the page** on Windows the Runners card of the status page
+  has a field for the count and the recommended count for this PC. Apply
+  writes `runner-count` and starts the task
+  `GitHub Actions runner count (<org>)`, which runs the script as admin in a
+  window on the desktop.
 - **Folders** the first runner sits in `~/actions-runner/<org>`, as before.
   Runner `n` sits in `~/actions-runner/<org>-<n>`.
 - **Names** the first runner takes the machine name. Runner `n` takes
@@ -39,8 +46,15 @@ machine with several runners builds several jobs at once.
   and the Gradle cache. A test on a fixed port can fail when 2 jobs run it.
 - **Disk** each runner keeps its own `_work` folder with checkouts and
   `node_modules`.
-- **Fewer runners** a lower `RUNNER_COUNT` leaves the extra runners in place.
-  Remove one with `config.cmd remove` in its folder.
+- **Fewer runners** on Windows a lower count removes the runners numbered
+  above it: from GitHub, their boot task and their folder. A runner on a job
+  goes once the job ends. On a Mac a lower `RUNNER_COUNT` leaves the extra
+  runners in place.
+- **Recommendation** 1 runner per 4 logical processors and per 4 GB of
+  memory, after 8 GB for Windows and the person's apps. It is a rule of
+  thumb: a Gradle build can take more.
+- **Page needs a person** the count task opens its window on the desktop of
+  the logged on person, so Apply needs someone logged on.
 
 ## Changes
 
@@ -131,3 +145,29 @@ machine with several runners builds several jobs at once.
 - **Change** `runner/install.ps1` sets `git config --global core.longpaths
   true`, and `LongPathsEnabled` in the registry when it runs as admin.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-30 Runner count from the status page
+
+- **Why** the person wants to set the number of runners on the page, and to
+  see how many suit this PC's processors.
+- **Changes**
+  - **Saved count** `runner/install.ps1` reads `RUNNER_COUNT`, then
+    `~/actions-runner/runner-count`, then 4, and saves the count it used.
+  - **Removal** the script removes each runner numbered above the count.
+    It waits for the runner's job, stops it, deletes its boot task,
+    unregisters it with a removal token and deletes its folder.
+  - **Count task** the script registers `GitHub Actions runner count (<org>)`.
+    The task runs the script with admin rights in the logged on person's
+    session, so `gh` has its login and no UAC prompt shows.
+  - **Page** the Runners card shows the count, the recommended count with
+    the processors and memory behind it, and an Apply button. Apply calls a
+    server action that writes `runner-count` and starts the count task.
+- **Limits** Windows only. The first run of `runner\install.ps1` after this
+  change registers the count task, and Apply says so until then.
+- **Steps**
+  1. This spec.
+  2. `runner/install.ps1`.
+  3. The recommendation, the server action and the card.
+  4. Docs and changelog.
+- **Docs** `README.md`, `docs/architecture.md`, `docs/user-flows.md`,
+  `docs/features.md`, `CHANGELOG.md`.
