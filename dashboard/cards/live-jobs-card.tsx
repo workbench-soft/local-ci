@@ -1,4 +1,4 @@
-import { formatAge } from '@/status/headline';
+import { formatAge, type StuckQueue } from '@/status/headline';
 import type { LiveJob, RunnerSlot } from '@/status/placement';
 import { Icon, placeIcons } from './icons';
 import { JobProgress } from './job-progress';
@@ -12,10 +12,21 @@ const columns: { place: LiveJob['place']; empty: string }[] = [
 ];
 
 /** What builds right now: every runner of this PC, the GitHub queue, and other runners. */
-export function LiveJobsCard({ jobs, slots, now }: { jobs: LiveJob[]; slots: RunnerSlot[]; now: number }) {
+export function LiveJobsCard({ jobs, slots, stuck, now }: { jobs: LiveJob[]; slots: RunnerSlot[]; stuck: StuckQueue; now: number }) {
+	const running = jobs.filter((job) => job.place !== 'waiting').length;
+	const { idle } = stuck;
+	const fit = stuck.waiting.length;
 	return (
-		<section className="card wide">
-			<h2>Now</h2>
+		<section className={`card wide running-now${idle.length ? ' stuck' : ''}`}>
+			<h2>
+				Running now <span className="count">{running}</span>
+			</h2>
+			{idle.length > 0 && (
+				<p className="error">
+					{idle.join(', ')} {idle.length === 1 ? 'sits' : 'sit'} idle while {fit} {fit === 1 ? 'job waits' : 'jobs wait'} on GitHub.
+					GitHub doesn't hand the jobs over. Restart the runner's boot task, or reboot the PC.
+				</p>
+			)}
 			<div className="live">
 				{columns.map(({ place, empty }) => {
 					const inPlace = jobs.filter((job) => job.place === place);
