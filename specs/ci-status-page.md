@@ -217,7 +217,7 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 
-### 2026-10-29 A release column with an Install button, the failed step, PR and branch links
+### 2025-10-29 A release column with an Install button, the failed step, PR and branch links
 
 - **Why** the person wants to open the release a run made and put it on an
   Android phone over adb in one click, from a column of its own. Errors, of
