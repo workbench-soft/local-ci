@@ -1,27 +1,28 @@
+/* The four tones color the status dots. busy doubles as the link color, bad as the error text. */
 :root {
 	--bg: #f6f7f9;
 	--card: #ffffff;
-	--text: #1d2330;
-	--muted: #687083;
-	--line: #e3e6ec;
-	--ok: #1f9d55;
-	--busy: #2f6fde;
-	--warn: #c98a06;
-	--bad: #d6342c;
+	--text: #1f2230;
+	--muted: #65697d;
+	--line: #e4e6ec;
+	--ok: #009f64;
+	--busy: #415ed3;
+	--warn: #b18000;
+	--bad: #ca2d00;
 	color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
 	:root {
-		--bg: #12151b;
-		--card: #1b1f27;
-		--text: #e4e7ee;
-		--muted: #9098a8;
-		--line: #2c323d;
-		--ok: #3cc475;
-		--busy: #5b93f5;
-		--warn: #e3a92a;
-		--bad: #f0645c;
+		--bg: #13151b;
+		--card: #1c1f27;
+		--text: #e5e7ee;
+		--muted: #9297a8;
+		--line: #2e313d;
+		--ok: #00c686;
+		--busy: #6e8ef6;
+		--warn: #d9ae27;
+		--bad: #ef6749;
 	}
 }
 
@@ -114,17 +115,21 @@ h1 .dot {
 .dot.ok {
 	background: var(--ok);
 }
+
 .dot.busy {
 	background: var(--busy);
 	animation: pulse 1.2s ease-in-out infinite;
 }
+
 .dot.warn {
 	background: var(--warn);
 }
+
 .dot.bad {
 	background: var(--bad);
 }
 
+/* A busy dot pulses, so a running build shows without reading the text. */
 @keyframes pulse {
 	50% {
 		opacity: 0.35;
