@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Latest runs gets a Took column with the length of each run, sortable. A
+  click on the time opens the time of each job and step.
+
 - The usual time of a running job comes from the 10 latest finished runs of
   its workflow, in place of the 3 latest successful ones. A cancelled or
   failed job counts as at least the time it ran.

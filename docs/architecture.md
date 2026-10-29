@@ -111,6 +111,11 @@ The server renders the page for each request.
   `%TEMP%local-ci-apk` and runs `adb install -r -d`. adb's output goes
   back to the button on failure.
 - **Failed step** the page reads the jobs of failed runs too, with their steps.
+- **Run times** the Took column is `updated_at` minus `run_started_at` for
+  a finished run, from `status/durations.ts`. A click on it calls the
+  `runTimings` server action, which reads the jobs of that run with the start
+  and end of each step. The call shares the ETag of the jobs call, so an
+  unchanged run costs no rate limit.
 - **PR and branch** `pull_requests` of a run gives its PR links. The branch
   links to `/tree/<branch>`.
 - **Repo errors** a repo whose runs call fails drops out of the list, and the
@@ -129,6 +134,9 @@ sequenceDiagram
   B->>N: Stop or Purge, a server action
   N->>G: cancel, or force-cancel, poll, DELETE
   N-->>B: the result and a fresh page
+  B->>N: a click on Took, a server action
+  N->>G: the jobs of the run, with step times
+  N-->>B: each job and step with its time
   B->>N: Install, a server action
   N->>G: the release by tag, then its APK
   N->>W: adb devices, adb install -r -d
