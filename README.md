@@ -82,6 +82,13 @@ once, from the main checkout:
   org runners, and the latest runs with a filter and sorting.
 - **Stop and Purge** each run gets a Stop button to cancel it, and a Purge
   button to force cancel it and delete it from GitHub with its logs.
+- **Release and Install** a run that published a release links to it in the
+  Release column. Install puts its APK on the phone plugged in over USB,
+  through `adb install -r`. adb comes from `ADB_PATH`, `PATH` or the
+  Android SDK.
+- **Errors** a failed run names its failed job and step, linked to the log. A
+  failed install shows adb's error in a red box under the button.
+- **Links** the branch and the PR of each run open on GitHub.
 - **Opens** after the install build, and at logon through a shortcut in the
   Startup folder. Delete `local-ci dashboard.lnk` there to stop it.
 - **Token** the boot task can't read the gh login, so the script copies

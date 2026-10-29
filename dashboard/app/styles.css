@@ -494,3 +494,55 @@ td .run-controls {
 	clip: rect(0 0 0 0);
 	white-space: nowrap;
 }
+
+.failed-step {
+	display: block;
+	max-width: 260px;
+	margin-top: 2px;
+	color: var(--bad);
+	white-space: normal;
+}
+
+.release-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	white-space: nowrap;
+}
+
+.release-link .icon {
+	width: 14px;
+	height: 14px;
+	margin: 0;
+}
+
+.install {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 4px;
+	margin-top: 4px;
+}
+
+.install-ok {
+	color: var(--ok);
+}
+
+.install-error {
+	max-width: 340px;
+	max-height: 160px;
+	overflow: auto;
+	margin: 0;
+	padding: 6px 8px;
+	border: 1px solid var(--bad);
+	border-radius: 6px;
+	background: color-mix(in srgb, var(--bad) 10%, transparent);
+	color: var(--bad);
+	font-size: 12px;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.pr-link {
+	margin-left: 6px;
+}

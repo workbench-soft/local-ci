@@ -67,6 +67,14 @@ icon: a white loop arrow around a green play sign on blue.
   run on GitHub. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's
   buttons act on its whole run, since GitHub cancels runs only.
+- **Release and Install** the Release column links to the release a run
+  published. Install puts its APK on the phone plugged in over USB through
+  adb. adb's error shows in a red box under the button. Needs exactly one
+  phone in `adb devices`, and the public repo keeps 3 releases per app.
+- **Failed step** a failed run names its failed job and step under the
+  result, linked to that job's log.
+- **PR and branch** the branch of a run is a link, and its PR sits beside the
+  event. GitHub gives no PR for pushes to the default branch.
 - **Limits** a job counts as local when its runner name matches a runner
   folder of this PC, so the this PC checks need Windows. After a new gh login,
   run the install script again.

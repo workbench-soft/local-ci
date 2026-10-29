@@ -16,6 +16,12 @@ browser at each logon.
 4. The person filters, searches and sorts the runs table.
 5. The person presses Stop on an unfinished run to cancel it, or Purge to
    force cancel it and delete it from GitHub with its logs and artifacts.
+6. A run that published a release shows it in the Release column. The person
+   opens the release, or presses Install to put its APK on the phone plugged
+   in over USB.
+7. A failed run names its failed job and step under the result, with a link
+   to that job's log. A failed install shows adb's error under the button.
+8. The branch of a run opens on GitHub, and so does its PR.
 
 ## How it works: modules, files, data
 
@@ -56,6 +62,17 @@ browser at each logon.
   which also stops steps with `if: always()`. It then waits up to 60 seconds
   for the run to finish and calls `DELETE /repos/{repo}/actions/runs/{id}`.
   Each action drops the 20 second cache, so the next render shows the change.
+- **Releases** the app repos are private, so each release goes to the public
+  `workbench-soft/workbench-soft.github.io` repo with the tag
+  `<repo>-v<version>`. `GET /repos/{public}/releases` gives them. A run owns
+  the release of its repo created between its start and its last update.
+- **Install** a server action in `status/install-apk.ts` downloads the `.apk`
+  asset of the release to a temp folder and runs `adb install -r`. adb comes
+  from `ADB_PATH`, `PATH`, `ANDROID_HOME` or `%LOCALAPPDATA%\Android\Sdk`.
+- **Failed step** for a failed run the page reads its jobs and names the
+  first failed job and step.
+- **PR and branch** `pull_requests` of a run gives its PR numbers. GitHub
+  leaves out PRs from forks and pushes to the default branch.
 
 ## Limits
 
@@ -68,10 +85,14 @@ browser at each logon.
   Now card stops its whole run.
 - **Token scope** Stop and Purge need write access to Actions. The `repo`
   scope of a gh login gives it.
+- **One phone** Install needs one device in `adb devices`. With none or
+  several, the button shows adb's error.
+- **Last 3** the public repo keeps 3 releases per app, so older runs lose
+  their release link.
 
 ## Changes
 
-### 2026-10-29 A web page with the CI status that starts with Windows
+### 2025-10-29 A web page with the CI status that starts with Windows
 
 - **Why** the person wants to see at a glance whether the runner is up and
   what it builds, without opening GitHub.
@@ -85,7 +106,7 @@ browser at each logon.
 - **Docs** `README.md`, `docs/architecture.md`, `docs/user-flows.md`,
   `docs/features.md`.
 
-### 2026-10-29 A row per runner of this PC
+### 2025-10-29 A row per runner of this PC
 
 - **Why** `runner/install.ps1` now installs several runners, see
   `specs/ci-runner.md`.
@@ -94,7 +115,7 @@ browser at each logon.
   runners are down.
 - **Docs** `docs/features.md`, `docs/architecture.md`.
 
-### 2026-10-29 Local jobs first, sorting, a filter, icons, and the page opens on its own
+### 2025-10-29 Local jobs first, sorting, a filter, icons, and the page opens on its own
 
 - **Why** the person wants to see at once what builds on this PC and what
   waits on GitHub. The runs list needs sorting and a filter. The page should
@@ -122,7 +143,7 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 
-### 2026-10-29 An icon for the page and its shortcut
+### 2025-10-29 An icon for the page and its shortcut
 
 - **Why** the browser tab and the Startup shortcut show a blank default icon.
 - **Changes**
@@ -137,7 +158,7 @@ browser at each logon.
   3. Docs and changelog.
 - **Docs** `docs/features.md`, `CHANGELOG.md`.
 
-### 2026-10-29 Stop and purge runs from the page
+### 2025-10-29 Stop and purge runs from the page
 
 - **Why** the person wants to kill a stuck or unwanted run from the page,
   including a full purge, without opening GitHub.
@@ -160,7 +181,7 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 
-### 2026-10-29 Every runner of this PC in the Now card
+### 2025-10-29 Every runner of this PC in the Now card
 
 - **Why** the person wants all runners of this PC at the top, idle ones too,
   without scrolling to the This PC card.
@@ -199,7 +220,33 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 
-### 2026-10-29 One Runners card in place of This PC and Runners of the org
+### 2025-10-29 A release column with an Install button, the failed step, PR and branch links
+
+- **Why** the person wants to open the release a run made and put it on an
+  Android phone over adb in one click, from a column of its own. Errors, of
+  the install and of a failed run, should be easy to see. The branch and its
+  PR should open from the row.
+- **Changes**
+  - **`status/releases.ts`** reads the releases of the public repo and pairs
+    each with the run that made it.
+  - **`status/install-apk.ts`** a server action: download the APK, run
+    `adb install -r`, return adb's output on failure.
+  - **`status/org-status.ts`** reads the jobs of failed runs too, with their
+    steps, and the releases. Each run gets its branch link and the links of
+    its PRs from `pull_requests`.
+  - **`cards/latest-runs-table.tsx`** a Release column with the link and an
+    Install button. A failed run names its failed job and step. The branch
+    is a link, with a PR link beside the event.
+  - **`cards/install-button.tsx`** the button, its progress and its error.
+- **Steps**
+  1. This spec.
+  2. Releases, the install action and the failed step.
+  3. The column and the button.
+  4. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2025-10-29 One Runners card in place of This PC and Runners of the org
 
 - **Why** the person saw two runner cards and couldn't tell them apart. This
   PC read the runner folders, Runners of workbench-soft read GitHub, and the

@@ -4,8 +4,9 @@ import { LiveJobsCard } from '@/cards/live-jobs-card';
 import { RunnersCard } from '@/cards/runners-card';
 import { StatusDot } from '@/cards/status-dot';
 import { summarizeCi } from '@/status/headline';
-import { fetchOrgStatus } from '@/status/org-status';
+import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
+import { releaseOfRun } from '@/status/releases';
 import { readThisPc } from '@/status/this-pc';
 
 // Each visit reads the runner afresh, so Next must not prerender the page.
@@ -16,12 +17,13 @@ export default async function StatusPage() {
 	const now = Date.now();
 	const local = localRunnerNames(pc);
 	const runs = org.ok ? org.runs : [];
+	const releases = org.ok ? org.releases : [];
 	const live = liveJobs(runs, local);
 	const headline = summarizeCi(pc, org, live);
 	// The table runs in the browser, so it gets each run without its jobs.
 	const rows: RunRow[] = runs.map((run) => {
 		const { jobs, updatedAt, ...row } = run;
-		return { ...row, place: placeOfRun(run, local) };
+		return { ...row, place: placeOfRun(run, local), release: releaseOfRun(run, releases), failure: failureOf(run) };
 	});
 	return (
 		<main>

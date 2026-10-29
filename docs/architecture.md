@@ -81,6 +81,17 @@ The server renders the page for each request.
   `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/cancel`. Purge
   runs `status/purge.ts`: it posts to `force-cancel`, polls the run until it
   is completed, then sends `DELETE` on the run. Each action drops the cache.
+- **Releases** the app repos are private, so their release workflows publish
+  to the public `workbench-soft/workbench-soft.github.io` with the tag
+  `<repo>-v<version>`. `status/releases.ts` gives a run the release of its
+  repo created while it ran. `RELEASES_REPO` picks another repo.
+- **Install** `status/install-apk.ts` is a server action. It checks
+  `adb devices` for one phone, downloads the release's `.apk` to
+  `%TEMP%local-ci-apk` and runs `adb install -r -d`. adb's output goes
+  back to the button on failure.
+- **Failed step** the page reads the jobs of failed runs too, with their steps.
+- **PR and branch** `pull_requests` of a run gives its PR links. The branch
+  links to `/tree/<branch>`.
 - **Repo errors** a repo whose runs call fails drops out of the list, and the
   other repos still show.
 
@@ -92,9 +103,13 @@ sequenceDiagram
   participant G as GitHub API
   B->>N: GET / every 15 s
   N->>W: Get-ScheduledTask, the open _diag logs of each runner
-  N->>G: org runners, org repos, 5 runs per repo, jobs of unfinished runs
+  N->>G: org runners, org repos, 5 runs per repo, jobs of unfinished and failed runs, releases
   N-->>B: HTML with the headline, cards and runs
   B->>N: Stop or Purge, a server action
   N->>G: cancel, or force-cancel, poll, DELETE
   N-->>B: the result and a fresh page
+  B->>N: Install, a server action
+  N->>G: the release by tag, then its APK
+  N->>W: adb devices, adb install -r -d
+  N-->>B: the device, or adb's error
 ```
