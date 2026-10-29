@@ -118,12 +118,20 @@ icon: a white loop arrow around a green play sign on blue.
   to confirm, purges them 5 at a time, then shows how many it purged and the
   first error. A run that won't stop within 60 seconds stays.
 - **Old runs die** every 10 seconds the page server force cancels an
-  unfinished run when a newer run of the same repo, workflow, branch and
-  event exists, or when it checks a PR that is merged or closed. Main and
-  open PRs keep building. `CANCEL_SUPERSEDED=off` in `.env.local` turns it
-  off.
+  unfinished push or PR run when a newer run of the same repo, workflow,
+  branch and event exists, or when it checks a PR that is merged or closed.
+  Main and open PRs keep building, and so do `workflow_run` and `schedule`
+  runs. `CANCEL_SUPERSEDED=off` in `.env.local` turns it off, and a rerun of
+  the install script keeps that line. `pnpm dev` doesn't cancel. Each cancel
+  goes to `dashboard.log` with its time and reason.
+- **Stale page** when refreshes hang for 45 seconds, the line under the
+  headline turns red and says when the page last updated. A stopped server
+  shows the browser's error page instead, since Next reloads the tab. A
+  hidden tab skips its refreshes.
+- **Localhost only** the page answers on `localhost`, `127.0.0.1` and `[::1]`
+  and refuses any other host name with 421. Other sites can't frame it.
 - **Release and Install** the Release column links to the release a run
-  published. Install puts its APK on the phone plugged in over USB through
+  published, on the one run of its repo that ended nearest to it. Install puts its APK on the phone plugged in over USB through
   adb. adb's error shows in a red box under the button. Needs exactly one
   phone in `adb devices`, and the public repo keeps 3 releases per app.
 - **Failed step** a failed run names its failed job and step under the

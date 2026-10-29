@@ -19,9 +19,9 @@ export function RunnersCard({ pc, org, jobs, now }: { pc: ThisPcStatus; org: Org
 					))}
 				</ul>
 			) : (
-				<p className="error">No runner is installed. Run runner\install.ps1.</p>
+				<p className="error">No runner is installed. Run {pc.supported ? 'runner\\install.ps1' : 'runner/install.sh'}.</p>
 			)}
-			{!pc.supported && <p className="muted small">The this PC checks read Windows tools, so they are skipped here.</p>}
+			{!pc.supported && <p className="muted small">The checks of this PC's runners need Windows, so the card shows GitHub's view only.</p>}
 			{!org.ok && <p className="error small">GitHub: {org.error}</p>}
 			{org.ok && org.runners === null && (
 				<p className="error small">GitHub: {org.runnersError}. Listing runners needs a token with admin:org.</p>

@@ -70,21 +70,65 @@ const runsPerRepo = 5;
 const runsRead = 30;
 const queuedJobsTtlMs = 60_000;
 
-let cached: { at: number; status: Promise<OrgStatus> } | null = null;
+// An expired status still shows while the next load runs, up to this age.
+const staleMaxMs = 120_000;
+
+type Store = {
+	cached: { at: number; status: Promise<OrgStatus> } | null;
+	refreshing: Promise<OrgStatus> | null;
+	etagged: Map<string, { etag: string; body: string }>;
+	queuedJobs: Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>;
+	finishedJobs: Map<number, Promise<RunJob[]>>;
+};
+
+// Next bundles this module once for the page and once for the sweep. One store on globalThis
+// lets both share the loads, and a cancel by the sweep drops the status the page shows.
+// Tests delete it to start empty.
+const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.for('local-ci.org-status')] ??= {
+	cached: null,
+	refreshing: null,
+	etagged: new Map(),
+	queuedJobs: new Map(),
+	finishedJobs: new Map(),
+});
 let ghToken: string | null = null;
 
-/** The org's runners and the latest runs of its repos, kept for 20 s so open tabs share one set of calls. */
+/**
+ * The org's runners and the latest runs of its repos, kept for 20 s so open tabs and the sweep share one set of calls.
+ * After that the kept status still answers at once while a new load runs in the background.
+ */
 export function fetchOrgStatus(): Promise<OrgStatus> {
-	if (cached && Date.now() - cached.at < cacheTtlMs) return cached.status;
+	const kept = store.cached;
+	const age = kept ? Date.now() - kept.at : Number.POSITIVE_INFINITY;
+	if (kept && age < cacheTtlMs) return kept.status;
+	if (kept && age < staleMaxMs) {
+		refreshOrgStatus();
+		return kept.status;
+	}
 	// The promise goes in the cache before it settles, so requests that arrive meanwhile wait for the same load.
+	// A background refresh still running would land older data over it, so it is dropped.
 	const status = loadOrgStatus();
-	cached = { at: Date.now(), status };
+	store.cached = { at: Date.now(), status };
+	store.refreshing = null;
 	return status;
+}
+
+function refreshOrgStatus(): void {
+	if (store.refreshing) return;
+	const status = loadOrgStatus();
+	store.refreshing = status;
+	void status.then(() => {
+		// A forget meanwhile dropped this load, since a run changed after it began.
+		if (store.refreshing !== status) return;
+		store.cached = { at: Date.now(), status };
+		store.refreshing = null;
+	});
 }
 
 /** Drops the cached status, so the next render reads GitHub after a run changed. */
 export function forgetOrgStatus(): void {
-	cached = null;
+	store.cached = null;
+	store.refreshing = null;
 }
 
 async function loadOrgStatus(): Promise<OrgStatus> {
@@ -214,7 +258,7 @@ async function latestFinishedRuns(fullName: string, workflowId: number): Promise
 }
 
 // A queue of 20 runs would cost 20 calls a load. GitHub bumps updated_at when a job of the run starts.
-const queuedJobs = new Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>();
+const queuedJobs = store.queuedJobs;
 
 async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
 	if (run.status !== 'queued') {
@@ -235,7 +279,7 @@ async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
 }
 
 // A finished run never changes, so its jobs are read once. The oldest entry goes past 200 runs.
-const finishedJobs = new Map<number, Promise<RunJob[]>>();
+const finishedJobs = store.finishedJobs;
 
 function finishedRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 	let jobs = finishedJobs.get(runId);
@@ -294,7 +338,7 @@ export async function readJobTimings(repo: string, runId: number): Promise<JobTi
 }
 
 // A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.
-const etagged = new Map<string, { etag: string; body: string }>();
+const etagged = store.etagged;
 const etaggedMax = 500;
 
 async function getJson<T>(path: string): Promise<T> {
@@ -311,6 +355,15 @@ async function getJson<T>(path: string): Promise<T> {
 	return JSON.parse(body) as T;
 }
 
+// Node waits 5 min for a stalled answer, and the sweep and the page would wait with it.
+const githubTimeoutMs = 20_000;
+
+/** The HTTP status of an error from callGitHub, or null for any other error. */
+export function githubStatus(error: unknown): number | null {
+	const status = (error as { githubStatus?: unknown } | null)?.githubStatus;
+	return typeof status === 'number' ? status : null;
+}
+
 /** One GitHub API call with the page's token. A status outside 2xx and 304 throws with the path in the message. */
 export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', extra: Record<string, string> = {}): Promise<Response> {
 	const response = await fetch(`https://api.github.com${path}`, {
@@ -322,9 +375,23 @@ export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE'
 			...extra,
 		},
 		cache: 'no-store',
+		signal: AbortSignal.timeout(githubTimeoutMs),
 	});
-	if (!response.ok && response.status !== 304) throw new Error(`GitHub answered ${response.status} to ${method} ${path}`);
+	if (!response.ok && response.status !== 304) {
+		// A plain property, so the check works across the bundle copies of this module.
+		throw Object.assign(new Error(`GitHub answered ${response.status} to ${method} ${path}.${githubHint(response)}`), { githubStatus: response.status });
+	}
 	return response;
+}
+
+// What a person can do about the two answers that stop the whole page.
+function githubHint(response: Response): string {
+	if (response.status === 401) return ' The token was refused. Run gh auth login, then dashboard\\install.ps1.';
+	const reset = Number(response.headers.get('x-ratelimit-reset'));
+	if ((response.status === 403 || response.status === 429) && response.headers.get('x-ratelimit-remaining') === '0' && reset) {
+		return ` The rate limit is used up until ${new Date(reset * 1000).toLocaleTimeString()}.`;
+	}
+	return '';
 }
 
 // The boot task can't reach the gh login, so install.ps1 leaves GITHUB_TOKEN in .env.local.

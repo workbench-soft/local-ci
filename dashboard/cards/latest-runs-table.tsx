@@ -100,7 +100,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 						</button>
 					))}
 				</div>
-				<input type="search" placeholder="Search repo, workflow, branch" value={search} onChange={(event) => setSearch(event.target.value)} />
+				<input type="search" aria-label="Search runs" placeholder="Search repo, workflow, branch" value={search} onChange={(event) => setSearch(event.target.value)} />
 				<PurgeAllButton runs={shown} />
 			</div>
 			<div className="table-scroll">

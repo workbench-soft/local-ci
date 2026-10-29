@@ -1,0 +1,52 @@
+name: Checks
+
+# Runs the status page checks and lints the installers on pull requests and on pushes to master.
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Windows runs steps in PowerShell unless told otherwise.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  dashboard:
+    # The installers and the page are for Windows, so the checks run on the Windows runners.
+    runs-on: [self-hosted, Windows]
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v7
+      - run: mise x -- pnpm install --frozen-lockfile
+      - run: mise x -- pnpm typecheck
+      - run: mise x -- pnpm test
+      - run: mise x -- pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+
+  scripts:
+    runs-on: [self-hosted, Windows]
+    steps:
+      - uses: actions/checkout@v7
+      - run: mise x shellcheck@latest shfmt@latest -- bash -c 'shellcheck install.sh runner/install.sh && shfmt -d install.sh runner/install.sh'
+      # A syntax error in a .ps1 file shows only when a person runs it.
+      - shell: powershell
+        run: |
+          $bad = 0
+          Get-ChildItem -Recurse -Filter *.ps1 | Where-Object FullName -notmatch 'node_modules' | ForEach-Object {
+            $errors = $null
+            [void][Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errors)
+            foreach ($e in $errors) { Write-Host "$($_.Name):$($e.Extent.StartLineNumber) $($e.Message)"; $bad++ }
+          }
+          exit $bad

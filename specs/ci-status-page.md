@@ -67,6 +67,7 @@ browser at each logon.
   `workbench-soft/workbench-soft.github.io` repo with the tag
   `<repo>-v<version>`. `GET /repos/{public}/releases` gives them. A run owns
   the release of its repo created between its start and its last update.
+  Of several such runs, the one whose last update came nearest owns it.
 - **Install** a server action in `status/install-apk.ts` downloads the `.apk`
   asset of the release to a temp folder and runs `adb install -r`. adb comes
   from `ADB_PATH`, `PATH`, `ANDROID_HOME` or `%LOCALAPPDATA%\Android\Sdk`.
@@ -506,3 +507,35 @@ browser at each logon.
   3. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
+### 2026-10-29 Audit fixes: safer sweep, a host check, faster renders
+
+- **Why** an audit of the whole repo found that the sweep could cancel the
+  first run of a new PR, that any site could reach the server actions
+  through DNS rebinding, and that each render waited on PowerShell and on
+  GitHub with no timeout.
+- **Changes**
+  - **Sweep** a PR run counts as closed only when the open PR list was read
+    after the run started. A repo whose PR list fails is left out, and the
+    rest of the sweep goes on. The newer-run rule covers `push` and
+    `pull_request` runs only. The sweep runs in the production server only.
+    Each log line starts with the time and gives the reason.
+  - **`proxy.ts`** answers 421 to a request whose Host isn't localhost,
+    `127.0.0.1` or `[::1]`. `next.config.ts` forbids framing.
+  - **State** the caches of `org-status.ts` sit on `globalThis`, so the page
+    and the sweep share them. An expired status is served at once while a
+    new load runs.
+  - **Timeouts** GitHub calls give up after 20 s, PowerShell after 15 s. A
+    failed PowerShell probe keeps the last snapshot for a minute. GitHub errors carry
+    their status, and a refused token or a rate limit says so.
+  - **Page** the idle alert counts the jobs the idle runner could take. A
+    release goes to the one run of its repo that ended nearest to it. Light
+    mode text and the dark active chip reach 4.5:1. Buttons, search and
+    progress bars get names. A page whose refreshes hang for 45 s says so, and a
+    hidden tab skips its refresh.
+  - **`install.ps1`** keeps the other lines of `.env.local`, and turns off
+    Next telemetry.
+  - **CI** `.github/workflows/checks.yml` runs the checks on the Windows
+    runner, and Dependabot proposes updates.
+- **Steps** one commit per fix, then docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `CHANGELOG.md`.

@@ -62,3 +62,21 @@
 
 - [ ] In `C:\Programming\WorkbenchSoft\local-ci`, run `git pull`, then `.\runner\install.ps1`, so the 4 runners share `~/actions-runner/_tool` and get the Defender exclusions (PR #29 and #30, merged 2026-10-29).
 - [ ] On the Mac, run `git pull`, then `./runner/install.sh`. The Mac part was linted but not run.
+
+## app-audit
+
+- [ ] In `C:\Programming\WorkbenchSoft\local-ci`, run `git pull`, then `.\dashboard\install.ps1` as admin, so `http://localhost:4280` gets the audit fixes (branch `audit-2026-10-29`).
+- [ ] Watch the first sweep cancels in `dashboard\dashboard.log` after the install: each line now gives a time and a reason. A new PR's first run should keep building.
+- [ ] Press Install on a real release: it should show on the Release run only. `workbench-soft.github.io` had 0 releases when tested.
+- [ ] On the Mac, run the status page once: the Runners card names `runner/install.sh`. Only Windows ran here.
+- Left: run the runners under their own Windows account, so jobs can't read the admin token in `dashboard\.env.local` (effort L, needs a new account and paths for mise, Gradle and the Android SDK).
+- Left: a fine-grained token for the page in place of the `gh` login (needs a new PAT made by a person).
+- Left: restart the old page task when an `install.ps1` build fails (needs an admin run to test).
+- Left: a warning headline when some repos fail to load (a new headline state).
+- Left: a running job shows in Now and in Running now, each with Stop and Purge (product call on which card keeps them).
+- Left: Purge all on the All filter after one generic confirm (product call).
+- Left: one module for run states and a split of `org-status.ts` (refactor, effort M).
+- Left: npm globals in a mise `npm:` backend and a node pin (installer change, and a `mise.toml` needs `mise trust` on each machine).
+- Left: shared tool cache race on a first download (a guess, unseen).
+- Left: runner labels set once, installer lists kept twice, `RUNNER_ORG` missing from the page, no paging past 100 repos (effort M, or no effect at 16 repos).
+- Left: the boot task gives up after 3 restarts, the APK sits in memory, `start.cmd` is rewritten during the idle wait (low value, `## python-setup` covers the wait).

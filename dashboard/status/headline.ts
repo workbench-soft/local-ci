@@ -26,8 +26,12 @@ export function toneOfRun({ status, conclusion }: Pick<WorkflowRun, 'status' | '
 
 const jobs = (count: number) => `${count} job${count === 1 ? '' : 's'}`;
 
+/** The idle runners of this PC and the waiting jobs they fit, from idleWhileQueued. */
+export type StuckQueue = { idle: string[]; waiting: LiveJob[] };
+
 /** The headline: the worst problem first, then jobs on this PC, then other runners, then the GitHub queue. */
-export function summarizeCi(pc: ThisPcStatus, org: OrgStatus, live: LiveJob[], idle: string[] = []): { tone: Tone; text: string } {
+export function summarizeCi(pc: ThisPcStatus, org: OrgStatus, live: LiveJob[], stuck: StuckQueue = { idle: [], waiting: [] }): { tone: Tone; text: string } {
+	const { idle } = stuck;
 	if (pc.supported) {
 		const total = pc.runners.length;
 		const down = pc.runners.filter((runner) => !runner.listener).length;
@@ -43,7 +47,9 @@ export function summarizeCi(pc: ThisPcStatus, org: OrgStatus, live: LiveJob[], i
 	const [local, elsewhere, waiting] = [count('local'), count('elsewhere'), count('waiting')];
 	if (idle.length) {
 		const who = idle.length === 1 ? `${idle[0]} sits` : `${idle.length} runners on this PC sit`;
-		return { tone: 'bad', text: `${who} idle while ${jobs(waiting)} ${waiting === 1 ? 'waits' : 'wait'} on GitHub` };
+		// Only the jobs the idle runners could take count, not macOS jobs or ones queued a few seconds ago.
+		const fit = stuck.waiting.length;
+		return { tone: 'bad', text: `${who} idle while ${jobs(fit)} ${fit === 1 ? 'waits' : 'wait'} on GitHub` };
 	}
 	const queue = waiting ? [`${waiting} waiting on GitHub`] : [];
 	if (local) {

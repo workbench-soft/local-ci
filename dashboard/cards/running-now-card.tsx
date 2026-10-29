@@ -1,13 +1,15 @@
-import { formatAge } from '@/status/headline';
+import { formatAge, type StuckQueue } from '@/status/headline';
 import type { LiveJob } from '@/status/placement';
 import { JobProgress } from './job-progress';
 import { RunControls } from './run-controls';
 import { StatusDot } from './status-dot';
 
 /** A large row per job that builds right now, on this PC or elsewhere, so the person sees it at a glance. */
-export function RunningNowCard({ jobs, idle, now }: { jobs: LiveJob[]; idle: string[]; now: number }) {
+export function RunningNowCard({ jobs, stuck, now }: { jobs: LiveJob[]; stuck: StuckQueue; now: number }) {
 	const running = jobs.filter((job) => job.place !== 'waiting');
 	const waiting = jobs.length - running.length;
+	const { idle } = stuck;
+	const fit = stuck.waiting.length;
 	return (
 		<section className={`card wide running-now${idle.length ? ' stuck' : ''}`}>
 			<h2>
@@ -15,7 +17,7 @@ export function RunningNowCard({ jobs, idle, now }: { jobs: LiveJob[]; idle: str
 			</h2>
 			{idle.length > 0 && (
 				<p className="error">
-					{idle.join(', ')} {idle.length === 1 ? 'sits' : 'sit'} idle while {waiting} {waiting === 1 ? 'job waits' : 'jobs wait'} on GitHub.
+					{idle.join(', ')} {idle.length === 1 ? 'sits' : 'sit'} idle while {fit} {fit === 1 ? 'job waits' : 'jobs wait'} on GitHub.
 					GitHub doesn't hand the jobs over. Restart the runner's boot task, or reboot the PC.
 				</p>
 			)}

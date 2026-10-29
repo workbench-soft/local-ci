@@ -40,13 +40,24 @@ const healthyOrg: Route = (path) => {
 	return { status: 200, body: { workflow_runs: [apiRun(1)] } };
 };
 
-// Each test loads its own copy of the module, so the 20 s cache starts empty.
+// Each test drops the shared store and loads its own copy of the module, so the 20 s cache starts empty.
 let copy = 0;
 const freshModule = () => import(`./org-status.ts?copy=${++copy}`) as Promise<typeof import('./org-status.ts')>;
 
 beforeEach(() => {
 	calls = [];
 	route = healthyOrg;
+	delete (globalThis as Record<symbol, unknown>)[Symbol.for('local-ci.org-status')];
+});
+
+test('two copies of the module, as Next bundles for the page and the sweep, share one cache', async () => {
+	const page = await freshModule();
+	const sweep = await freshModule();
+	await Promise.all([page.fetchOrgStatus(), sweep.fetchOrgStatus()]);
+	assert.equal(calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length, 1);
+	sweep.forgetOrgStatus();
+	await page.fetchOrgStatus();
+	assert.equal(calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length, 2);
 });
 
 test('a repo whose runs call fails drops out, the other repos still show', async () => {
@@ -59,7 +70,54 @@ test('a repo whose runs call fails drops out, the other repos still show', async
 test('a failing repo list still makes the whole status fail', async () => {
 	route = (path) => (path.includes('/orgs/workbench-soft/repos') ? { status: 401 } : healthyOrg(path));
 	const status = await (await freshModule()).fetchOrgStatus();
-	assert.deepEqual(status, { ok: false, error: 'GitHub answered 401 to GET /orgs/workbench-soft/repos?per_page=100&sort=pushed' });
+	assert.deepEqual(status, {
+		ok: false,
+		error: 'GitHub answered 401 to GET /orgs/workbench-soft/repos?per_page=100&sort=pushed. The token was refused. Run gh auth login, then dashboard\\install.ps1.',
+	});
+});
+
+test('an expired status answers at once while a new load runs, then the new one answers', async () => {
+	const { fetchOrgStatus } = await freshModule();
+	const first = fetchOrgStatus();
+	await first;
+	const store = (globalThis as Record<symbol, { cached: { at: number } }>)[Symbol.for('local-ci.org-status')];
+	store.cached.at -= 30_000;
+	const repoCalls = () => calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length;
+	assert.equal(fetchOrgStatus(), first);
+	assert.equal(fetchOrgStatus(), first);
+	await new Promise((resolve) => setTimeout(resolve, 20));
+	assert.equal(repoCalls(), 2);
+	assert.notEqual(fetchOrgStatus(), first);
+	assert.equal(repoCalls(), 2);
+});
+
+test('a background refresh that ends after a newer full load leaves the newer status in place', async () => {
+	const { fetchOrgStatus } = await freshModule();
+	await fetchOrgStatus();
+	const store = (globalThis as Record<symbol, { cached: { at: number; status: unknown }; refreshing: unknown }>)[Symbol.for('local-ci.org-status')];
+	store.cached.at -= 30_000;
+	fetchOrgStatus();
+	assert.ok(store.refreshing);
+	store.cached.at -= 200_000;
+	const full = fetchOrgStatus();
+	await new Promise((resolve) => setTimeout(resolve, 20));
+	assert.equal(store.cached.status, full);
+});
+
+test('a GitHub error carries its status, and a used up rate limit says until when', async () => {
+	const realFetch = globalThis.fetch;
+	const reset = Math.floor(Date.parse('2026-10-29T15:00:00Z') / 1000);
+	globalThis.fetch = (async () =>
+		new Response('{}', { status: 403, headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': String(reset) } })) as unknown as typeof fetch;
+	try {
+		const { callGitHub, githubStatus } = await freshModule();
+		const error = await callGitHub('/rate').catch((caught: unknown) => caught);
+		assert.equal(githubStatus(error), 403);
+		assert.equal((error as Error).message, `GitHub answered 403 to GET /rate. The rate limit is used up until ${new Date(reset * 1000).toLocaleTimeString()}.`);
+		assert.equal(githubStatus(new Error('GitHub answered 409')), null);
+	} finally {
+		globalThis.fetch = realFetch;
+	}
 });
 
 test('tabs that load at the same moment share one set of GitHub calls', async () => {
