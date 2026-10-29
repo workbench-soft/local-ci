@@ -156,3 +156,20 @@ browser at each logon.
   4. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Every runner of this PC in the Now card
+
+- **Why** the person wants all runners of this PC at the top, idle ones too,
+  without scrolling to the This PC card.
+- **Changes**
+  - **`status/placement.ts`** `runnerSlots` pairs each runner of this PC with
+    the job it builds. A local job whose runner has no folder here gets a row
+    of its own.
+  - **`cards/live-jobs-card.tsx`** the On this PC column shows a row per
+    runner: its name, a dot, and its job, or idle, or stopped. The count reads
+    busy runners out of all runners.
+- **Steps**
+  1. This spec.
+  2. The runner rows.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.
