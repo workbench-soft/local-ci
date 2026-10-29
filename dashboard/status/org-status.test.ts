@@ -58,7 +58,7 @@ test('a repo whose runs call fails drops out, the other repos still show', async
 test('a failing repo list still makes the whole status fail', async () => {
 	route = (path) => (path.includes('/orgs/workbench-soft/repos') ? { status: 401 } : healthyOrg(path));
 	const status = await (await freshModule()).fetchOrgStatus();
-	assert.deepEqual(status, { ok: false, error: 'GitHub answered 401 to /orgs/workbench-soft/repos?per_page=100&sort=pushed' });
+	assert.deepEqual(status, { ok: false, error: 'GitHub answered 401 to GET /orgs/workbench-soft/repos?per_page=100&sort=pushed' });
 });
 
 test('tabs that load at the same moment share one set of GitHub calls', async () => {
