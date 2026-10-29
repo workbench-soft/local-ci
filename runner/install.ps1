@@ -91,6 +91,10 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs) {
 }
 
 function Start-Runner($runner) {
+	# A restart would kill the job this runner builds now.
+	$ownWorker = { Get-Process Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } }
+	if (& $ownWorker) { Write-Host "$($runner.Name) is running a job, waiting for it to finish" }
+	while (& $ownWorker) { Start-Sleep -Seconds 10 }
 	Stop-ScheduledTask -TaskName $runner.Task -ErrorAction SilentlyContinue
 	# Stopping the task leaves its listener running, still with the old PATH.
 	Get-Process Runner.Listener, Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } | Stop-Process -Force
