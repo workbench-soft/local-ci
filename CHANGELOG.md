@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The runs table gets a Purge all button. After a confirm, it purges every
+  run the filter and search match.
+
 - Each running job on the status page gets a progress bar with its current
   step and the time left, from the 3 latest successful runs of its workflow.
 
