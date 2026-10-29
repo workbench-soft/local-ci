@@ -123,3 +123,11 @@ machine with several runners builds several jobs at once.
   2. `runner/install.ps1` and `runner/install.sh`.
   3. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Long paths
+
+- **Why** `node_modules` and the `.open-next` cache hold paths over 260
+  characters, and git clean on the runner failed on them.
+- **Change** `runner/install.ps1` sets `git config --global core.longpaths
+  true`, and `LongPathsEnabled` in the registry when it runs as admin.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
