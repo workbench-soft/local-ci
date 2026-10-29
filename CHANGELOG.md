@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The status page gets a Running now card above Latest runs, and each
+  runner in Runners names its job. The page reads 30 runs per repo, so a
+  run that builds under newer queued runs stays in view. ETags keep the page
+  under the GitHub rate limit. The headline turns red when a runner of this
+  PC sits idle while jobs wait.
+
 - Each running job on the status page gets a progress bar with its current
   step and the time left, from the 3 latest successful runs of its workflow.
 

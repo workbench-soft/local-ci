@@ -49,7 +49,8 @@ install build and at each logon. The tab and the Startup shortcut show its
 icon: a white loop arrow around a green play sign on blue.
 
 - **Headline** counts jobs on this PC first, then jobs on other runners, then
-  jobs waiting on GitHub. Red when a runner of this PC is down.
+  jobs waiting on GitHub. Red when a runner of this PC is down, or sits idle
+  while a job it fits waits on GitHub over a minute.
 - **Now** a column per place. On this PC lists every runner of this PC with
   the job it builds, or idle, or stopped, and counts busy runners out of all.
   Then the jobs waiting on GitHub with the labels they ask for, and the jobs on
@@ -65,8 +66,14 @@ icon: a white loop arrow around a green play sign on blue.
   `this PC` from the runner folder and processes, `GitHub` from the API. A row
   whose sides disagree turns yellow, with a hint on what to check. Runners of
   this PC also show their boot task and when their last job started. The
-  list stops at 420 px and scrolls.
-- **Runs** the latest 5 runs of each org repo, with an icon for the result and
+  list stops at 420 px and scrolls. Each row names the job its runner
+  builds, linked to the log, or says `No job`.
+- **Running now** a card with a blue frame right above the runs table. Each
+  job that builds right now gets a large row: the runner, repo, workflow and
+  job, the progress bar and Stop. With no job building, the card says how
+  many wait. The frame turns red when a runner of this PC sits idle while
+  jobs wait.
+- **Runs** the latest 5 runs of each org repo and every unfinished one, with an icon for the result and
   for the place. Filter chips pick this PC, waiting, other runners, failed or
   passed. A search box matches repo, workflow and branch. A click on a column
   head sorts by it. The table stops at 70% of the window height and scrolls,

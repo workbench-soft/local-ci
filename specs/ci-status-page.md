@@ -39,8 +39,9 @@ browser at each logon.
 - **Runners card** one card joins both sources by runner name. A row says
   where the runner lives, its state on this PC and on GitHub, and a hint when
   the two disagree.
-- **Runs** `GET /repos/{repo}/actions/runs` gives the latest runs of each org
-  repo. `GET /repos/{repo}/actions/runs/{id}/jobs` gives the jobs of each
+- **Runs** `GET /repos/{repo}/actions/runs?per_page=30` gives the latest
+  runs of each org repo. The page keeps the latest 5 and every unfinished
+  one. `GET /repos/{repo}/actions/runs/{id}/jobs` gives the jobs of each
   unfinished run, with the runner name of each job.
 - **Place** a job is local when its runner name matches the `agentName` in a
   runner folder's `.runner` file. A started job on another runner is
@@ -365,6 +366,9 @@ browser at each logon.
     The jobs of a run in `queued` state stay in memory while the run's
     `updated_at` stays the same, for up to 60 seconds, since 20 queued runs
     cost 20 calls each load.
+  - **ETags** each GET sends `If-None-Match` with the ETag of its last
+    answer. A 304 costs no rate limit. The page ran out of its 5000 calls an
+    hour on 2026-10-29 and showed no runs until the reset.
   - **`status/headline.ts`** a runner of this PC sits idle while a job waits
     for `self-hosted`: the headline turns red and says so.
   - **`cards/running-now-card.tsx`** a wide card right above Latest runs.
