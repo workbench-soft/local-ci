@@ -539,3 +539,21 @@ browser at each logon.
 - **Steps** one commit per fix, then docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`.
+
+### 2026-10-29 One Running now card in place of Now and Running now
+
+- **Why** the person saw that the Building on this PC column of Now and the
+  Running now card list the same jobs, each with its bar and Stop. They asked
+  to merge the two.
+- **Changes**
+  - **`cards/live-jobs-card.tsx`** the card is called Running now, with the
+    count of jobs that build. It keeps its 3 columns: Building on this PC,
+    Queued on GitHub, Building on another runner. It gets the blue frame, the
+    idle alert and the red frame from the old Running now card.
+  - **`cards/running-now-card.tsx`** goes, with its styles.
+  - **`app/page.tsx`** the merged card stays at the top of the page.
+- **Steps**
+  1. This spec.
+  2. The merged card.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/user-flows.md`, `CHANGELOG.md`.
