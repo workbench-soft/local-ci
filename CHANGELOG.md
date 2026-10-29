@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The Now card of the status page lists every runner of this PC, idle ones
+  too, with the job each one builds.
+
 - The status page gets an icon, in the browser tab and on its Startup
   shortcut.
 

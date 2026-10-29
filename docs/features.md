@@ -40,8 +40,10 @@ icon: a white loop arrow around a green play sign on blue.
 
 - **Headline** counts jobs on this PC first, then jobs on other runners, then
   jobs waiting on GitHub. Red when a runner of this PC is down.
-- **Now** a column per place: on this PC, waiting on GitHub with the labels the
-  job asks for, and on another runner. Each job links to its GitHub log.
+- **Now** a column per place. On this PC lists every runner of this PC with
+  the job it builds, or idle, or stopped, and counts busy runners out of all.
+  Then the jobs waiting on GitHub with the labels they ask for, and the jobs on
+  another runner. Each job links to its GitHub log.
 - **This PC** a row per runner: the job it runs, idle or stopped, its boot
   task, and when its last job started.
 - **Runs** the latest 5 runs of each org repo, with an icon for the result and
