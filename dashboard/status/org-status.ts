@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { activeStatuses } from './placement.ts';
 import { orgName } from './settings.ts';
 
 export type OrgRunner = {
@@ -22,6 +23,20 @@ export type WorkflowRun = {
 	conclusion: string | null;
 	createdAt: string;
 	updatedAt: string;
+	url: string;
+	/** Read only for runs that haven't finished. */
+	jobs: RunJob[];
+};
+
+/** A job of a run, with the runner that took it. A queued job has no runner yet. */
+export type RunJob = {
+	id: number;
+	name: string;
+	status: string;
+	conclusion: string | null;
+	runnerName: string | null;
+	labels: string[];
+	startedAt: string | null;
 	url: string;
 };
 
@@ -74,6 +89,17 @@ type ApiRun = {
 	html_url: string;
 };
 
+type ApiJob = {
+	id: number;
+	name: string;
+	status: string;
+	conclusion: string | null;
+	runner_name: string | null;
+	labels: string[];
+	started_at: string | null;
+	html_url: string;
+};
+
 async function listRunners(): Promise<OrgRunner[]> {
 	const { runners } = await getJson<{ runners: ApiRunner[] }>(`/orgs/${orgName}/actions/runners?per_page=100`);
 	return runners.map(({ id, name, os, status, busy, labels }) => ({ id, name, os, status, busy, labels: labels.map((label) => label.name) }));
@@ -89,19 +115,41 @@ async function listLatestRuns(): Promise<WorkflowRun[]> {
 async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 	const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(`/repos/${fullName}/actions/runs?per_page=${runsPerRepo}`);
 	const repo = fullName.split('/')[1];
-	return workflow_runs.map((run) => ({
-		id: run.id,
-		repo,
-		workflow: run.name,
-		title: run.display_title,
-		branch: run.head_branch,
-		event: run.event,
-		status: run.status,
-		conclusion: run.conclusion,
-		createdAt: run.created_at,
-		updatedAt: run.updated_at,
-		url: run.html_url,
-	}));
+	return Promise.all(
+		workflow_runs.map(async (run) => ({
+			id: run.id,
+			repo,
+			workflow: run.name,
+			title: run.display_title,
+			branch: run.head_branch,
+			event: run.event,
+			status: run.status,
+			conclusion: run.conclusion,
+			createdAt: run.created_at,
+			updatedAt: run.updated_at,
+			url: run.html_url,
+			jobs: activeStatuses.has(run.status) ? await listRunJobs(fullName, run.id) : [],
+		})),
+	);
+}
+
+// Only the jobs tell which runner builds a run. A failed call leaves the run without them.
+async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
+	try {
+		const { jobs } = await getJson<{ jobs: ApiJob[] }>(`/repos/${fullName}/actions/runs/${runId}/jobs?per_page=100`);
+		return jobs.map((job) => ({
+			id: job.id,
+			name: job.name,
+			status: job.status,
+			conclusion: job.conclusion,
+			runnerName: job.runner_name || null,
+			labels: job.labels,
+			startedAt: job.started_at,
+			url: job.html_url,
+		}));
+	} catch {
+		return [];
+	}
 }
 
 async function getJson<T>(path: string): Promise<T> {
