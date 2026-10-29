@@ -106,3 +106,20 @@ machine with several runners builds several jobs at once.
   2. `runner/install.ps1`.
   3. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-29 One pnpm store for every job
+
+- **Why** `pnpm/action-setup` sets `PNPM_HOME` under the job's `_temp`, and
+  pnpm then keeps its store there. The runner wipes `_temp` after each job,
+  so every `pnpm install` downloaded all its packages again. guitar-upscale
+  logged `reused 0, downloaded 780` and a 13 minute install.
+- **Change** the runner `.env` sets `pnpm_config_store_dir` to the machine's
+  usual store: `%LOCALAPPDATA%\pnpm\store` on Windows, `~/Library/pnpm/store`
+  on a Mac. pnpm 11 reads this name. It ignores `npm_config_store_dir`.
+- **Limits** a runner reads `.env` at start, so a rerun of the script applies
+  it once the runner is idle.
+- **Steps**
+  1. This spec.
+  2. `runner/install.ps1` and `runner/install.sh`.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
