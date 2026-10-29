@@ -126,7 +126,8 @@ browser at each logon.
 - **Changes**
   - **`status/org-status.ts`** a shared GitHub call for any method, and a way
     to drop the cache.
-  - **`status/run-actions.ts`** server actions: Stop cancels a run. Purge
+  - **`status/run-actions.ts`** server actions: Stop cancels a run. Purge, in
+    `status/purge.ts`,
     force cancels it, waits for it to finish, then deletes it.
   - **`cards/run-controls.tsx`** Stop and Purge buttons. Purge asks to
     confirm first. An error shows next to the buttons.
