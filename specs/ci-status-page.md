@@ -350,3 +350,25 @@ browser at each logon.
   3. The bar.
   4. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Purge all runs of the table
+
+- **Why** the person wants to clear many runs at once, such as every failed
+  run or every run of one repo, without pressing Purge on each.
+- **Changes**
+  - **`status/purge.ts`** `purgeRuns` purges a list of runs, 5 at a time,
+    and returns the runs it failed on with their errors.
+  - **`status/run-actions.ts`** a server action that checks each repo and
+    run id, then purges them all.
+  - **`cards/latest-runs-table.tsx`** a Purge all button in the toolbar. It
+    acts on every run the filter and the search match, past the 60 rows the
+    table shows too. It asks to confirm with the count first, then shows how
+    many it purged and the first error.
+- **Limits** a run that won't stop within 60 seconds stays, like with Purge.
+- **Steps**
+  1. This spec.
+  2. `purgeRuns` with tests, and the server action.
+  3. The button.
+  4. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/user-flows.md`, `docs/architecture.md`,
+  `README.md`, `CHANGELOG.md`.
