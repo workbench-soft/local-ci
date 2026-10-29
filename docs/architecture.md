@@ -85,6 +85,12 @@ The server renders the page for each request.
   `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/cancel`. Purge
   runs `status/purge.ts`: it posts to `force-cancel`, polls the run until it
   is completed, then sends `DELETE` on the run. Each action drops the cache.
+- **Old runs die** `instrumentation.ts` starts
+  `status/cancel-superseded.ts` with the server. Every 10 seconds it reads
+  the runs through the 20 second cache, and the open PRs of repos with an
+  unfinished PR run, kept for a minute. `status/superseded.ts` picks the
+  runs to kill, and each one gets `force-cancel`. A failed PR read kills
+  nothing.
 - **Releases** the app repos are private, so their release workflows publish
   to the public `workbench-soft/workbench-soft.github.io` with the tag
   `<repo>-v<version>`. `status/releases.ts` gives a run the release of its

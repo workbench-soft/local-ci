@@ -18,6 +18,7 @@ export type WorkflowRun = {
 	id: number;
 	repo: string;
 	workflow: string;
+	workflowId: number;
 	title: string;
 	branch: string;
 	event: string;
@@ -99,9 +100,9 @@ async function loadOrgStatus(): Promise<OrgStatus> {
 type ApiRunner = Omit<OrgRunner, 'labels'> & { labels: { name: string }[] };
 
 type ApiRun = {
+	workflow_id: number;
 	id: number;
 	name: string;
-	workflow_id: number;
 	display_title: string;
 	head_branch: string;
 	event: string;
@@ -146,6 +147,7 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 			id: run.id,
 			repo,
 			workflow: run.name,
+			workflowId: run.workflow_id,
 			title: run.display_title,
 			branch: run.head_branch,
 			event: run.event,
@@ -159,30 +161,28 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 			jobs: activeStatuses.has(run.status) || failedConclusions.has(run.conclusion ?? '') ? await listRunJobs(fullName, run.id) : [],
 		})),
 	);
-	const workflowIds = new Map(workflow_runs.map((run) => [run.name, run.workflow_id]));
-	await addTypicalTimes(fullName, runs, workflowIds);
+	await addTypicalTimes(fullName, runs);
 	return runs;
 }
 
 /** The 3 latest successful runs of a workflow give the usual length of each of its running jobs. */
-async function addTypicalTimes(fullName: string, runs: WorkflowRun[], workflowIds: Map<string, number>): Promise<void> {
+async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<void> {
 	const running = runs.flatMap((run) => run.jobs.filter((job) => job.status === 'in_progress').map((job) => ({ run, job })));
 	if (!running.length) return;
-	const workflows = new Set(running.map(({ run }) => run.workflow));
-	const pastByWorkflow = new Map<string, RunJob[]>();
+	const workflowIds = new Set(running.map(({ run }) => run.workflowId));
+	const pastByWorkflow = new Map<number, RunJob[]>();
 	await Promise.all(
-		[...workflows].map(async (workflow) => {
-			const ids = await latestSuccessfulRuns(fullName, workflowIds.get(workflow));
+		[...workflowIds].map(async (workflowId) => {
+			const ids = await latestSuccessfulRuns(fullName, workflowId);
 			const jobs = await Promise.all(ids.map((id) => finishedRunJobs(fullName, id)));
-			pastByWorkflow.set(workflow, jobs.flat().filter((job) => job.conclusion === 'success'));
+			pastByWorkflow.set(workflowId, jobs.flat().filter((job) => job.conclusion === 'success'));
 		}),
 	);
-	for (const { run, job } of running) job.typicalMs = typicalDuration(job.name, pastByWorkflow.get(run.workflow) ?? []);
+	for (const { run, job } of running) job.typicalMs = typicalDuration(job.name, pastByWorkflow.get(run.workflowId) ?? []);
 }
 
 // The latest 5 runs of a busy repo are often all queued, so the successful ones come from a call of their own.
-async function latestSuccessfulRuns(fullName: string, workflowId: number | undefined): Promise<number[]> {
-	if (workflowId === undefined) return [];
+async function latestSuccessfulRuns(fullName: string, workflowId: number): Promise<number[]> {
 	try {
 		const { workflow_runs } = await getJson<{ workflow_runs: { id: number }[] }>(
 			`/repos/${fullName}/actions/workflows/${workflowId}/runs?status=success&per_page=3`,

@@ -26,6 +26,7 @@ const run = (status: string, jobs: RunJob[] = []): WorkflowRun => ({
 	repo: 'app',
 	workflow: 'ci',
 	title: 't',
+	workflowId: 1,
 	branch: 'main',
 	event: 'push',
 	status,
