@@ -52,3 +52,13 @@
 
 - [ ] Pull `master` in `C:\Programming\WorkbenchSoft\local-ci` and run `.\dashboard\install.ps1`, so `http://localhost:4280` gets the Release column, Install, the failed step and the PR links (PR #21).
 - [ ] Press Install once on a real release. `workbench-soft.github.io` had 0 releases on 2025-10-29, since the latest Release runs failed, so only the error path ran in testing.
+
+## purge-all
+
+- [ ] In `C:\Programming\WorkbenchSoft\local-ci`, run `git pull`, then `.\dashboard\install.ps1`, so `http://localhost:4280` gets Purge all (PR #27, merged 2026-10-29).
+- [ ] Press Purge all once with a filter that matches a few throwaway runs. Only the confirm was tested, no real purge ran.
+
+## runner-speed
+
+- [ ] In `C:\Programming\WorkbenchSoft\local-ci`, run `git pull`, then `.\runner\install.ps1`, so the 4 runners share `~/actions-runner/_tool` and get the Defender exclusions (PR #29 and #30, merged 2026-10-29).
+- [ ] On the Mac, run `git pull`, then `./runner/install.sh`. The Mac part was linted but not run.
