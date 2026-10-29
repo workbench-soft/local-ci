@@ -82,3 +82,27 @@ machine with several runners builds several jobs at once.
   2. Both runner scripts.
   3. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Defender exclusions for the runners
+
+- **Why** Defender scans each file a job writes, and `pnpm install` writes
+  tens of thousands of them. The person chose the speed over the scan.
+- **Changes** `runner/install.ps1` adds these folders to the Defender
+  exclusions:
+  - **Runners** `~/actions-runner`, with each `_work` folder and the tool
+    cache.
+  - **Caches** `~/.gradle`, and `pnpm`, `npm-cache` and `mise` under
+    `%LOCALAPPDATA%`.
+- **Switch** `RUNNER_DEFENDER_EXCLUSIONS=off` skips the step. Exclusions
+  already added stay until `Remove-MpPreference -ExclusionPath` takes them
+  out.
+- **Limits**
+  - **Unscanned code** Defender skips the code jobs check out. The runners
+    build only `workbench-soft` repos.
+  - **Other antivirus** with Defender switched off, the script prints the
+    error and goes on.
+- **Steps**
+  1. This spec.
+  2. `runner/install.ps1`.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
