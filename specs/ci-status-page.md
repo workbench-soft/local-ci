@@ -446,7 +446,7 @@ browser at each logon.
     and the sweep share them. An expired status is served at once while a
     new load runs.
   - **Timeouts** GitHub calls give up after 20 s, PowerShell after 15 s. A
-    failed PowerShell probe keeps the last snapshot. GitHub errors carry
+    failed PowerShell probe keeps the last snapshot for a minute. GitHub errors carry
     their status, and a refused token or a rate limit says so.
   - **Page** the idle alert counts the jobs the idle runner could take. A
     release goes to the one run of its repo that ended nearest to it. Light

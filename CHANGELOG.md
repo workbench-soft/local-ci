@@ -12,7 +12,7 @@
 - The status page shows at once from its last GitHub answer while a new one
   loads, and the page and the sweep share one set of calls. GitHub calls and
   the PowerShell read time out, and a failed PowerShell read keeps the last
-  runner states in place of "runners down".
+  runner states for a minute in place of "runners down".
 
 - The idle alert counts only the jobs the idle runner could take, a release
   shows on one run only, and a page that stopped updating says so in red.
