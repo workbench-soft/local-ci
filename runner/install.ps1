@@ -59,7 +59,9 @@ function Get-RegistrationToken {
 	$token = try { gh api -X POST "orgs/$org/actions/runners/registration-token" --jq .token 2>$null } catch { $null }
 	if ($token) { return $token }
 	Write-Host "Copy the token from https://github.com/organizations/$org/settings/actions/runners/new?arch=x64&os=win"
-	return Read-Host 'Registration token'
+	# The token stays off the screen, as read -s keeps it in runner/install.sh.
+	$secure = Read-Host 'Registration token' -AsSecureString
+	return [Net.NetworkCredential]::new('', $secure).Password
 }
 
 # WindowsApps holds a WSL bash and a Store stub for python, both ahead of the

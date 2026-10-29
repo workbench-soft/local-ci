@@ -121,5 +121,13 @@ test('summarizeCi puts jobs on this PC first, then other runners, then the GitHu
 
 test('summarizeCi turns red when a runner of this PC sits idle while jobs wait', () => {
 	const runs = [run('queued')];
-	assert.deepEqual(summarizeCi(pcUp, orgWith(runs), liveJobs(runs, new Set(['pc'])), ['pc']), { tone: 'bad', text: 'pc sits idle while 1 job waits on GitHub' });
+	const live = liveJobs(runs, new Set(['pc']));
+	assert.deepEqual(summarizeCi(pcUp, orgWith(runs), live, { idle: ['pc'], waiting: live }), { tone: 'bad', text: 'pc sits idle while 1 job waits on GitHub' });
+});
+
+test('the idle alert counts only the waiting jobs the idle runner could take', () => {
+	const runs = [1, 2, 3].map((id) => ({ ...run('queued'), id }));
+	const live = liveJobs(runs, new Set(['pc']));
+	assert.equal(live.length, 3);
+	assert.deepEqual(summarizeCi(pcUp, orgWith(runs), live, { idle: ['pc'], waiting: live.slice(0, 1) }), { tone: 'bad', text: 'pc sits idle while 1 job waits on GitHub' });
 });

@@ -8,7 +8,7 @@ import { runDuration } from '@/status/durations';
 import { summarizeCi } from '@/status/headline';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
-import { releaseOfRun } from '@/status/releases';
+import { releasesByRun } from '@/status/releases';
 import { readThisPc } from '@/status/this-pc';
 
 // Each visit reads the runner afresh, so Next must not prerender the page.
@@ -21,12 +21,13 @@ export default async function StatusPage() {
 	const runs = org.ok ? org.runs : [];
 	const releases = org.ok ? org.releases : [];
 	const live = liveJobs(runs, local);
-	const { idle } = idleWhileQueued(org.ok ? org.runners : null, local, live, now);
-	const headline = summarizeCi(pc, org, live, idle);
+	const stuck = idleWhileQueued(org.ok ? org.runners : null, local, live, now);
+	const headline = summarizeCi(pc, org, live, stuck);
 	// The table runs in the browser, so it gets each run without its jobs.
+	const releaseOf = releasesByRun(runs, releases);
 	const rows: RunRow[] = runs.map((run) => {
 		const { jobs, updatedAt, ...row } = run;
-		return { ...row, tookMs: runDuration(run, now), place: placeOfRun(run, local), release: releaseOfRun(run, releases), failure: failureOf(run) };
+		return { ...row, tookMs: runDuration(run, now), place: placeOfRun(run, local), release: releaseOf.get(run.id) ?? null, failure: failureOf(run) };
 	});
 	return (
 		<main>
@@ -40,7 +41,7 @@ export default async function StatusPage() {
 			<div className="grid">
 				{org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} now={now} />}
 				<RunnersCard pc={pc} org={org} jobs={live} now={now} />
-				{org.ok && <RunningNowCard jobs={live} idle={idle} now={now} />}
+				{org.ok && <RunningNowCard jobs={live} stuck={stuck} now={now} />}
 				{org.ok && <LatestRunsTable runs={rows} now={now} />}
 			</div>
 		</main>

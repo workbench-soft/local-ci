@@ -98,7 +98,7 @@ once, from the main checkout:
 - **Old runs die** the page server force cancels a run that a newer run of
   its workflow and branch replaced, or whose PR is merged or closed. Each
   cancel goes to `dashboard.log`. `CANCEL_SUPERSEDED=off` in
-  `dashboard.env.local` turns it off.
+  `dashboard\.env.local` turns it off. A rerun of the install script keeps it.
 - **Release and Install** a run that published a release links to it in the
   Release column. Install puts its APK on the phone plugged in over USB,
   through `adb install -r`. adb comes from `ADB_PATH`, `PATH` or the
@@ -113,8 +113,11 @@ once, from the main checkout:
 - **Rerun** after a `git pull` or a new gh login. The script rebuilds the page
   and restarts it.
 - **Develop and test** in `dashboard`, `mise x -- pnpm dev` serves the page on
-  port 4281. `mise x -- pnpm typecheck` and `mise x -- pnpm test` are the
-  checks.
+  port 4281 and cancels no run. `mise x -- pnpm typecheck` and
+  `mise x -- pnpm test` are the checks.
+- **CI** `.github/workflows/checks.yml` runs those checks, a build, shellcheck,
+  shfmt and a parse of each `.ps1` file on the Windows runners, for each PR
+  and each push to `master`.
 - **Logs** `dashboard\dashboard.log`.
 
 ## Windows

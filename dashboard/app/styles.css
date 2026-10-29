@@ -1,13 +1,15 @@
-/* The four tones color the status dots. busy doubles as the link color, bad as the error text. */
+/* The four tones color the status dots. busy doubles as the link color, bad as the error text.
+   Each tone reaches 4.5:1 on the card and on the page, since it also colors small text. */
 :root {
 	--bg: #f6f7f9;
 	--card: #ffffff;
 	--text: #1f2230;
 	--muted: #65697d;
 	--line: #e4e6ec;
-	--ok: #009f64;
+	--ok: #007a4d;
 	--busy: #415ed3;
-	--warn: #b18000;
+	--chip-on: #415ed3;
+	--warn: #8a6400;
 	--bad: #ca2d00;
 	color-scheme: light dark;
 }
@@ -21,6 +23,8 @@
 		--line: #2e313d;
 		--ok: #00c686;
 		--busy: #6e8ef6;
+		/* White text on the lighter busy blue reads at 3.1:1 only. */
+		--chip-on: #4a68e0;
 		--warn: #d9ae27;
 		--bad: #ef6749;
 	}
@@ -429,8 +433,8 @@ h3 {
 }
 
 .chip[aria-pressed='true'] {
-	background: var(--busy);
-	border-color: var(--busy);
+	background: var(--chip-on);
+	border-color: var(--chip-on);
 	color: #fff;
 }
 
@@ -500,6 +504,8 @@ td .run-controls {
 	gap: 4px;
 	font: inherit;
 	font-size: 12px;
+	/* WCAG 2.5.8 asks for targets at least 24 px tall. */
+	min-height: 26px;
 	padding: 2px 8px;
 	border: 1px solid var(--line);
 	border-radius: 6px;

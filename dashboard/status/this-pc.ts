@@ -26,6 +26,14 @@ export type ProcessSnapshot = {
 
 const runnersRoot = join(homedir(), 'actions-runner');
 const execFileAsync = promisify(execFile);
+const pcCacheTtlMs = 5_000;
+const powershellTimeoutMs = 15_000;
+type PcCache = { doneAt: number | null; status: Promise<ThisPcStatus> };
+let pcCache: PcCache | null = null;
+// A failed or hung PowerShell would read as every runner down, so the last good answer stays for a
+// minute. Past that the runners show as down, since one may have died meanwhile.
+const snapshotKeepMs = 60_000;
+let lastSnapshot: { at: number; snapshot: ProcessSnapshot } | null = null;
 
 /** runner/install.ps1 numbers the folders and tasks from the second runner on. */
 export function runnerNumber(folder: string): number | null {
@@ -53,7 +61,18 @@ export function describeRunner(folder: string, snapshot: ProcessSnapshot): Omit<
 }
 
 /** The runners on this PC. The checks need Windows. */
-export async function readThisPc(): Promise<ThisPcStatus> {
+export function readThisPc(): Promise<ThisPcStatus> {
+	// PowerShell takes 2 to 8 s here, so open tabs share a read, and its answer for 5 s after it ends.
+	if (pcCache && (pcCache.doneAt === null || Date.now() - pcCache.doneAt < pcCacheTtlMs)) return pcCache.status;
+	const entry: PcCache = { doneAt: null, status: loadThisPc() };
+	void entry.status.finally(() => {
+		entry.doneAt = Date.now();
+	});
+	pcCache = entry;
+	return entry.status;
+}
+
+async function loadThisPc(): Promise<ThisPcStatus> {
 	if (process.platform !== 'win32') return { supported: false };
 	const folders = await listRunnerFolders();
 	const snapshot = await readProcessSnapshot(folders);
@@ -84,19 +103,24 @@ async function listRunnerFolders(): Promise<string[]> {
 // process path is hidden from the page. A live listener or worker holds its
 // newest _diag log open for writing, and opening that log for read only fails.
 async function readProcessSnapshot(folders: string[]): Promise<ProcessSnapshot> {
-	const list = folders.map((folder) => `'${folder.replaceAll("'", "''")}'`).join(', ');
+	const quote = (text: string) => `'${text.replaceAll("'", "''")}'`;
+	const list = folders.map(quote).join(', ');
 	const script = [
 		`$tasks = @(Get-ScheduledTask -TaskName 'GitHub Actions runner (${orgName}*' -ErrorAction SilentlyContinue | ForEach-Object { @{ name = $_.TaskName; state = "$($_.State)" } })`,
-		`function Test-Held($folder, $filter) { $log = Get-ChildItem (Join-Path '${runnersRoot}' "$folder\\_diag") -Filter $filter -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $log) { return $false }; try { [IO.File]::Open($log.FullName, 'Open', 'Read', 'Read').Close(); $false } catch { $true } }`,
+		`function Test-Held($folder, $filter) { $log = Get-ChildItem (Join-Path ${quote(runnersRoot)} "$folder\\_diag") -Filter $filter -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if (-not $log) { return $false }; try { [IO.File]::Open($log.FullName, 'Open', 'Read', 'Read').Close(); $false } catch { $true } }`,
 		`$logs = @(foreach ($folder in @(${list})) { @{ folder = $folder; listener = Test-Held $folder 'Runner_*.log'; worker = Test-Held $folder 'Worker_*.log' } })`,
 		'ConvertTo-Json -Compress -Depth 3 @{ tasks = $tasks; logs = $logs }',
 	].join('; ');
 	try {
-		const { stdout } = await execFileAsync('powershell', ['-NoProfile', '-Command', script]);
+		const { stdout } = await execFileAsync('powershell', ['-NoProfile', '-Command', script], { timeout: powershellTimeoutMs });
 		const parsed = JSON.parse(stdout);
-		return { tasks: parsed.tasks ?? [], logs: parsed.logs ?? [] };
-	} catch {
-		return { tasks: [], logs: [] };
+		const snapshot = { tasks: parsed.tasks ?? [], logs: parsed.logs ?? [] };
+		lastSnapshot = { at: Date.now(), snapshot };
+		return snapshot;
+	} catch (error) {
+		const kept = lastSnapshot && Date.now() - lastSnapshot.at < snapshotKeepMs ? lastSnapshot.snapshot : null;
+		console.error(`${new Date().toISOString()} Couldn't read the runner processes${kept ? ', so the page keeps the last answer' : ''}: ${error}`);
+		return kept ?? { tasks: [], logs: [] };
 	}
 }
 

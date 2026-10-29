@@ -1,0 +1,19 @@
+# Dependabot opens one PR per ecosystem each week for minor and patch updates.
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /dashboard
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']

@@ -11,11 +11,14 @@ $appDir = $PSScriptRoot
 $port = if ($env:DASHBOARD_PORT) { $env:DASHBOARD_PORT } else { '4280' }
 $taskName = 'local-ci dashboard'
 $env:GH_PAGER = 'cat'
+# Next sends usage data to Vercel on each build unless told not to.
+$env:NEXT_TELEMETRY_DISABLED = '1'
 
 function Write-Step([string]$text) { Write-Host "`n==> $text" }
 
 # The boot task has no password, so it can't read the gh login in the Windows
-# credential store. The page reads the token from .env.local instead.
+# credential store. The page reads the token from .env.local instead. Other
+# lines there, such as CANCEL_SUPERSEDED=off, stay as the person wrote them.
 function Write-TokenFile {
 	$token = try { gh auth token 2>$null } catch { $null }
 	if (-not $token) {
@@ -23,8 +26,13 @@ function Write-TokenFile {
 		return
 	}
 	$envFile = Join-Path $appDir '.env.local'
-	Set-Content -LiteralPath $envFile -Encoding ascii -Value "GITHUB_TOKEN=$token"
-	icacls $envFile /inheritance:r /grant:r "$($env:USERDOMAIN)\$($env:USERNAME):F" | Out-Null
+	$kept = @(if (Test-Path -LiteralPath $envFile) { Get-Content -LiteralPath $envFile | Where-Object { $_ -notmatch '^\s*GITHUB_TOKEN=' } })
+	# The new file is locked to this user before it takes the place of the old one.
+	$newFile = "$envFile.new"
+	Set-Content -LiteralPath $newFile -Encoding ascii -Value (@("GITHUB_TOKEN=$token") + $kept)
+	icacls $newFile /inheritance:r /grant:r "$($env:USERDOMAIN)\$($env:USERNAME):F" | Out-Null
+	if ($LASTEXITCODE -ne 0) { Remove-Item -LiteralPath $newFile; throw 'icacls could not lock .env.local to this user' }
+	Move-Item -LiteralPath $newFile -Destination $envFile -Force
 }
 
 $mise = (Get-Command mise -CommandType Application -ErrorAction Stop).Source
