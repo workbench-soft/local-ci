@@ -134,8 +134,9 @@ icon: a white loop arrow around a green play sign on blue.
   phone in `adb devices`, and the public repo keeps 3 releases per app.
 - **Failed step** a failed run names its failed job and step under the
   result, linked to that job's log.
-- **PR and branch** the branch of a run is a link, and its PR sits beside the
-  event. GitHub gives no PR for pushes to the default branch.
+- **PR and branch** the branch of a run is a link. The PR column links each
+  PR of the run by its number, sorts by it, and search finds `#number`.
+  GitHub gives no PR for pushes to the default branch or for PRs from forks.
 - **Limits** a job counts as local when its runner name matches a runner
   folder of this PC, so the this PC checks need Windows. After a new gh login,
   run the install script again.
