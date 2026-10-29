@@ -173,3 +173,25 @@ browser at each logon.
   2. The runner rows.
   3. Docs and changelog.
 - **Docs** `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-29 A START file in the repo root
+
+- **Why** the person wants one file in the repo root to double click. It
+  starts the runners and the page, then opens the page in the browser.
+- **Changes**
+  - **`START.cmd`** in the repo root, upper case like `README.md`, so it is
+    easy to spot. It runs `windows/start.ps1` and keeps the window open on an
+    error.
+  - **`windows/start.ps1`** starts each `GitHub Actions runner (...)` task and
+    the `local-ci dashboard` task that isn't running. Windows refuses? It asks
+    once for admin rights and tries again. No page task yet? It runs
+    `dashboard/install.ps1`. No runner task? It names `runner/install.ps1`.
+    Then it opens the page through `dashboard/open.ps1`.
+- **Limits** Windows only. The tasks must exist, so a new PC runs the install
+  scripts first.
+- **Steps**
+  1. This spec.
+  2. `START.cmd` and `windows/start.ps1`.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
