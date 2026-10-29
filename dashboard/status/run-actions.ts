@@ -1,7 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { callGitHub, forgetOrgStatus } from './org-status.ts';
+import type { JobTiming } from './durations.ts';
+import { callGitHub, forgetOrgStatus, readJobTimings } from './org-status.ts';
 import { purgeRun, purgeRuns } from './purge.ts';
 import { orgName } from './settings.ts';
 
@@ -14,6 +15,16 @@ export async function stopRun(repo: string, runId: number): Promise<ActionResult
 	return runAction(repo, runId, async (path) => {
 		await callGitHub(`${path}/cancel`, 'POST');
 	});
+}
+
+/** The jobs and steps of a run with their times. It only reads, so the page stays as it is. */
+export async function runTimings(repo: string, runId: number): Promise<{ ok: true; jobs: JobTiming[] } | { ok: false; error: string }> {
+	if (!isRun(repo, runId)) return { ok: false, error: 'Unknown run.' };
+	try {
+		return { ok: true, jobs: await readJobTimings(repo, runId) };
+	} catch (error) {
+		return { ok: false, error: error instanceof Error ? error.message : String(error) };
+	}
 }
 
 /** Force cancels a run when it hasn't finished, then deletes it from GitHub. */

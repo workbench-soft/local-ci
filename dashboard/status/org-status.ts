@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { type JobTiming, toJobTimings } from './durations.ts';
 import { activeStatuses } from './placement.ts';
 import { countSteps, type StepCount, typicalDuration } from './progress.ts';
 import { type ApiRelease, type Release, releasesRepo, toRelease } from './releases.ts';
@@ -25,6 +26,8 @@ export type WorkflowRun = {
 	status: string;
 	conclusion: string | null;
 	createdAt: string;
+	/** When the latest attempt of the run started. */
+	startedAt: string | null;
 	updatedAt: string;
 	url: string;
 	/** The branch on GitHub. */
@@ -112,6 +115,7 @@ type ApiRun = {
 	status: string;
 	conclusion: string | null;
 	created_at: string;
+	run_started_at?: string;
 	updated_at: string;
 	html_url: string;
 	pull_requests?: { number: number }[];
@@ -127,7 +131,7 @@ type ApiJob = {
 	started_at: string | null;
 	completed_at: string | null;
 	html_url: string;
-	steps?: { name: string; status: string; conclusion: string | null }[];
+	steps?: { name: string; status: string; conclusion: string | null; started_at?: string | null; completed_at?: string | null }[];
 };
 
 async function listRunners(): Promise<OrgRunner[]> {
@@ -165,6 +169,7 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 			status: run.status,
 			conclusion: run.conclusion,
 			createdAt: run.created_at,
+			startedAt: run.run_started_at ?? null,
 			updatedAt: run.updated_at,
 			url: run.html_url,
 			branchUrl: `https://github.com/${fullName}/tree/${run.head_branch.split('/').map(encodeURIComponent).join('/')}`,
@@ -280,6 +285,12 @@ async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 	} catch {
 		return [];
 	}
+}
+
+/** The jobs of 1 run with the time of each step, for the breakdown row. It shares the ETag of the jobs call above. */
+export async function readJobTimings(repo: string, runId: number): Promise<JobTiming[]> {
+	const { jobs } = await getJson<{ jobs: ApiJob[] }>(`/repos/${orgName}/${repo}/actions/runs/${runId}/jobs?per_page=100`);
+	return toJobTimings(jobs, Date.now());
 }
 
 // A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.
