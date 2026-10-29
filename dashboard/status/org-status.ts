@@ -17,6 +17,7 @@ export type WorkflowRun = {
 	id: number;
 	repo: string;
 	workflow: string;
+	workflowId: number;
 	title: string;
 	branch: string;
 	event: string;
@@ -94,6 +95,7 @@ async function loadOrgStatus(): Promise<OrgStatus> {
 type ApiRunner = Omit<OrgRunner, 'labels'> & { labels: { name: string }[] };
 
 type ApiRun = {
+	workflow_id: number;
 	id: number;
 	name: string;
 	display_title: string;
@@ -139,6 +141,7 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 			id: run.id,
 			repo,
 			workflow: run.name,
+			workflowId: run.workflow_id,
 			title: run.display_title,
 			branch: run.head_branch,
 			event: run.event,
