@@ -90,7 +90,7 @@ flowchart TD
 3. The browser opens `http://localhost:4280` once the page answers. It opens
    again at each logon.
 4. Read the headline: how many jobs build on this PC and how many wait on
-   GitHub. The Now card lists those jobs.
+   GitHub. The Running now card lists those jobs.
 5. In Latest runs, pick a filter chip, type in the search box or click a
    column head to sort.
 6. Press Stop on a run or a job to cancel its run. Press Purge and confirm to

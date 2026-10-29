@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The status page shows one Running now card at the top in place of the
+  Now card and the Running now card, which listed the same jobs.
+
 - The Runners card spans the page and lists its runners in columns. It sat
   in a narrow cell beside empty space before.
 

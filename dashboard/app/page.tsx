@@ -2,7 +2,6 @@ import { AutoRefresh } from '@/cards/auto-refresh';
 import { LatestRunsTable, type RunRow } from '@/cards/latest-runs-table';
 import { LiveJobsCard } from '@/cards/live-jobs-card';
 import { RunnersCard } from '@/cards/runners-card';
-import { RunningNowCard } from '@/cards/running-now-card';
 import { StatusDot } from '@/cards/status-dot';
 import { runDuration } from '@/status/durations';
 import { summarizeCi } from '@/status/headline';
@@ -39,9 +38,8 @@ export default async function StatusPage() {
 				<AutoRefresh renderedAt={new Date(now).toISOString()} />
 			</header>
 			<div className="grid">
-				{org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} now={now} />}
+				{org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />}
 				<RunnersCard pc={pc} org={org} jobs={live} now={now} />
-				{org.ok && <RunningNowCard jobs={live} stuck={stuck} now={now} />}
 				{org.ok && <LatestRunsTable runs={rows} now={now} />}
 			</div>
 		</main>
