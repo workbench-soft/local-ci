@@ -11,16 +11,23 @@ const staleAfterMs = 3 * refreshMs;
 export function AutoRefresh({ renderedAt }: { renderedAt: string }) {
 	const router = useRouter();
 	const [now, setNow] = useState<number | null>(null);
+	// A hidden tab skips its refreshes, so its age counts from when it showed again.
+	const [shownAt, setShownAt] = useState(0);
 	useEffect(() => {
 		// A hidden tab skips its refreshes, and catches up once it shows again.
 		const refresh = () => {
 			if (!document.hidden) router.refresh();
 		};
+		const show = () => {
+			if (document.hidden) return;
+			setShownAt(Date.now());
+			router.refresh();
+		};
 		const timer = setInterval(refresh, refreshMs);
-		document.addEventListener('visibilitychange', refresh);
+		document.addEventListener('visibilitychange', show);
 		return () => {
 			clearInterval(timer);
-			document.removeEventListener('visibilitychange', refresh);
+			document.removeEventListener('visibilitychange', show);
 		};
 	}, [router]);
 	useEffect(() => {
@@ -29,7 +36,7 @@ export function AutoRefresh({ renderedAt }: { renderedAt: string }) {
 		return () => clearInterval(clock);
 	}, []);
 	const time = new Date(renderedAt).toLocaleTimeString();
-	if (now !== null && now - Date.parse(renderedAt) > staleAfterMs) {
+	if (now !== null && now - Math.max(Date.parse(renderedAt), shownAt) > staleAfterMs) {
 		return (
 			<span className="error" role="alert">
 				Not updated since {time}. Check that the local-ci dashboard task runs.
