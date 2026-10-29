@@ -67,6 +67,7 @@ browser at each logon.
   `workbench-soft/workbench-soft.github.io` repo with the tag
   `<repo>-v<version>`. `GET /repos/{public}/releases` gives them. A run owns
   the release of its repo created between its start and its last update.
+  Of several such runs, the one whose last update came nearest owns it.
 - **Install** a server action in `status/install-apk.ts` downloads the `.apk`
   asset of the release to a temp folder and runs `adb install -r`. adb comes
   from `ADB_PATH`, `PATH`, `ANDROID_HOME` or `%LOCALAPPDATA%\Android\Sdk`.

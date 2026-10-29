@@ -34,14 +34,26 @@ export function toRelease(release: ApiRelease): Release {
 	};
 }
 
-/** The release of the run's repo that GitHub created while the run ran. */
-export function releaseOfRun(run: { repo: string; createdAt: string; updatedAt: string }, releases: Release[]): Release | null {
-	const from = Date.parse(run.createdAt);
-	const to = Date.parse(run.updatedAt) + slackMs;
-	return (
-		releases.find((release) => {
-			const at = Date.parse(release.createdAt);
-			return release.tag.startsWith(`${run.repo}-v`) && at >= from && at <= to;
-		}) ?? null
-	);
+type RunWindow = { id: number; repo: string; createdAt: string; updatedAt: string };
+
+/** True when GitHub created the release of the run's repo while the run ran. */
+function ranDuring(run: RunWindow, release: Release): boolean {
+	const at = Date.parse(release.createdAt);
+	return release.tag.startsWith(`${run.repo}-v`) && at >= Date.parse(run.createdAt) && at <= Date.parse(run.updatedAt) + slackMs;
+}
+
+/**
+ * The release of each run, by run id. Checks and PR runs of the same repo often run at the same time,
+ * so each release goes to one run only: the one whose last update came nearest to it.
+ * The Release workflow ends seconds after its upload.
+ */
+export function releasesByRun(runs: RunWindow[], releases: Release[]): Map<number, Release> {
+	const byRun = new Map<number, Release>();
+	for (const release of releases) {
+		const at = Date.parse(release.createdAt);
+		const gap = (run: RunWindow) => Math.abs(Date.parse(run.updatedAt) - at);
+		const owner = runs.filter((run) => ranDuring(run, release)).sort((a, b) => gap(a) - gap(b))[0];
+		if (owner && !byRun.has(owner.id)) byRun.set(owner.id, release);
+	}
+	return byRun;
 }

@@ -7,7 +7,7 @@ import { StatusDot } from '@/cards/status-dot';
 import { summarizeCi } from '@/status/headline';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
-import { releaseOfRun } from '@/status/releases';
+import { releasesByRun } from '@/status/releases';
 import { readThisPc } from '@/status/this-pc';
 
 // Each visit reads the runner afresh, so Next must not prerender the page.
@@ -23,9 +23,10 @@ export default async function StatusPage() {
 	const stuck = idleWhileQueued(org.ok ? org.runners : null, local, live, now);
 	const headline = summarizeCi(pc, org, live, stuck);
 	// The table runs in the browser, so it gets each run without its jobs.
+	const releaseOf = releasesByRun(runs, releases);
 	const rows: RunRow[] = runs.map((run) => {
 		const { jobs, updatedAt, ...row } = run;
-		return { ...row, place: placeOfRun(run, local), release: releaseOfRun(run, releases), failure: failureOf(run) };
+		return { ...row, place: placeOfRun(run, local), release: releaseOf.get(run.id) ?? null, failure: failureOf(run) };
 	});
 	return (
 		<main>

@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { type Release, releaseOfRun, toRelease } from './releases.ts';
+import { type Release, releasesByRun, toRelease } from './releases.ts';
 
 const release = (tag: string, createdAt: string): Release => ({ tag, name: tag, url: `https://github.com/${tag}`, createdAt, apk: null });
 
-const run = { repo: 'tickalot', createdAt: '2025-10-29T12:00:00Z', updatedAt: '2025-10-29T12:10:00Z' };
+const run = { id: 1, repo: 'tickalot', createdAt: '2025-10-29T12:00:00Z', updatedAt: '2025-10-29T12:10:00Z' };
+const releaseOfRun = (item: typeof run, releases: Release[]) => releasesByRun([item], releases).get(item.id) ?? null;
 
 test('a run owns the release of its repo created while it ran', () => {
 	const releases = [release('tickalot-v2025.10.29.1', '2025-10-29T11:00:00Z'), release('tickalot-v2025.10.29.2', '2025-10-29T12:09:00Z')];
@@ -19,6 +20,13 @@ test('a release of another repo or outside the run stays off it', () => {
 test('a repo name that starts another one keeps its own releases', () => {
 	const releases = [release('memories-mobile-v1.0.0', '2025-10-29T12:05:00Z')];
 	assert.equal(releaseOfRun({ ...run, repo: 'memories' }, releases), null);
+});
+
+test('a release goes to the one overlapping run that ended nearest to it', () => {
+	const releaseRun = { ...run, id: 2, createdAt: '2025-10-29T12:05:00Z', updatedAt: '2025-10-29T12:09:20Z' };
+	const checks = { ...run, id: 3, createdAt: '2025-10-29T12:04:00Z', updatedAt: '2025-10-29T12:30:00Z' };
+	const byRun = releasesByRun([run, releaseRun, checks], [release('tickalot-v2', '2025-10-29T12:09:00Z')]);
+	assert.deepEqual([...byRun.keys()], [2]);
 });
 
 test('the APK asset comes out of the release assets', () => {
