@@ -71,8 +71,9 @@ icon: a white loop arrow around a green play sign on blue.
   PC, Queued on GitHub or Building on another runner. A finished run shows
   only its result. Each place label and chip explains itself on hover.
   Filter chips pick one of those places, failed or passed. A search box
-  matches repo, workflow and branch. A click on a column head sorts by it. The table stops at 70% of the window height and scrolls,
-  with its head row pinned.
+  matches repo, workflow and branch. A click on a column head sorts by it. The
+  table stops at 70% of the window height and scrolls, with its head row
+  pinned.
 - **Stop and Purge** buttons on each run and each live job. Stop cancels the
   run on GitHub. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's
