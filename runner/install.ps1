@@ -30,12 +30,17 @@ $env:GH_PAGER = 'cat'
 function Write-Step([string]$text) { Write-Host "`n==> $text" }
 
 # The first runner keeps the folder, name and task it had before runners got numbers.
+# Jobs check repos out here, a short root so deep node_modules paths stay under 260 characters.
+$workRoot = if ($env:RUNNER_WORK_ROOT) { $env:RUNNER_WORK_ROOT } else { Join-Path $env:SystemDrive 'ci' }
+
 function Get-Runner([int]$number) {
 	$suffix = if ($number -eq 1) { '' } else { "-$number" }
 	$taskSuffix = if ($number -eq 1) { '' } else { " $number" }
 	return [pscustomobject]@{
 		Dir = Join-Path $HOME "actions-runner\$org$suffix"
 		Name = "$env:COMPUTERNAME$suffix"
+		# Windows can't start a .bat past 260 characters, and Expo's CMake writes one deep in node_modules.
+		Work = Join-Path $workRoot $number
 		Task = "GitHub Actions runner ($org$taskSuffix)"
 	}
 }
@@ -61,7 +66,7 @@ function Install-Runner($runner, [string]$zip, [string]$token) {
 	Write-Step "Registering $($runner.Name) in $($runner.Dir)"
 	New-Item -ItemType Directory -Force -Path $runner.Dir | Out-Null
 	Expand-Archive -Force -Path $zip -DestinationPath $runner.Dir
-	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $labels
+	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $labels --work $runner.Work
 	if ($LASTEXITCODE -ne 0) { throw "config.cmd failed for $($runner.Name)" }
 }
 
@@ -111,6 +116,7 @@ function Add-DefenderExclusions {
 	if ($env:RUNNER_DEFENDER_EXCLUSIONS -eq 'off') { Write-Host 'RUNNER_DEFENDER_EXCLUSIONS=off, skipping'; return }
 	$paths = @(
 		(Join-Path $HOME 'actions-runner'),
+		$workRoot,
 		(Join-Path $HOME '.gradle'),
 		(Join-Path $env:LOCALAPPDATA 'pnpm'),
 		(Join-Path $env:LOCALAPPDATA 'npm-cache'),
@@ -135,8 +141,18 @@ function Stop-RunnerWhenIdle($runner) {
 	Get-Process Runner.Listener, Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } | Stop-Process -Force
 }
 
+# Runners registered before the short root still point at _work in their own folder.
+function Set-RunnerWork($runner) {
+	$file = Join-Path $runner.Dir '.runner'
+	$config = Get-Content -Raw -LiteralPath $file | ConvertFrom-Json
+	if ($config.workFolder -eq $runner.Work) { return }
+	$config.workFolder = $runner.Work
+	Set-Content -LiteralPath $file -Encoding utf8 -Value ($config | ConvertTo-Json)
+}
+
 function Start-Runner($runner) {
 	Stop-RunnerWhenIdle $runner
+	Set-RunnerWork $runner
 	# Jobs reach GitHub through their GITHUB_TOKEN, since the task can't read the gh login.
 	Register-BootTask $runner.Task (Join-Path $runner.Dir 'start.cmd') $runner.Dir
 }
@@ -158,6 +174,7 @@ function Remove-Runner($runner, [string]$token) {
 	}
 	# node_modules in _work holds paths over 260 characters.
 	Remove-Item -LiteralPath "\\?\$($runner.Dir)" -Recurse -Force
+	if (Test-Path -LiteralPath $runner.Work) { Remove-Item -LiteralPath "\\?\$($runner.Work)" -Recurse -Force }
 }
 
 # The task runs this script as admin in the person's session, so gh keeps its login and UAC asks nothing.

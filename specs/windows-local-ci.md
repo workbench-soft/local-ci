@@ -71,3 +71,9 @@ without `source.properties`, and Platform 37 was missing.
 - Each runner's `.env` sets `ORG_GRADLE_PROJECT_android.builder.sdkDownload=false`,
   so a job fails fast on a missing part and doesn't touch the shared SDK.
 - A new SDK part goes into `$androidPackages`, then the script runs again.
+- Each runner checks repos out under `C:\ci\<number>` in place of
+  `~\actions-runner\<org>-<number>\_work`. Windows can't start a `.bat` past
+  260 characters, and Expo's CMake writes `prefab_command.bat` deep inside
+  `node_modules`. `install.ps1` passes `--work` on register and rewrites
+  `workFolder` in `.runner` for runners registered before. `RUNNER_WORK_ROOT`
+  picks another root.
