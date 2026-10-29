@@ -47,3 +47,8 @@
 
 - [ ] `runner/install.ps1` waits for a runner to go idle before it restarts it, and a busy queue keeps it busy. On 29 Oct 2025 runners 2 to 4 waited over an hour, so the agent copied `.path` and `start.cmd` from runner 1. Restart a runner between jobs in place of waiting for idle, or pause its listener first
 - [ ] Runners 2 to 4 still run their listeners with the old PATH, since a listener reads `.path` at start. Restart them between jobs, or reboot the PC
+
+## release-install
+
+- [ ] Pull `master` in `C:\Programming\WorkbenchSoft\local-ci` and run `.\dashboard\install.ps1`, so `http://localhost:4280` gets the Release column, Install, the failed step and the PR links (PR #21).
+- [ ] Press Install once on a real release. `workbench-soft.github.io` had 0 releases on 2025-10-29, since the latest Release runs failed, so only the error path ran in testing.
