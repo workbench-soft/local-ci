@@ -1,5 +1,5 @@
-import type { OrgStatus, WorkflowRun } from './org-status';
-import type { ThisPcStatus } from './this-pc';
+import type { OrgStatus, WorkflowRun } from './org-status.ts';
+import type { ThisPcStatus } from './this-pc.ts';
 
 /** The color of a status dot: green, blue, amber or red. */
 export type Tone = 'ok' | 'busy' | 'warn' | 'bad';

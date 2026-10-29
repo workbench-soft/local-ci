@@ -3,7 +3,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
-import { orgName } from './settings';
+import { orgName } from './settings.ts';
 
 export type ThisPcStatus =
 	| { supported: false }

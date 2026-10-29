@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { orgName } from './settings';
+import { orgName } from './settings.ts';
 
 export type OrgRunner = {
 	id: number;
@@ -80,8 +80,9 @@ async function listRunners(): Promise<OrgRunner[]> {
 
 async function listLatestRuns(): Promise<WorkflowRun[]> {
 	const repos = await getJson<{ full_name: string; archived: boolean }[]>(`/orgs/${orgName}/repos?per_page=100&sort=pushed`);
-	const perRepo = await Promise.all(repos.filter((repo) => !repo.archived).map((repo) => listRepoRuns(repo.full_name)));
-	return perRepo.flat();
+	const perRepo = await Promise.allSettled(repos.filter((repo) => !repo.archived).map((repo) => listRepoRuns(repo.full_name)));
+	// One repo that GitHub refuses, say with Actions turned off, drops out alone.
+	return perRepo.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
 }
 
 async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
