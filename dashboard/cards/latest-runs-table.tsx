@@ -79,29 +79,31 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 				</div>
 				<input type="search" placeholder="Search repo, workflow, branch" value={search} onChange={(event) => setSearch(event.target.value)} />
 			</div>
-			<table>
-				<thead>
-					<tr>
-						{columns.map(({ key, text }) => (
-							<th key={key} aria-sort={sort.key === key ? (sort.descending ? 'descending' : 'ascending') : undefined}>
-								<button type="button" className="sort" onClick={() => sortBy(key)}>
-									{text}
-									<span className="arrow">{sort.key === key ? (sort.descending ? '▼' : '▲') : ''}</span>
-								</button>
+			<div className="table-scroll">
+				<table>
+					<thead>
+						<tr>
+							{columns.map(({ key, text }) => (
+								<th key={key} aria-sort={sort.key === key ? (sort.descending ? 'descending' : 'ascending') : undefined}>
+									<button type="button" className="sort" onClick={() => sortBy(key)}>
+										{text}
+										<span className="arrow">{sort.key === key ? (sort.descending ? '▼' : '▲') : ''}</span>
+									</button>
+								</th>
+							))}
+							<th>Release</th>
+							<th>
+								<span className="sr-only">Actions</span>
 							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{rows.map((run) => (
+							<RunRowItem key={run.id} run={run} now={now} />
 						))}
-						<th>Release</th>
-						<th>
-							<span className="sr-only">Actions</span>
-						</th>
-					</tr>
-				</thead>
-				<tbody>
-					{rows.map((run) => (
-						<RunRowItem key={run.id} run={run} now={now} />
-					))}
-				</tbody>
-			</table>
+					</tbody>
+				</table>
+			</div>
 			{shown.length > rowLimit && (
 				<p className="muted small">
 					{rowLimit} of {shown.length} runs shown. Narrow the filter to see the rest.
