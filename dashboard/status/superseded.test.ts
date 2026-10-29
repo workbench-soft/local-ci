@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { reposWithPrRuns, supersededRuns } from './superseded.ts';
+import { prListsToRead, reposWithPrRuns, supersededRuns } from './superseded.ts';
 
 const run = (id: number, status: string, change: Partial<{ repo: string; workflowId: number; branch: string; event: string }> = {}) => ({
 	id,
@@ -48,4 +48,21 @@ test('a run of a merged or closed PR dies, a run of an open PR stays', () => {
 test('open PRs are read only for repos with an unfinished PR run', () => {
 	const runs = [run(3, 'queued', { event: 'pull_request' }), run(2, 'completed', { repo: 'done', event: 'pull_request' }), run(1, 'queued', { repo: 'push' })];
 	assert.deepEqual(reposWithPrRuns(runs), ['app']);
+});
+
+test('a PR run of a repo whose open PR list failed stays', () => {
+	const runs = [run(2, 'queued', { event: 'pull_request', branch: 'new-pr' }), run(1, 'queued', { repo: 'other', event: 'pull_request', branch: 'gone' })];
+	assert.deepEqual(ids(supersededRuns(runs, new Map([['other', new Set<string>()]]))), [1]);
+});
+
+test('a PR run that started after the last read of the open PRs gets a fresh read', () => {
+	const at = Date.parse('2026-10-29T10:00:00Z');
+	const pr = (id: number, createdAt: string, repo = 'app') => ({ ...run(id, 'queued', { repo, event: 'pull_request' }), createdAt });
+	const readAt = new Map([
+		['app', at],
+		['old', at],
+	]);
+	const runs = [pr(2, '2026-10-29T10:00:30Z'), pr(1, '2026-10-29T09:59:00Z', 'old'), pr(3, '2026-10-29T10:00:30Z', 'new')];
+	assert.deepEqual(prListsToRead(runs, readAt, at + 40_000, 60_000), ['app', 'new']);
+	assert.deepEqual(prListsToRead(runs, readAt, at + 60_000, 60_000), ['app', 'old', 'new']);
 });
