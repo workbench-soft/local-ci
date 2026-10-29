@@ -451,7 +451,7 @@ browser at each logon.
   - **Page** the idle alert counts the jobs the idle runner could take. A
     release goes to the one run of its repo that ended nearest to it. Light
     mode text and the dark active chip reach 4.5:1. Buttons, search and
-    progress bars get names. A page older than 3 refreshes says so, and a
+    progress bars get names. A page whose refreshes hang for 45 s says so, and a
     hidden tab skips its refresh.
   - **`install.ps1`** keeps the other lines of `.env.local`, and turns off
     Next telemetry.

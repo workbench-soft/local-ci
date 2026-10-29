@@ -107,9 +107,10 @@ icon: a white loop arrow around a green play sign on blue.
   runs. `CANCEL_SUPERSEDED=off` in `.env.local` turns it off, and a rerun of
   the install script keeps that line. `pnpm dev` doesn't cancel. Each cancel
   goes to `dashboard.log` with its time and reason.
-- **Stale page** when the page misses 3 refreshes, the line under the
-  headline turns red and says when it last updated. A hidden tab skips its
-  refreshes.
+- **Stale page** when refreshes hang for 45 seconds, the line under the
+  headline turns red and says when the page last updated. A stopped server
+  shows the browser's error page instead, since Next reloads the tab. A
+  hidden tab skips its refreshes.
 - **Localhost only** the page answers on `localhost`, `127.0.0.1` and `[::1]`
   and refuses any other host name with 421. Other sites can't frame it.
 - **Release and Install** the Release column links to the release a run
