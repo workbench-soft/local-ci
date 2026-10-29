@@ -107,3 +107,18 @@ browser at each logon.
   5. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 An icon for the page and its shortcut
+
+- **Why** the browser tab and the Startup shortcut show a blank default icon.
+- **Changes**
+  - **`app/icon.svg`** a blue rounded square with a white loop arrow around a
+    green play sign: a build that runs again and again. Next serves it as the
+    favicon.
+  - **`dashboard/icon.ico`** the same icon at 16, 24, 32, 48 and 256 px.
+    `install.ps1` sets it on the `local-ci dashboard.lnk` shortcut.
+- **Steps**
+  1. This spec.
+  2. The icon, the favicon and the shortcut.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.
