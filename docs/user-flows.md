@@ -93,8 +93,9 @@ flowchart TD
    GitHub. The Running now card lists those jobs.
 5. In Latest runs, pick a filter chip, type in the search box or click a
    column head to sort.
-6. Press Stop on a run or a job to cancel its run. Press Purge and confirm to
-   stop the run and delete it from GitHub. An error shows beside the buttons.
+6. Press Stop on a run or a job to cancel its run. The button reads
+   Stopping, then Stopped, and its runner takes the next job. Press Purge
+   and confirm to stop the run and delete it from GitHub. An error shows beside the buttons.
    To clear many runs, pick a filter or type a search, press Purge all and
    confirm. The count of purged runs and the first error show beside it.
 7. A failed run names its failed job and step. Click it to read the log.
@@ -115,7 +116,7 @@ flowchart TD
   O --> F[browser shows localhost:4280]
   F --> G[page refreshes every 15 s]
   F --> H{button}
-  H -- Stop --> I[GitHub cancels the run]
+  H -- Stop --> I[Stopping: force cancel] --> I2[Stopped: the runner takes the next job]
   H -- Purge, confirmed --> J[force cancel, wait, delete the run]
   H -- Purge all, confirmed --> P[purge every matched run, 5 at a time]
   H -- Install --> K[adb devices, download the APK, adb install]

@@ -103,14 +103,15 @@ icon: a white loop arrow around a green play sign on blue.
   a row with each job and step, its time and a bar in scale with the longest
   step. The row of an unfinished run updates on each refresh.
 - **Stop and Purge** buttons on each run and each live job. Stop cancels the
-  run on GitHub. Purge asks to confirm, force cancels the run and deletes it
+  run on GitHub. The button reads Stopping at once, then Stopped when GitHub
+  ends the run, and stays disabled the whole time. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's
   buttons act on its whole run, since GitHub cancels runs only.
-- **Stop or Purge** Stop is GitHub's Cancel: the run ends as cancelled and
-  stays in the history, and steps with `if: always()` still run. A queued
-  run gets Stop too, so it leaves the queue before a runner takes it. Purge
-  is for a run you want gone: it force cancels, skipping `if: always()`
-  steps, then deletes the run with its logs and artifacts.
+- **Stop or Purge** Stop force cancels: the run ends as cancelled and stays
+  in the history. It skips steps with `if: always()`, so the runner takes the
+  next job as soon as the run ends. A queued run gets Stop too, so it leaves
+  the queue before a runner takes it. Purge is for a run you want gone: it
+  force cancels, then deletes the run with its logs and artifacts.
 - **Purge all** a button in the Latest runs toolbar with the count of runs
   the filter and search match, past the 60 rows the table shows too. It asks
   to confirm, purges them 5 at a time, then shows how many it purged and the

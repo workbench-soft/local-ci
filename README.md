@@ -92,8 +92,9 @@ once, from the main checkout:
 
 - **Shows** the jobs on this PC, the jobs waiting on GitHub for a runner, the
   org runners, and the latest runs with a filter and sorting.
-- **Stop and Purge** each run gets a Stop button to cancel it, and a Purge
-  button to force cancel it and delete it from GitHub with its logs.
+- **Stop and Purge** each run gets a Stop button to force cancel it, so its
+  runner is free at once. The button reads Stopping, then Stopped. A Purge
+  button force cancels a run and deletes it from GitHub with its logs.
   Purge all, after a confirm, purges every run the filter and search match.
 - **Old runs die** the page server force cancels a run that a newer run of
   its workflow and branch replaced, or whose PR is merged or closed. Each
