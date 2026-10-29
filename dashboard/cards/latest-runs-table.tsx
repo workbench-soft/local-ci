@@ -7,6 +7,7 @@ import { type Place, placeOrder } from '@/status/placement';
 import type { Release } from '@/status/releases';
 import { Icon, placeIcons, resultOf } from './icons';
 import { InstallButton } from './install-button';
+import { PurgeAllButton } from './purge-all-button';
 import { RunControls } from './run-controls';
 
 export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & { place: Place; release: Release | null; failure: RunFailure | null };
@@ -88,6 +89,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 					))}
 				</div>
 				<input type="search" placeholder="Search repo, workflow, branch" value={search} onChange={(event) => setSearch(event.target.value)} />
+				<PurgeAllButton runs={shown} />
 			</div>
 			<div className="table-scroll">
 				<table>
