@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- `runner/install.ps1` installs the Android SDK parts the apps build with,
+  and jobs no longer download SDK parts. Two Release builds at once broke NDK
+  27.1 for every runner before.
+
+- Runners check repos out under `C:\ci\<number>`. Expo release builds
+  failed on a `.bat` path past 260 characters under `~ctions-runner`.
+
 - The Runners card sets the number of runners on this PC and suggests a
   count from the logical processors and the memory. `runner\install.ps1`
   keeps the count in `~/actions-runner/runner-count` and removes the runners

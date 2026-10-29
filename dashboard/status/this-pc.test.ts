@@ -37,7 +37,7 @@ test('the folders and tasks of runner/install.ps1 are the ones this page reads',
 	const source = await readFile(new URL('../../runner/install.ps1', import.meta.url), 'utf8');
 	const getRunner = /function Get-Runner\b[\s\S]*?\n\}/.exec(source)?.[0];
 	assert.ok(getRunner, 'runner/install.ps1 has no Get-Runner function');
-	const script = `$org = 'workbench-soft'; ${getRunner}; 1..3 | ForEach-Object { $r = Get-Runner $_; "$(Split-Path $r.Dir -Leaf)|$($r.Task)" }`;
+	const script = `$org = 'workbench-soft'; $workRoot = 'C:/ci'; ${getRunner}; 1..3 | ForEach-Object { $r = Get-Runner $_; "$(Split-Path $r.Dir -Leaf)|$($r.Task)" }`;
 	const stdout = await new Promise<string>((resolve, reject) =>
 		execFile('powershell', ['-NoProfile', '-Command', script], (error, out) => (error ? reject(error) : resolve(out))),
 	);

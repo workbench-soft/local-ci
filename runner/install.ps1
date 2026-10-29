@@ -30,12 +30,17 @@ $env:GH_PAGER = 'cat'
 function Write-Step([string]$text) { Write-Host "`n==> $text" }
 
 # The first runner keeps the folder, name and task it had before runners got numbers.
+# Jobs check repos out here, a short root so deep node_modules paths stay under 260 characters.
+$workRoot = if ($env:RUNNER_WORK_ROOT) { $env:RUNNER_WORK_ROOT } else { Join-Path $env:SystemDrive 'ci' }
+
 function Get-Runner([int]$number) {
 	$suffix = if ($number -eq 1) { '' } else { "-$number" }
 	$taskSuffix = if ($number -eq 1) { '' } else { " $number" }
 	return [pscustomobject]@{
 		Dir = Join-Path $HOME "actions-runner\$org$suffix"
 		Name = "$env:COMPUTERNAME$suffix"
+		# Windows can't start a .bat past 260 characters, and Expo's CMake writes one deep in node_modules.
+		Work = Join-Path $workRoot $number
 		Task = "GitHub Actions runner ($org$taskSuffix)"
 	}
 }
@@ -61,7 +66,7 @@ function Install-Runner($runner, [string]$zip, [string]$token) {
 	Write-Step "Registering $($runner.Name) in $($runner.Dir)"
 	New-Item -ItemType Directory -Force -Path $runner.Dir | Out-Null
 	Expand-Archive -Force -Path $zip -DestinationPath $runner.Dir
-	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $labels
+	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $labels --work $runner.Work
 	if ($LASTEXITCODE -ne 0) { throw "config.cmd failed for $($runner.Name)" }
 }
 
@@ -100,6 +105,8 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	# action-setup puts PNPM_HOME, and with it the pnpm store, in _temp, which the runner wipes after each job.
 	$jobVars.pnpm_config_store_dir = Join-Path $env:LOCALAPPDATA 'pnpm\store'
 	if (Test-Path -LiteralPath $android) { $jobVars.ANDROID_HOME = $android; $jobVars.ANDROID_SDK_ROOT = $android }
+	# Two jobs downloading the same SDK part at once leave it half written, so jobs only read the SDK.
+	$jobVars.'ORG_GRADLE_PROJECT_android.builder.sdkDownload' = 'false'
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
 
@@ -109,6 +116,7 @@ function Add-DefenderExclusions {
 	if ($env:RUNNER_DEFENDER_EXCLUSIONS -eq 'off') { Write-Host 'RUNNER_DEFENDER_EXCLUSIONS=off, skipping'; return }
 	$paths = @(
 		(Join-Path $HOME 'actions-runner'),
+		$workRoot,
 		(Join-Path $HOME '.gradle'),
 		(Join-Path $env:LOCALAPPDATA 'pnpm'),
 		(Join-Path $env:LOCALAPPDATA 'npm-cache'),
@@ -133,8 +141,18 @@ function Stop-RunnerWhenIdle($runner) {
 	Get-Process Runner.Listener, Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } | Stop-Process -Force
 }
 
+# Runners registered before the short root still point at _work in their own folder.
+function Set-RunnerWork($runner) {
+	$file = Join-Path $runner.Dir '.runner'
+	$config = Get-Content -Raw -LiteralPath $file | ConvertFrom-Json
+	if ($config.workFolder -eq $runner.Work) { return }
+	$config.workFolder = $runner.Work
+	Set-Content -LiteralPath $file -Encoding utf8 -Value ($config | ConvertTo-Json)
+}
+
 function Start-Runner($runner) {
 	Stop-RunnerWhenIdle $runner
+	Set-RunnerWork $runner
 	# Jobs reach GitHub through their GITHUB_TOKEN, since the task can't read the gh login.
 	Register-BootTask $runner.Task (Join-Path $runner.Dir 'start.cmd') $runner.Dir
 }
@@ -156,6 +174,7 @@ function Remove-Runner($runner, [string]$token) {
 	}
 	# node_modules in _work holds paths over 260 characters.
 	Remove-Item -LiteralPath "\\?\$($runner.Dir)" -Recurse -Force
+	if (Test-Path -LiteralPath $runner.Work) { Remove-Item -LiteralPath "\\?\$($runner.Work)" -Recurse -Force }
 }
 
 # The task runs this script as admin in the person's session, so gh keeps its login and UAC asks nothing.
@@ -194,6 +213,18 @@ if ($extra.Count) {
 Write-Step 'Adding the runner folders and the package caches to the Defender exclusions'
 Add-DefenderExclusions
 
+# The SDK parts the org's Android apps build with. Add one here and run the script again.
+$androidPackages = 'ndk;27.1.12297006', 'platforms;android-36', 'platforms;android-37.0', 'build-tools;35.0.0', 'build-tools;36.0.0', 'build-tools;37.0.0'
+
+function Install-AndroidSdk {
+	$android = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
+	$sdkmanager = Join-Path $android 'cmdline-tools\latest\bin\sdkmanager.bat'
+	if (-not (Test-Path -LiteralPath $sdkmanager)) { Write-Host "No sdkmanager at $sdkmanager, skipping the Android SDK"; return }
+	if (-not $env:JAVA_HOME) { $env:JAVA_HOME = mise where java }
+	@('y') * 20 | & $sdkmanager --install @androidPackages | Out-Null
+	if ($LASTEXITCODE -ne 0) { throw "sdkmanager failed with exit code $LASTEXITCODE" }
+}
+
 # node_modules and the .open-next cache hold paths over 260 characters.
 Write-Step 'Turning on long paths for git and Windows'
 git config --global core.longpaths true
@@ -202,6 +233,9 @@ try {
 } catch {
 	Write-Host "Windows long paths need an admin run: $($_.Exception.Message)"
 }
+
+Write-Step 'Installing the Android SDK parts the apps build with'
+Install-AndroidSdk
 
 $toolDirs = Get-ToolDirs
 $toolCache = Join-Path $HOME 'actions-runner\_tool'
