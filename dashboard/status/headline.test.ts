@@ -20,6 +20,8 @@ const run = (status: string, conclusion: string | null = null): WorkflowRun => (
 	createdAt: secondsBefore(0),
 	updatedAt: secondsBefore(0),
 	url: 'https://github.com',
+	branchUrl: 'https://github.com/tree/main',
+	pullRequests: [],
 	jobs: [],
 });
 
@@ -37,7 +39,7 @@ const pcRunner = (listener: boolean): PcRunner => ({
 const pcUp: ThisPcStatus = { supported: true, runners: [pcRunner(true), pcRunner(true)] };
 const pcDown: ThisPcStatus = { supported: true, runners: [pcRunner(false)] };
 const noPc: ThisPcStatus = { supported: false };
-const orgWith = (runs: WorkflowRun[], runners: OrgRunner[] | null = [runner('online')]): OrgStatus => ({ ok: true, runners, runnersError: null, runs });
+const orgWith = (runs: WorkflowRun[], runners: OrgRunner[] | null = [runner('online')]): OrgStatus => ({ ok: true, runners, runnersError: null, runs, releases: [] });
 
 test('formatAge picks seconds, minutes, hours and days', () => {
 	assert.equal(formatAge(secondsBefore(0), now), '0 s ago');
@@ -96,6 +98,7 @@ const job = (status: string, runnerName: string | null = null) => ({
 	labels: ['self-hosted'],
 	startedAt: null,
 	url: 'https://github.com',
+	failedStep: null,
 });
 const runWith = (...jobs: ReturnType<typeof job>[]): WorkflowRun => ({ ...run('in_progress'), jobs });
 const summarize = (runs: WorkflowRun[]) => summarizeCi(pcUp, orgWith(runs), liveJobs(runs, new Set(['pc'])));

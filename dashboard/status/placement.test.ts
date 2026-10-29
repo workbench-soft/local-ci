@@ -15,6 +15,7 @@ const job = (id: number, status: string, runnerName: string | null = null, start
 	labels: ['self-hosted', 'local'],
 	startedAt,
 	url: `https://github.com/job/${id}`,
+	failedStep: null,
 });
 
 const run = (status: string, jobs: RunJob[] = []): WorkflowRun => ({
@@ -29,6 +30,8 @@ const run = (status: string, jobs: RunJob[] = []): WorkflowRun => ({
 	createdAt: '2025-10-29T12:00:00Z',
 	updatedAt: '2025-10-29T12:00:00Z',
 	url: 'https://github.com/run/7',
+	branchUrl: 'https://github.com/tree/main',
+	pullRequests: [],
 	jobs,
 });
 
