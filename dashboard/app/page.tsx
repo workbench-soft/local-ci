@@ -20,8 +20,8 @@ export default async function StatusPage() {
 	const runs = org.ok ? org.runs : [];
 	const releases = org.ok ? org.releases : [];
 	const live = liveJobs(runs, local);
-	const { idle } = idleWhileQueued(org.ok ? org.runners : null, local, live, now);
-	const headline = summarizeCi(pc, org, live, idle);
+	const stuck = idleWhileQueued(org.ok ? org.runners : null, local, live, now);
+	const headline = summarizeCi(pc, org, live, stuck);
 	// The table runs in the browser, so it gets each run without its jobs.
 	const rows: RunRow[] = runs.map((run) => {
 		const { jobs, updatedAt, ...row } = run;
@@ -39,7 +39,7 @@ export default async function StatusPage() {
 			<div className="grid">
 				{org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} now={now} />}
 				<RunnersCard pc={pc} org={org} jobs={live} now={now} />
-				{org.ok && <RunningNowCard jobs={live} idle={idle} now={now} />}
+				{org.ok && <RunningNowCard jobs={live} stuck={stuck} now={now} />}
 				{org.ok && <LatestRunsTable runs={rows} now={now} />}
 			</div>
 		</main>
