@@ -69,6 +69,8 @@ flowchart TD
    GitHub. The Now card lists those jobs.
 5. In Latest runs, pick a filter chip, type in the search box or click a
    column head to sort.
+6. Press Stop on a run or a job to cancel its run. Press Purge and confirm to
+   stop the run and delete it from GitHub. An error shows beside the buttons.
 
 ```mermaid
 flowchart TD
@@ -81,4 +83,8 @@ flowchart TD
   E --> O
   O --> F[browser shows localhost:4280]
   F --> G[page refreshes every 15 s]
+  F --> H{button}
+  H -- Stop --> I[GitHub cancels the run]
+  H -- Purge, confirmed --> J[force cancel, wait, delete the run]
+  I & J --> G
 ```

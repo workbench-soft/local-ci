@@ -60,6 +60,11 @@ export function fetchOrgStatus(): Promise<OrgStatus> {
 	return status;
 }
 
+/** Drops the cached status, so the next render reads GitHub after a run changed. */
+export function forgetOrgStatus(): void {
+	cached = null;
+}
+
 async function loadOrgStatus(): Promise<OrgStatus> {
 	try {
 		const [runners, runs] = await Promise.allSettled([listRunners(), listLatestRuns()]);
@@ -153,7 +158,13 @@ async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 }
 
 async function getJson<T>(path: string): Promise<T> {
+	return (await callGitHub(path)).json() as Promise<T>;
+}
+
+/** One GitHub API call with the page's token. A status outside 2xx throws with the path in the message. */
+export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET'): Promise<Response> {
 	const response = await fetch(`https://api.github.com${path}`, {
+		method,
 		headers: {
 			Authorization: `Bearer ${await resolveToken()}`,
 			Accept: 'application/vnd.github+json',
@@ -161,8 +172,8 @@ async function getJson<T>(path: string): Promise<T> {
 		},
 		cache: 'no-store',
 	});
-	if (!response.ok) throw new Error(`GitHub answered ${response.status} to ${path}`);
-	return response.json() as Promise<T>;
+	if (!response.ok) throw new Error(`GitHub answered ${response.status} to ${method} ${path}`);
+	return response;
 }
 
 // The boot task can't reach the gh login, so install.ps1 leaves GITHUB_TOKEN in .env.local.

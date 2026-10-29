@@ -5,6 +5,10 @@
 - The status page gets an icon, in the browser tab and on its Startup
   shortcut.
 
+- The status page gets Stop and Purge buttons on each run and live job. Stop
+  cancels the run. Purge force cancels it and deletes it from GitHub with its
+  logs and artifacts.
+
 - Both installs put Python 3.15 in through mise. On Windows `python3` now runs
   it in place of the Store stub, in a terminal and in runner jobs.
 

@@ -73,6 +73,10 @@ The server renders the page for each request.
 - **Open at logon** the boot task runs without a desktop. A shortcut in the
   Startup folder runs `dashboard/open.ps1`, which waits for the port and opens
   the page.
+- **Stop and Purge** the buttons call server actions in
+  `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/cancel`. Purge
+  runs `status/purge.ts`: it posts to `force-cancel`, polls the run until it
+  is completed, then sends `DELETE` on the run. Each action drops the cache.
 - **Repo errors** a repo whose runs call fails drops out of the list, and the
   other repos still show.
 
@@ -86,4 +90,7 @@ sequenceDiagram
   N->>W: Get-ScheduledTask, the open _diag logs of each runner
   N->>G: org runners, org repos, 5 runs per repo, jobs of unfinished runs
   N-->>B: HTML with the headline, cards and runs
+  B->>N: Stop or Purge, a server action
+  N->>G: cancel, or force-cancel, poll, DELETE
+  N-->>B: the result and a fresh page
 ```

@@ -48,6 +48,10 @@ icon: a white loop arrow around a green play sign on blue.
   for the place. Filter chips pick this PC, waiting, other runners, failed or
   passed. A search box matches repo, workflow and branch. A click on a column
   head sorts by it.
+- **Stop and Purge** buttons on each run and each live job. Stop cancels the
+  run on GitHub. Purge asks to confirm, force cancels the run and deletes it
+  with its logs and artifacts. A finished run gets Purge only. A job's
+  buttons act on its whole run, since GitHub cancels runs only.
 - **Limits** a job counts as local when its runner name matches a runner
   folder of this PC, so the This PC parts need Windows. After a new gh login,
   run the install script again.

@@ -14,6 +14,8 @@ browser at each logon.
 3. The browser opens `http://localhost:4280` after the build and at each
    logon. The page refreshes every 15 seconds on its own.
 4. The person filters, searches and sorts the runs table.
+5. The person presses Stop on an unfinished run to cancel it, or Purge to
+   force cancel it and delete it from GitHub with its logs and artifacts.
 
 ## How it works: modules, files, data
 
@@ -46,6 +48,11 @@ browser at each logon.
 - **`dashboard/install.ps1`** installs the packages and builds. Then it writes
   `.env.local` and registers the `local-ci dashboard` task at boot.
 - **Port** `4280`, on `127.0.0.1` only. `DASHBOARD_PORT` picks another one.
+- **Stop and Purge** server actions in `status/run-actions.ts`. Stop calls
+  `POST /repos/{repo}/actions/runs/{id}/cancel`. Purge calls `force-cancel`,
+  which also stops steps with `if: always()`. It then waits up to 60 seconds
+  for the run to finish and calls `DELETE /repos/{repo}/actions/runs/{id}`.
+  Each action drops the 20 second cache, so the next render shows the change.
 
 ## Limits
 
@@ -54,6 +61,10 @@ browser at each logon.
 - **Token** GitHub data shows only while the token in `.env.local` works.
   After a new gh login, run the install script again.
 - **Repos** up to 100 org repos, with 5 runs each.
+- **Whole runs** GitHub cancels a run, not a single job. Stop on a job in the
+  Now card stops its whole run.
+- **Token scope** Stop and Purge need write access to Actions. The `repo`
+  scope of a gh login gives it.
 
 ## Changes
 
@@ -122,3 +133,26 @@ browser at each logon.
   2. The icon, the favicon and the shortcut.
   3. Docs and changelog.
 - **Docs** `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Stop and purge runs from the page
+
+- **Why** the person wants to kill a stuck or unwanted run from the page,
+  including a full purge, without opening GitHub.
+- **Changes**
+  - **`status/org-status.ts`** a shared GitHub call for any method, and a way
+    to drop the cache.
+  - **`status/run-actions.ts`** server actions: Stop cancels a run. Purge,
+    in `status/purge.ts`,
+    force cancels it, waits for it to finish, then deletes it.
+  - **`cards/run-controls.tsx`** Stop and Purge buttons. Purge asks to
+    confirm first. An error shows next to the buttons.
+  - **`cards/latest-runs-table.tsx`** the buttons on each run. A finished run
+    gets Purge only.
+  - **`cards/live-jobs-card.tsx`** the buttons on each job, for its run.
+- **Steps**
+  1. This spec.
+  2. The GitHub calls and the server actions.
+  3. The buttons.
+  4. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
