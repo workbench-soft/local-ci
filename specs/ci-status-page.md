@@ -318,3 +318,35 @@ browser at each logon.
   2. The styles and the table box.
   3. Docs and changelog.
 - **Docs** `docs/features.md`, `CHANGELOG.md`.
+
+### 2025-10-29 A progress bar and a time left on each running job
+
+- **Why** the person wants to see how far a running job got and when it ends,
+  without opening its log.
+- **Changes**
+  - **`status/org-status.ts`** each job keeps its step count, its current
+    step and its end time. For a workflow with a running job, the page also
+    asks `GET /repos/{repo}/actions/workflows/{id}/runs?status=success` for
+    its 3 latest successful runs and reads their jobs. The latest 5 runs of a
+    busy repo are often all queued, so they can't serve here. A finished run
+    doesn't change, so its jobs stay in memory for good, up to 200 runs.
+  - **`status/progress.ts`** the typical time of a job is the median time of
+    the same job name in those successful runs. The bar fills by elapsed
+    time over the typical time, capped at 99 %. Without a past run it fills
+    by finished steps over all steps.
+  - **`status/placement.ts`** each live job carries its steps and its
+    typical time.
+  - **`cards/job-progress.tsx`** the bar under a running job, with
+    `step 4 of 9: Build` and `about 3 min left`, or `2 min over the usual 5`
+    once it runs long.
+  - **`cards/live-jobs-card.tsx`** the bar on the jobs of this PC and of other
+    runners. A queued job gets none.
+- **Limits** the estimate needs a successful run of the same workflow with a
+  job of the same name. Steps come from GitHub, which updates them every
+  few seconds, and the page reads them every 15 to 20 seconds.
+- **Steps**
+  1. This spec.
+  2. Steps, past jobs and the estimate, with tests.
+  3. The bar.
+  4. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.

@@ -1,6 +1,7 @@
 import { formatAge } from '@/status/headline';
 import type { LiveJob, RunnerSlot } from '@/status/placement';
 import { Icon, placeIcons } from './icons';
+import { JobProgress } from './job-progress';
 import { RunControls } from './run-controls';
 import { StatusDot } from './status-dot';
 
@@ -64,6 +65,7 @@ function RunnerRow({ slot: { runner, job }, now }: { slot: RunnerSlot; now: numb
 				{job && (
 					<>
 						<div className="muted small">started {formatAge(job.since, now)}</div>
+						<JobProgress job={job} now={now} />
 						<RunControls repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
 					</>
 				)}
@@ -86,6 +88,7 @@ function JobItem({ job, now }: { job: LiveJob; now: number }) {
 					{where && `${where}, `}
 					{job.place === 'waiting' ? 'queued' : 'started'} {formatAge(job.since, now)}
 				</div>
+				{job.place !== 'waiting' && <JobProgress job={job} now={now} />}
 				<RunControls repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
 			</div>
 		</li>

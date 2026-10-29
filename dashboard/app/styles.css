@@ -136,6 +136,29 @@ h1 .dot {
 	}
 }
 
+.progress {
+	margin: 4px 0;
+}
+
+.progress-bar {
+	height: 4px;
+	border-radius: 999px;
+	background: var(--line);
+	overflow: hidden;
+}
+
+.progress-bar > span {
+	display: block;
+	height: 100%;
+	background: var(--busy);
+	transition: width 0.4s;
+}
+
+/* A job past its usual time keeps a full bar, so the color says it runs long. */
+.progress-bar.over > span {
+	background: var(--warn);
+}
+
 .runners {
 	list-style: none;
 	margin: 0;

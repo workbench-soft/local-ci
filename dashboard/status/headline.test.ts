@@ -100,6 +100,9 @@ const job = (status: string, runnerName: string | null = null) => ({
 	startedAt: null,
 	url: 'https://github.com',
 	failedStep: null,
+	completedAt: null,
+	steps: { done: 0, total: 0, current: null },
+	typicalMs: null,
 });
 const runWith = (...jobs: ReturnType<typeof job>[]): WorkflowRun => ({ ...run('in_progress'), jobs });
 const summarize = (runs: WorkflowRun[]) => summarizeCi(pcUp, orgWith(runs), liveJobs(runs, new Set(['pc'])));

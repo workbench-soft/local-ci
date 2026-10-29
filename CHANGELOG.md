@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Each running job on the status page gets a progress bar with its current
+  step and the time left, from the 3 latest successful runs of its workflow.
+
 - The status page server force cancels a run once a newer run of its
   workflow and branch shows, or once its PR is merged or closed.
 
