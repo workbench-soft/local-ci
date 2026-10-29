@@ -16,6 +16,9 @@ const job = (id: number, status: string, runnerName: string | null = null, start
 	startedAt,
 	url: `https://github.com/job/${id}`,
 	failedStep: null,
+	completedAt: null,
+	steps: { done: 0, total: 0, current: null },
+	typicalMs: null,
 });
 
 const run = (status: string, jobs: RunJob[] = []): WorkflowRun => ({
@@ -89,6 +92,8 @@ const liveJob = (runnerName: string, place: LiveJob['place'] = 'local'): LiveJob
 	labels: [],
 	since: '2025-10-29T12:00:00Z',
 	url: 'u',
+	steps: null,
+	typicalMs: null,
 });
 
 test('runnerSlots gives every runner of this PC a row, idle ones too', () => {

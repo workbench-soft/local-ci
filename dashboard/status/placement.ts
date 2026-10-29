@@ -1,4 +1,5 @@
 import type { RunJob, WorkflowRun } from './org-status.ts';
+import type { StepCount } from './progress.ts';
 import type { PcRunner, ThisPcStatus } from './this-pc.ts';
 
 /** Statuses of a run or a job that hasn't finished. */
@@ -20,6 +21,9 @@ export type LiveJob = {
 	labels: string[];
 	since: string;
 	url: string;
+	/** Null for a whole run without jobs, which has no steps to count. */
+	steps: StepCount | null;
+	typicalMs: number | null;
 };
 
 /** Local first, then the queue, then other runners. */
@@ -56,12 +60,12 @@ export function liveJobs(runs: WorkflowRun[], local: Set<string>): LiveJob[] {
 		const base = { runId: run.id, repo: run.repo, workflow: run.workflow };
 		if (!run.jobs.length) {
 			const place = placeOfRun(run, local) as LiveJob['place'];
-			return [{ ...base, key: `run-${run.id}`, name: null, place, runnerName: null, labels: [], since: run.createdAt, url: run.url }];
+			return [{ ...base, key: `run-${run.id}`, name: null, place, runnerName: null, labels: [], since: run.createdAt, url: run.url, steps: null, typicalMs: null }];
 		}
 		return run.jobs.flatMap((job): LiveJob[] => {
 			const place = placeOfJob(job, local);
 			if (place === 'done') return [];
-			return [{ ...base, key: `job-${job.id}`, name: job.name, place, runnerName: job.runnerName, labels: job.labels, since: job.startedAt ?? run.createdAt, url: job.url }];
+			return [{ ...base, key: `job-${job.id}`, name: job.name, place, runnerName: job.runnerName, labels: job.labels, since: job.startedAt ?? run.createdAt, url: job.url, steps: job.steps, typicalMs: job.typicalMs }];
 		});
 	});
 	return jobs.sort((a, b) => placeOrder[a.place] - placeOrder[b.place] || Date.parse(a.since) - Date.parse(b.since));

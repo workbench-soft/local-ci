@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { activeStatuses } from './placement.ts';
+import { countSteps, type StepCount, typicalDuration } from './progress.ts';
 import { type ApiRelease, type Release, releasesRepo, toRelease } from './releases.ts';
 import { orgName } from './settings.ts';
 
@@ -45,9 +46,13 @@ export type RunJob = {
 	runnerName: string | null;
 	labels: string[];
 	startedAt: string | null;
+	completedAt: string | null;
 	url: string;
 	/** The first step that failed, for a failed job. */
 	failedStep: string | null;
+	steps: StepCount;
+	/** How long this job took in the latest successful runs of its workflow. Set only on running jobs. */
+	typicalMs: number | null;
 };
 
 export type OrgStatus =
@@ -115,8 +120,9 @@ type ApiJob = {
 	runner_name: string | null;
 	labels: string[];
 	started_at: string | null;
+	completed_at: string | null;
 	html_url: string;
-	steps?: { name: string; conclusion: string | null }[];
+	steps?: { name: string; status: string; conclusion: string | null }[];
 };
 
 async function listRunners(): Promise<OrgRunner[]> {
@@ -134,7 +140,7 @@ async function listLatestRuns(): Promise<WorkflowRun[]> {
 async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 	const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(`/repos/${fullName}/actions/runs?per_page=${runsPerRepo}`);
 	const repo = fullName.split('/')[1];
-	return Promise.all(
+	const runs = await Promise.all(
 		workflow_runs.map(async (run) => ({
 			id: run.id,
 			repo,
@@ -152,6 +158,39 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 			jobs: activeStatuses.has(run.status) || failedConclusions.has(run.conclusion ?? '') ? await listRunJobs(fullName, run.id) : [],
 		})),
 	);
+	await addTypicalTimes(fullName, runs);
+	return runs;
+}
+
+/** Past successful runs of a workflow give the usual length of each of its running jobs. */
+async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<void> {
+	const running = runs.flatMap((run) => run.jobs.filter((job) => job.status === 'in_progress').map((job) => ({ run, job })));
+	if (!running.length) return;
+	const workflows = new Set(running.map(({ run }) => run.workflow));
+	const pastByWorkflow = new Map<string, RunJob[]>();
+	await Promise.all(
+		[...workflows].map(async (workflow) => {
+			const past = runs.filter((run) => run.workflow === workflow && run.conclusion === 'success').slice(0, 3);
+			const jobs = await Promise.all(past.map((run) => finishedRunJobs(fullName, run.id)));
+			pastByWorkflow.set(workflow, jobs.flat().filter((job) => job.conclusion === 'success'));
+		}),
+	);
+	for (const { run, job } of running) job.typicalMs = typicalDuration(job.name, pastByWorkflow.get(run.workflow) ?? []);
+}
+
+// A finished run never changes, so its jobs are read once. The oldest entry goes past 200 runs.
+const finishedJobs = new Map<number, Promise<RunJob[]>>();
+
+function finishedRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
+	let jobs = finishedJobs.get(runId);
+	if (!jobs) {
+		jobs = listRunJobs(fullName, runId);
+		finishedJobs.set(runId, jobs);
+		// A failed call gives no jobs, so the next load tries again.
+		void jobs.then((list) => list.length || finishedJobs.delete(runId));
+		if (finishedJobs.size > 200) finishedJobs.delete(finishedJobs.keys().next().value as number);
+	}
+	return jobs;
 }
 
 const failedConclusions = new Set(['failure', 'timed_out', 'startup_failure']);
@@ -181,8 +220,11 @@ async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 			runnerName: job.runner_name || null,
 			labels: job.labels,
 			startedAt: job.started_at,
+			completedAt: job.completed_at,
 			url: job.html_url,
 			failedStep: job.steps?.find((step) => failedConclusions.has(step.conclusion ?? ''))?.name ?? null,
+			steps: countSteps(job.steps),
+			typicalMs: null,
 		}));
 	} catch {
 		return [];
