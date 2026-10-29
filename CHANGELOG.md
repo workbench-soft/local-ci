@@ -8,6 +8,21 @@
   under the GitHub rate limit. The headline turns red when a runner of this
   PC sits idle while jobs wait.
 
+- `runner/install.ps1` excludes the runner folders and the pnpm, npm, mise
+  and Gradle caches from Defender scans. `RUNNER_DEFENDER_EXCLUSIONS=off`
+  skips it.
+
+- The runners of a machine share one tool cache in `~/actions-runner/_tool`.
+  Node, Java or Python from a `setup-*` action downloads once for all of
+  them. Run `runner/install.ps1` or `runner/install.sh` again to switch.
+
+- The runs table of the status page says Building on this PC, Queued on
+  GitHub or Building on another runner, with a hint on hover. A line under
+  the heading says a finished run shows only its result.
+
+- The runs table gets a Purge all button. After a confirm, it purges every
+  run the filter and search match.
+
 - Each running job on the status page gets a progress bar with its current
   step and the time left, from the 3 latest successful runs of its workflow.
 

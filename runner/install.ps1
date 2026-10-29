@@ -75,15 +75,36 @@ function Get-ToolDirs {
 	return $dirs
 }
 
-function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs) {
+function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [string]$toolCache) {
 	Set-Content -LiteralPath (Join-Path $runnerDir 'start.cmd') -Encoding ascii -Value "@echo off`r`nset `"PATH=$($toolDirs -join ';');%PATH%`"`r`ncall `"%~dp0run.cmd`""
 	$path = $toolDirs + ([Environment]::GetEnvironmentVariable('Path', 'Machine') -split ';') + ([Environment]::GetEnvironmentVariable('Path', 'User') -split ';')
 	Set-Content -LiteralPath (Join-Path $runnerDir '.path') -Encoding ascii -Value (($path | Where-Object { $_ } | Select-Object -Unique) -join ';')
 
 	$android = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
-	$jobVars = [ordered]@{ LANG = 'en_US.UTF-8' }
+	# The setup-* actions then download a tool once for every runner, not once per runner.
+	$jobVars = [ordered]@{ LANG = 'en_US.UTF-8'; RUNNER_TOOL_CACHE = $toolCache; AGENT_TOOLSDIRECTORY = $toolCache }
 	if (Test-Path -LiteralPath $android) { $jobVars.ANDROID_HOME = $android; $jobVars.ANDROID_SDK_ROOT = $android }
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
+}
+
+# Defender scans each file a job writes, and pnpm install writes tens of
+# thousands. The runners build only the org's own repos.
+function Add-DefenderExclusions {
+	if ($env:RUNNER_DEFENDER_EXCLUSIONS -eq 'off') { Write-Host 'RUNNER_DEFENDER_EXCLUSIONS=off, skipping'; return }
+	$paths = @(
+		(Join-Path $HOME 'actions-runner'),
+		(Join-Path $HOME '.gradle'),
+		(Join-Path $env:LOCALAPPDATA 'pnpm'),
+		(Join-Path $env:LOCALAPPDATA 'npm-cache'),
+		(Join-Path $env:LOCALAPPDATA 'mise')
+	)
+	# Another antivirus switches Defender off, and Add-MpPreference then fails.
+	try {
+		Add-MpPreference -ExclusionPath $paths
+		$paths | ForEach-Object { Write-Host "Excluded  $_" }
+	} catch {
+		Write-Host "Defender refused the exclusions: $($_.Exception.Message)"
+	}
 }
 
 function Start-Runner($runner) {
@@ -111,9 +132,14 @@ if ($missing.Count) {
 	Remove-Item $zip
 }
 
+Write-Step 'Adding the runner folders and the package caches to the Defender exclusions'
+Add-DefenderExclusions
+
 $toolDirs = Get-ToolDirs
+$toolCache = Join-Path $HOME 'actions-runner\_tool'
+New-Item -ItemType Directory -Force -Path $toolCache | Out-Null
 foreach ($runner in $runners) {
 	Write-Step "Writing start.cmd, .path and the job variables for $($runner.Name), and starting it at boot"
-	Write-RunnerEnvironment $runner.Dir $toolDirs
+	Write-RunnerEnvironment $runner.Dir $toolDirs $toolCache
 	Start-Runner $runner
 }

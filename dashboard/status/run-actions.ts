@@ -2,10 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { callGitHub, forgetOrgStatus } from './org-status.ts';
-import { purgeRun } from './purge.ts';
+import { purgeRun, purgeRuns } from './purge.ts';
 import { orgName } from './settings.ts';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
+
+export type PurgeAllResult = { purged: number; failed: number; error: string | null };
 
 /** Cancels a run, the way the Cancel workflow button on GitHub does. */
 export async function stopRun(repo: string, runId: number): Promise<ActionResult> {
@@ -16,24 +18,47 @@ export async function stopRun(repo: string, runId: number): Promise<ActionResult
 
 /** Force cancels a run when it hasn't finished, then deletes it from GitHub. */
 export async function purgeRunById(repo: string, runId: number): Promise<ActionResult> {
-	return runAction(repo, runId, (path) =>
-		purgeRun({
-			status: async () => ((await (await callGitHub(path)).json()) as { status: string }).status,
-			forceCancel: async () => {
-				await callGitHub(`${path}/force-cancel`, 'POST');
-			},
-			remove: async () => {
-				await callGitHub(path, 'DELETE');
-			},
-		}),
-	);
+	return runAction(repo, runId, purgeAt);
+}
+
+/** Purges each run of the list, 5 at a time. */
+export async function purgeAllRuns(runs: { repo: string; runId: number }[]): Promise<PurgeAllResult> {
+	if (!Array.isArray(runs) || !runs.every((run) => isRun(run?.repo, run?.runId))) return { purged: 0, failed: 0, error: 'Unknown run.' };
+	try {
+		const failures = await purgeRuns(runs, (run) => purgeAt(runPath(run.repo, run.runId)));
+		const first = failures[0];
+		return { purged: runs.length - failures.length, failed: failures.length, error: first ? `${first.run.repo}: ${first.error}` : null };
+	} finally {
+		forgetOrgStatus();
+		revalidatePath('/');
+	}
+}
+
+function purgeAt(path: string): Promise<void> {
+	return purgeRun({
+		status: async () => ((await (await callGitHub(path)).json()) as { status: string }).status,
+		forceCancel: async () => {
+			await callGitHub(`${path}/force-cancel`, 'POST');
+		},
+		remove: async () => {
+			await callGitHub(path, 'DELETE');
+		},
+	});
 }
 
 // The browser sends these arguments, so each one is checked before it goes in a GitHub path.
+function isRun(repo: unknown, runId: unknown): boolean {
+	return typeof repo === 'string' && /^[\w.-]+$/.test(repo) && typeof runId === 'number' && Number.isSafeInteger(runId) && runId > 0;
+}
+
+function runPath(repo: string, runId: number): string {
+	return `/repos/${orgName}/${repo}/actions/runs/${runId}`;
+}
+
 async function runAction(repo: string, runId: number, act: (path: string) => Promise<void>): Promise<ActionResult> {
-	if (!/^[\w.-]+$/.test(repo) || !Number.isSafeInteger(runId) || runId <= 0) return { ok: false, error: 'Unknown run.' };
+	if (!isRun(repo, runId)) return { ok: false, error: 'Unknown run.' };
 	try {
-		await act(`/repos/${orgName}/${repo}/actions/runs/${runId}`);
+		await act(runPath(repo, runId));
 		return { ok: true };
 	} catch (error) {
 		const message = error instanceof Error ? error.message : String(error);

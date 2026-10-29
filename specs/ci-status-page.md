@@ -352,6 +352,46 @@ browser at each logon.
   4. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
 
+### 2026-10-29 Purge all runs of the table
+
+- **Why** the person wants to clear many runs at once, such as every failed
+  run or every run of one repo, without pressing Purge on each.
+- **Changes**
+  - **`status/purge.ts`** `purgeRuns` purges a list of runs, 5 at a time,
+    and returns the runs it failed on with their errors.
+  - **`status/run-actions.ts`** a server action that checks each repo and
+    run id, then purges them all.
+  - **`cards/latest-runs-table.tsx`** a Purge all button in the toolbar. It
+    acts on every run the filter and the search match, past the 60 rows the
+    table shows too. It asks to confirm with the count first, then shows how
+    many it purged and the first error.
+- **Limits** a run that won't stop within 60 seconds stays, like with Purge.
+- **Steps**
+  1. This spec.
+  2. `purgeRuns` with tests, and the server action.
+  3. The button.
+  4. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/user-flows.md`, `docs/architecture.md`,
+  `README.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Place labels that say what they mean
+
+- **Why** the person read "On this PC" in Latest runs and asked what it means,
+  since every run of theirs builds on this PC. The label shows only while a
+  run builds, and the page didn't say so.
+- **Changes**
+  - **`cards/icons.tsx`** each place gets a label with a verb and a hint:
+    Building on this PC, Queued on GitHub, Building on another runner. The
+    hint names who builds the job, for example a GitHub hosted runner.
+  - **`cards/latest-runs-table.tsx`** the filter chips use the same labels,
+    and each chip and place label shows its hint on hover. A line under the
+    heading says the place shows only while a run is unfinished.
+- **Steps**
+  1. This spec.
+  2. The labels, the hints and the line.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.
+
 ### 2026-10-29 A Running now banner, and every unfinished run on the page
 
 - **Why** the Now card showed a long waiting list and no running job, while

@@ -30,6 +30,12 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   how many runners the machine gets: 4 on Windows and 1 on a Mac by default.
 - **Limit** extra runners speed up only work split into jobs. Jobs at the
   same time share ports, the Android emulator and the Gradle cache.
+- **Shared tool cache** the runners of a machine keep `setup-*` downloads in
+  `~/actions-runner/_tool`. Node of one version downloads once for all of
+  them.
+- **Defender exclusions** on Windows Defender skips the runner folders and
+  the package caches. `RUNNER_DEFENDER_EXCLUSIONS=off` skips the step.
+- **Limit** Defender then skips the code that jobs check out.
 
 ## Start button
 
@@ -73,15 +79,27 @@ icon: a white loop arrow around a green play sign on blue.
   job, the progress bar and Stop. With no job building, the card says how
   many wait. The frame turns red when a runner of this PC sits idle while
   jobs wait.
-- **Runs** the latest 5 runs of each org repo and every unfinished one, with an icon for the result and
-  for the place. Filter chips pick this PC, waiting, other runners, failed or
-  passed. A search box matches repo, workflow and branch. A click on a column
-  head sorts by it. The table stops at 70% of the window height and scrolls,
-  with its head row pinned.
+- **Runs** the latest 5 runs of each org repo and every unfinished one, with
+  an icon for the result and for the place. An unfinished run says where it builds: Building on this
+  PC, Queued on GitHub or Building on another runner. A finished run shows
+  only its result. Each place label and chip explains itself on hover.
+  Filter chips pick one of those places, failed or passed. A search box
+  matches repo, workflow and branch. A click on a column head sorts by it. The
+  table stops at 70% of the window height and scrolls, with its head row
+  pinned.
 - **Stop and Purge** buttons on each run and each live job. Stop cancels the
   run on GitHub. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's
   buttons act on its whole run, since GitHub cancels runs only.
+- **Stop or Purge** Stop is GitHub's Cancel: the run ends as cancelled and
+  stays in the history, and steps with `if: always()` still run. A queued
+  run gets Stop too, so it leaves the queue before a runner takes it. Purge
+  is for a run you want gone: it force cancels, skipping `if: always()`
+  steps, then deletes the run with its logs and artifacts.
+- **Purge all** a button in the Latest runs toolbar with the count of runs
+  the filter and search match, past the 60 rows the table shows too. It asks
+  to confirm, purges them 5 at a time, then shows how many it purged and the
+  first error. A run that won't stop within 60 seconds stays.
 - **Old runs die** every 10 seconds the page server force cancels an
   unfinished run when a newer run of the same repo, workflow, branch and
   event exists, or when it checks a PR that is merged or closed. Main and

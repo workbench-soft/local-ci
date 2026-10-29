@@ -92,7 +92,9 @@ The server renders the page for each request.
 - **Stop and Purge** the buttons call server actions in
   `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/cancel`. Purge
   runs `status/purge.ts`: it posts to `force-cancel`, polls the run until it
-  is completed, then sends `DELETE` on the run. Each action drops the cache.
+  is completed, then sends `DELETE` on the run. Purge all sends the run ids
+  the table matches, and `purgeRuns` purges them 5 at a time. Each action
+  drops the cache.
 - **Old runs die** `instrumentation.ts` starts
   `status/cancel-superseded.ts` with the server. Every 10 seconds it reads
   the runs through the 20 second cache, and the open PRs of repos with an

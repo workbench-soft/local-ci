@@ -7,6 +7,7 @@ import { type Place, placeOrder } from '@/status/placement';
 import type { Release } from '@/status/releases';
 import { Icon, placeIcons, resultOf } from './icons';
 import { InstallButton } from './install-button';
+import { PurgeAllButton } from './purge-all-button';
 import { RunControls } from './run-controls';
 
 export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & { place: Place; release: Release | null; failure: RunFailure | null };
@@ -15,14 +16,16 @@ type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'started';
 
 const rowLimit = 60;
 
-const filters = {
+type Filter = { text: string; hint?: string; test: (row: RunRow) => boolean };
+
+const filters: Record<'all' | Exclude<Place, 'done'> | 'failed' | 'passed', Filter> = {
 	all: { text: 'All', test: () => true },
-	local: { text: 'On this PC', test: (row: RunRow) => row.place === 'local' },
-	waiting: { text: 'Waiting on GitHub', test: (row: RunRow) => row.place === 'waiting' },
-	elsewhere: { text: 'Other runners', test: (row: RunRow) => row.place === 'elsewhere' },
+	local: { ...placeIcons.local, test: (row: RunRow) => row.place === 'local' },
+	waiting: { ...placeIcons.waiting, test: (row: RunRow) => row.place === 'waiting' },
+	elsewhere: { ...placeIcons.elsewhere, test: (row: RunRow) => row.place === 'elsewhere' },
 	failed: { text: 'Failed', test: (row: RunRow) => toneOfRun(row) === 'bad' },
 	passed: { text: 'Passed', test: (row: RunRow) => row.conclusion === 'success' },
-} satisfies Record<string, { text: string; test: (row: RunRow) => boolean }>;
+};
 
 type FilterKey = keyof typeof filters;
 
@@ -68,16 +71,25 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 	return (
 		<section className="card wide">
 			<h2>Latest runs</h2>
+			<p className="muted small">An unfinished run says where it builds: on this PC, in the GitHub queue or on another runner. A finished run shows only its result.</p>
 			<div className="toolbar">
 				<div className="chips" role="group" aria-label="Filter runs">
 					{(Object.keys(filters) as FilterKey[]).map((key) => (
-						<button key={key} type="button" className="chip" aria-pressed={filter === key} onClick={() => setFilter(key)}>
+						<button
+							key={key}
+							type="button"
+							className="chip"
+							title={filters[key].hint}
+							aria-pressed={filter === key}
+							onClick={() => setFilter(key)}
+						>
 							{filters[key].text}
 							<span className="count">{runs.filter(filters[key].test).length}</span>
 						</button>
 					))}
 				</div>
 				<input type="search" placeholder="Search repo, workflow, branch" value={search} onChange={(event) => setSearch(event.target.value)} />
+				<PurgeAllButton runs={shown} />
 			</div>
 			<div className="table-scroll">
 				<table>
@@ -130,7 +142,7 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 					</a>
 				)}
 				{place && (
-					<div className={`place ${run.place}`}>
+					<div className={`place ${run.place}`} title={place.hint}>
 						<Icon name={place.icon} />
 						{place.text}
 					</div>

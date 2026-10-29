@@ -51,6 +51,12 @@ runner. The runner scripts also work alone:
   runners and a Mac 1, so Windows builds 4 jobs at once. `RUNNER_COUNT` picks
   another number. Jobs speed up only when the workflow splits its work into
   jobs or a `matrix`.
+- **Tool cache** the runners share `~/actions-runner/_tool`, so a `setup-*`
+  action downloads node, Java or Python once per machine. A rerun of the
+  script moves old runners onto it.
+- **Defender** on Windows the script excludes `~/actions-runner`,
+  `~/.gradle` and the pnpm, npm and mise caches from scans, so
+  `pnpm install` runs faster. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
 - **Folders** the first runner sits in `~/actions-runner/workbench-soft`, the
   next in `workbench-soft-2` and up. `RUNNER_ORG` picks another org.
 - **Fewer runners** a lower `RUNNER_COUNT` leaves the extra ones registered.
@@ -82,6 +88,7 @@ once, from the main checkout:
   org runners, and the latest runs with a filter and sorting.
 - **Stop and Purge** each run gets a Stop button to cancel it, and a Purge
   button to force cancel it and delete it from GitHub with its logs.
+  Purge all, after a confirm, purges every run the filter and search match.
 - **Old runs die** the page server force cancels a run that a newer run of
   its workflow and branch replaced, or whose PR is merged or closed. Each
   cancel goes to `dashboard.log`. `CANCEL_SUPERSEDED=off` in
