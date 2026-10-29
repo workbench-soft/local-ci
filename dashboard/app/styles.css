@@ -144,6 +144,26 @@ h1 .dot {
 	gap: 10px;
 }
 
+.runner-row > div {
+	margin-left: 18px;
+}
+
+.sides {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px 14px;
+}
+
+/* A row whose two sides disagree stands out, and its hint says what to check. */
+.runner-row.has-hint {
+	border-left: 3px solid var(--warn);
+	padding-left: 8px;
+}
+
+.hint {
+	color: var(--warn);
+}
+
 .labels {
 	margin: 4px 0 0 18px;
 	display: flex;

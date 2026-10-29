@@ -1,9 +1,8 @@
 import { AutoRefresh } from '@/cards/auto-refresh';
 import { LatestRunsTable, type RunRow } from '@/cards/latest-runs-table';
 import { LiveJobsCard } from '@/cards/live-jobs-card';
-import { OrgRunnersCard } from '@/cards/org-runners-card';
+import { RunnersCard } from '@/cards/runners-card';
 import { StatusDot } from '@/cards/status-dot';
-import { ThisPcCard } from '@/cards/this-pc-card';
 import { summarizeCi } from '@/status/headline';
 import { fetchOrgStatus } from '@/status/org-status';
 import { liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
@@ -35,8 +34,7 @@ export default async function StatusPage() {
 			</header>
 			<div className="grid">
 				{org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} now={now} />}
-				<ThisPcCard pc={pc} jobs={live} now={now} />
-				<OrgRunnersCard org={org} />
+				<RunnersCard pc={pc} org={org} now={now} />
 				{org.ok && <LatestRunsTable runs={rows} now={now} />}
 			</div>
 		</main>
