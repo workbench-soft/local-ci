@@ -41,8 +41,13 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 
 ## Start button
 
-`START.cmd` in the repo root starts the runners and the status page with a
-double click, then opens `http://localhost:4280`.
+`START.cmd` in the repo root runs the latest version of the CI with a double
+click, then opens `http://localhost:4280`.
+
+- **Latest code** it pulls the default branch first. On another branch, or
+  when the pull fails, it goes on with the code on disk.
+- **Rebuild** when the page code changed since the last build, it runs
+  `dashboardinstall.ps1`, which asks for admin and restarts the page.
 
 - **Starts** each `GitHub Actions runner` task and the `local-ci dashboard`
   task that isn't running.
