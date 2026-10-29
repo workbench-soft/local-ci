@@ -5,6 +5,7 @@ import { formatAge, toneOfRun } from '@/status/headline';
 import type { WorkflowRun } from '@/status/org-status';
 import { type Place, placeOrder } from '@/status/placement';
 import { Icon, placeIcons, resultOf } from './icons';
+import { RunControls } from './run-controls';
 
 export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & { place: Place };
 
@@ -87,6 +88,9 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 								</button>
 							</th>
 						))}
+						<th>
+							<span className="sr-only">Actions</span>
+						</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -134,6 +138,9 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 				<div className="muted small">{run.event}</div>
 			</td>
 			<td className="nowrap">{formatAge(run.createdAt, now)}</td>
+			<td>
+				<RunControls repo={run.repo} runId={run.id} active={run.status !== 'completed'} label={`the ${run.repo} / ${run.workflow} run`} />
+			</td>
 		</tr>
 	);
 }

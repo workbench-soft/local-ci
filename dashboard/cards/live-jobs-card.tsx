@@ -1,6 +1,7 @@
 import { formatAge } from '@/status/headline';
 import type { LiveJob, RunnerSlot } from '@/status/placement';
 import { Icon, placeIcons } from './icons';
+import { RunControls } from './run-controls';
 import { StatusDot } from './status-dot';
 
 const columns: { place: LiveJob['place']; empty: string }[] = [
@@ -50,7 +51,7 @@ function RunnerRow({ slot: { runner, job }, now }: { slot: RunnerSlot; now: numb
 	return (
 		<li>
 			<StatusDot tone={stopped ? 'bad' : busy ? 'busy' : 'ok'} />
-			<div>
+			<div className="grow">
 				<strong>{runner ? (runner.name ?? runner.folder) : job?.runnerName}</strong>{' '}
 				{job ? (
 					<a href={job.url} target="_blank" rel="noreferrer">
@@ -60,7 +61,12 @@ function RunnerRow({ slot: { runner, job }, now }: { slot: RunnerSlot; now: numb
 				) : (
 					<span className="muted">{stopped ? 'stopped' : busy ? 'running a job' : 'idle'}</span>
 				)}
-				{job && <div className="muted small">started {formatAge(job.since, now)}</div>}
+				{job && (
+					<>
+						<div className="muted small">started {formatAge(job.since, now)}</div>
+						<RunControls repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
+					</>
+				)}
 			</div>
 		</li>
 	);
@@ -71,7 +77,7 @@ function JobItem({ job, now }: { job: LiveJob; now: number }) {
 	return (
 		<li>
 			<Icon name={job.place === 'waiting' ? 'queued' : 'running'} className={job.place} />
-			<div>
+			<div className="grow">
 				<a href={job.url} target="_blank" rel="noreferrer">
 					{job.repo} / {job.workflow}
 					{job.name && ` / ${job.name}`}
@@ -80,6 +86,7 @@ function JobItem({ job, now }: { job: LiveJob; now: number }) {
 					{where && `${where}, `}
 					{job.place === 'waiting' ? 'queued' : 'started'} {formatAge(job.since, now)}
 				</div>
+				<RunControls repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
 			</div>
 		</li>
 	);

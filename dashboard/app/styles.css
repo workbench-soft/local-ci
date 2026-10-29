@@ -410,3 +410,67 @@ input[type='search'] {
 .local-row td {
 	background: color-mix(in srgb, var(--busy) 9%, transparent);
 }
+
+.grow {
+	flex: 1;
+	min-width: 0;
+}
+
+.run-controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 6px;
+	margin-top: 4px;
+}
+
+td .run-controls {
+	margin-top: 0;
+	justify-content: flex-end;
+}
+
+.action {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font: inherit;
+	font-size: 12px;
+	padding: 2px 8px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	background: var(--card);
+	color: var(--text);
+	cursor: pointer;
+}
+
+.action .icon {
+	width: 12px;
+	height: 12px;
+	margin: 0;
+}
+
+.action.danger {
+	color: var(--bad);
+}
+
+.action:hover:not(:disabled) {
+	border-color: currentColor;
+}
+
+.action:disabled {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.action-error {
+	color: var(--bad);
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}

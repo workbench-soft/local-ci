@@ -10,6 +10,8 @@ export type Place = 'local' | 'elsewhere' | 'waiting' | 'done';
 /** An unfinished job, or a whole run when GitHub gave no jobs for it. */
 export type LiveJob = {
 	key: string;
+	/** GitHub cancels whole runs, so a job's buttons act on this run. */
+	runId: number;
 	repo: string;
 	workflow: string;
 	name: string | null;
@@ -51,7 +53,7 @@ export function placeOfRun(run: WorkflowRun, local: Set<string>): Place {
 export function liveJobs(runs: WorkflowRun[], local: Set<string>): LiveJob[] {
 	const jobs = runs.flatMap((run): LiveJob[] => {
 		if (!activeStatuses.has(run.status)) return [];
-		const base = { repo: run.repo, workflow: run.workflow };
+		const base = { runId: run.id, repo: run.repo, workflow: run.workflow };
 		if (!run.jobs.length) {
 			const place = placeOfRun(run, local) as LiveJob['place'];
 			return [{ ...base, key: `run-${run.id}`, name: null, place, runnerName: null, labels: [], since: run.createdAt, url: run.url }];

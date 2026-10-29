@@ -71,6 +71,8 @@ once, from the main checkout:
 
 - **Shows** the jobs on this PC, the jobs waiting on GitHub for a runner, the
   org runners, and the latest runs with a filter and sorting.
+- **Stop and Purge** each run gets a Stop button to cancel it, and a Purge
+  button to force cancel it and delete it from GitHub with its logs.
 - **Opens** after the install build, and at logon through a shortcut in the
   Startup folder. Delete `local-ci dashboard.lnk` there to stop it.
 - **Token** the boot task can't read the gh login, so the script copies

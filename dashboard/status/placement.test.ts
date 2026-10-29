@@ -77,6 +77,7 @@ const pcRunner = (name: string): PcRunner => ({ folder: name, name, taskName: na
 
 const liveJob = (runnerName: string, place: LiveJob['place'] = 'local'): LiveJob => ({
 	key: runnerName,
+	runId: 7,
 	repo: 'app',
 	workflow: 'ci',
 	name: null,
