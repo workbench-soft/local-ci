@@ -326,6 +326,11 @@ h3 {
 	overflow-wrap: anywhere;
 }
 
+.jobs .dot {
+	flex: none;
+	margin-top: 5px;
+}
+
 .jobs .icon {
 	margin-top: 3px;
 }

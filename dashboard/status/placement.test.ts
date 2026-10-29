@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { RunJob, WorkflowRun } from './org-status.ts';
-import { liveJobs, localRunnerNames, placeOfJob, placeOfRun } from './placement.ts';
+import { type LiveJob, liveJobs, localRunnerNames, placeOfJob, placeOfRun, runnerSlots } from './placement.ts';
+import type { PcRunner } from './this-pc.ts';
 
 const local = new Set(['pc', 'pc-2']);
 
@@ -70,4 +71,36 @@ test('liveJobs drops finished jobs and lists local ones first', () => {
 test('liveJobs stands in a whole run when GitHub gave no jobs', () => {
 	const [entry] = liveJobs([run('queued')], local);
 	assert.deepEqual([entry.key, entry.place, entry.name], ['run-7', 'waiting', null]);
+});
+
+const pcRunner = (name: string): PcRunner => ({ folder: name, name, taskName: name, task: 'Running', listener: true, worker: false, lastJobAt: null });
+
+const liveJob = (runnerName: string, place: LiveJob['place'] = 'local'): LiveJob => ({
+	key: runnerName,
+	repo: 'app',
+	workflow: 'ci',
+	name: null,
+	place,
+	runnerName,
+	labels: [],
+	since: '2025-10-29T12:00:00Z',
+	url: 'u',
+});
+
+test('runnerSlots gives every runner of this PC a row, idle ones too', () => {
+	const pc = { supported: true as const, runners: [pcRunner('pc'), pcRunner('pc-2'), pcRunner('pc-3')] };
+	const slots = runnerSlots(pc, [liveJob('pc-2'), liveJob('other', 'elsewhere')]);
+	assert.deepEqual(
+		slots.map((slot) => [slot.runner?.name, slot.job?.runnerName]),
+		[
+			['pc', undefined],
+			['pc-2', 'pc-2'],
+			['pc-3', undefined],
+		],
+	);
+});
+
+test('runnerSlots keeps a local job whose runner has no folder', () => {
+	const slots = runnerSlots({ supported: false }, [liveJob('gone')]);
+	assert.deepEqual(slots.map((slot) => [slot.runner, slot.job?.runnerName]), [[null, 'gone']]);
 });

@@ -6,7 +6,7 @@ import { StatusDot } from '@/cards/status-dot';
 import { ThisPcCard } from '@/cards/this-pc-card';
 import { summarizeCi } from '@/status/headline';
 import { fetchOrgStatus } from '@/status/org-status';
-import { liveJobs, localRunnerNames, placeOfRun } from '@/status/placement';
+import { liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { readThisPc } from '@/status/this-pc';
 
 // Each visit reads the runner afresh, so Next must not prerender the page.
@@ -34,7 +34,7 @@ export default async function StatusPage() {
 				<AutoRefresh renderedAt={new Date(now).toISOString()} />
 			</header>
 			<div className="grid">
-				{org.ok && <LiveJobsCard jobs={live} now={now} />}
+				{org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} now={now} />}
 				<ThisPcCard pc={pc} jobs={live} now={now} />
 				<OrgRunnersCard org={org} />
 				{org.ok && <LatestRunsTable runs={rows} now={now} />}

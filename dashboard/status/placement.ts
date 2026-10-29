@@ -1,5 +1,5 @@
 import type { RunJob, WorkflowRun } from './org-status.ts';
-import type { ThisPcStatus } from './this-pc.ts';
+import type { PcRunner, ThisPcStatus } from './this-pc.ts';
 
 /** Statuses of a run or a job that hasn't finished. */
 export const activeStatuses = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
@@ -63,4 +63,16 @@ export function liveJobs(runs: WorkflowRun[], local: Set<string>): LiveJob[] {
 		});
 	});
 	return jobs.sort((a, b) => placeOrder[a.place] - placeOrder[b.place] || Date.parse(a.since) - Date.parse(b.since));
+}
+
+/** A runner of this PC with the job it builds, or a local job whose runner has no folder here. */
+export type RunnerSlot = { runner: PcRunner | null; job: LiveJob | undefined };
+
+/** A row per runner of this PC, idle ones too, so the person sees every runner at once. */
+export function runnerSlots(pc: ThisPcStatus, jobs: LiveJob[]): RunnerSlot[] {
+	const runners = pc.supported ? pc.runners : [];
+	const local = jobs.filter((job) => job.place === 'local');
+	const slots: RunnerSlot[] = runners.map((runner) => ({ runner, job: local.find((job) => job.runnerName === runner.name) }));
+	const names = new Set(runners.map((runner) => runner.name));
+	return [...slots, ...local.filter((job) => !names.has(job.runnerName)).map((job) => ({ runner: null, job }))];
 }
