@@ -104,8 +104,10 @@ The server renders the page for each request.
   `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/cancel`. Purge
   runs `status/purge.ts`: it posts to `force-cancel`, polls the run until it
   is completed, then sends `DELETE` on the run. Purge all sends the run ids
-  the table matches, and `purgeRuns` purges them 5 at a time. Each action
-  drops the cache.
+  the table matches, and `purgeRuns` purges them 5 at a time. The page holds
+  5 runs per repo, so the button then reloads the page and purges the older
+  runs that show, round after round, until none match. Each action drops the
+  cache.
 - **Old runs die** `instrumentation.ts` starts
   `status/cancel-superseded.ts` with the production server only. Every 10
   seconds it reads the runs through the shared cache, and the open PRs of
