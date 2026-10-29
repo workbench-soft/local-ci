@@ -60,11 +60,19 @@ sequenceDiagram
 
 The server renders the page for each request.
 
+- **Host check** `proxy.ts` answers 421 to a request whose Host isn't
+  `localhost`, `127.0.0.1` or `[::1]`, so a rebound site name can't reach the
+  server actions. `next.config.ts` forbids framing.
 - **This PC** `status/this-pc.ts` finds each runner folder of the org. For
   each it reads the boot task and which `_diag` logs a live process holds open.
+  One PowerShell call reads them all, gives up after 15 s and keeps its
+  answer for 5 s. A failed call keeps the last answer.
 - **GitHub** `status/org-status.ts` calls the API with the token from
-  `.env.local`. It keeps the answer in memory for 20 seconds, and requests
-  that arrive during a load wait for that load. Each repo call reads 30 runs.
+  `.env.local`, and each call gives up after 20 s. It keeps the answer in
+  memory for 20 seconds, and requests that arrive during a load wait for that
+  load. An older answer, up to 2 minutes, still serves at once while one new
+  load runs. The caches sit on `globalThis`, since Next bundles the module
+  once for the page and once for the sweep. Each repo call reads 30 runs.
   The page keeps the latest 5 and every unfinished one, so a run that builds
   under a pile of newer queued runs stays on the page. For each unfinished
   run it also reads the jobs, with the runner that took each one. The jobs of
@@ -96,15 +104,17 @@ The server renders the page for each request.
   the table matches, and `purgeRuns` purges them 5 at a time. Each action
   drops the cache.
 - **Old runs die** `instrumentation.ts` starts
-  `status/cancel-superseded.ts` with the server. Every 10 seconds it reads
-  the runs through the 20 second cache, and the open PRs of repos with an
-  unfinished PR run, kept for a minute. `status/superseded.ts` picks the
-  runs to kill, and each one gets `force-cancel`. A failed PR read kills
-  nothing.
+  `status/cancel-superseded.ts` with the production server only. Every 10
+  seconds it reads the runs through the shared cache, and the open PRs of
+  repos with an unfinished PR run. A PR list is kept for a minute, and read
+  again when a PR run started after it. `status/superseded.ts` picks the
+  push and PR runs to kill, and each one gets `force-cancel`. A repo whose PR
+  read fails, or returns 100 PRs, keeps its PR runs.
 - **Releases** the app repos are private, so their release workflows publish
   to the public `workbench-soft/workbench-soft.github.io` with the tag
-  `<repo>-v<version>`. `status/releases.ts` gives a run the release of its
-  repo created while it ran. `RELEASES_REPO` picks another repo.
+  `<repo>-v<version>`. `status/releases.ts` gives each release to the run of
+  its repo that ran while GitHub created it and ended nearest to it.
+  `RELEASES_REPO` picks another repo.
 - **Install** `status/install-apk.ts` is a server action. It checks
   `adb devices` for one phone, downloads the release's `.apk` to
   `%TEMP%local-ci-apk` and runs `adb install -r -d`. adb's output goes

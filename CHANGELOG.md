@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+- The cancel sweep keeps the first run of a new PR, keeps `workflow_run` and
+  `schedule` runs, goes on when one repo's PR list fails, and stays off in
+  `pnpm dev`. Each `dashboard.log` line gets a time and a reason.
+
+- The status page answers on localhost only and can't be framed, which
+  blocks DNS rebinding and clickjacking of Stop, Purge and Install.
+
+- The status page shows at once from its last GitHub answer while a new one
+  loads, and the page and the sweep share one set of calls. GitHub calls and
+  the PowerShell read time out, and a failed PowerShell read keeps the last
+  runner states in place of "runners down".
+
+- The idle alert counts only the jobs the idle runner could take, a release
+  shows on one run only, and a page that stopped updating says so in red.
+  Light mode text, the dark filter chip, button names and sizes meet WCAG
+  AA.
+
+- `dashboard\install.ps1` keeps the other lines of `.env.local` and turns
+  off Next telemetry. `runner\install.ps1` hides the pasted token.
+
+- CI runs the page checks and lints the installers on each PR, and
+  Dependabot proposes updates.
+
 - The status page gets a Running now card above Latest runs, and each
   runner in Runners names its job. The page reads 30 runs per repo, so a
   run that builds under newer queued runs stays in view. ETags keep the page

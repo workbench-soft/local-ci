@@ -107,8 +107,11 @@ once, from the main checkout:
 - **Rerun** after a `git pull` or a new gh login. The script rebuilds the page
   and restarts it.
 - **Develop and test** in `dashboard`, `mise x -- pnpm dev` serves the page on
-  port 4281. `mise x -- pnpm typecheck` and `mise x -- pnpm test` are the
-  checks.
+  port 4281 and cancels no run. `mise x -- pnpm typecheck` and
+  `mise x -- pnpm test` are the checks.
+- **CI** `.github/workflows/checks.yml` runs those checks, a build, shellcheck,
+  shfmt and a parse of each `.ps1` file on the Windows runners, for each PR
+  and each push to `master`.
 - **Logs** `dashboard\dashboard.log`.
 
 ## Windows
