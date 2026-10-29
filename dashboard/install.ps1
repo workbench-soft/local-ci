@@ -59,6 +59,7 @@ $shortcut.TargetPath = (Get-Command powershell -CommandType Application).Source
 $shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$openScript`" -Port $port"
 $shortcut.WorkingDirectory = $appDir
 $shortcut.WindowStyle = 7
+$shortcut.IconLocation = (Join-Path $appDir 'icon.ico')
 $shortcut.Save()
 
 Write-Step "Opening http://localhost:$port"
