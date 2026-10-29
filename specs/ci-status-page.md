@@ -426,3 +426,31 @@ browser at each logon.
   3. The Running now card and the jobs in the Runners card.
   4. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 The usual time counts cancelled and failed runs, over a window of 10
+
+- **Why** the usual time came from the 3 latest successful runs only. A job
+  cancelled after 10 minutes says the job takes 10 minutes or more, and the
+  page dropped that. Three runs also react slowly when a job gets faster or
+  slower.
+- **Changes**
+  - **`status/org-status.ts`** reads the 10 latest finished runs of the
+    workflow, any conclusion, in 1 call. Their jobs stay in memory as before,
+    since a finished run doesn't change.
+  - **`status/progress.ts`** a successful job gives its full time. A
+    cancelled, failed or timed out job gives a lower bound: it ran this long
+    and still had work left. A skipped job counts for nothing. The usual time
+    is the Kaplan-Meier median of these times. A lower bound under the
+    median only shrinks the pool of jobs, and a lower bound above it pushes
+    the median up. With no full time over the middle, the usual time is the
+    longest time seen, so 3 jobs cancelled at 10 minutes give 10 minutes.
+  - **Window** each new finished run pushes the oldest of the 10 out. More
+    fast runs pull the usual time down, more slow ones push it up.
+- **Limits** a run cancelled by a newer push counts as a short lower bound,
+  which moves the median little. A window of 10 cancelled runs and no
+  success gives the longest of them, which can sit under the real time.
+- **Steps**
+  1. This spec.
+  2. The window and the median, with tests.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
