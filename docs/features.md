@@ -13,6 +13,8 @@ MCP config. A second run skips what is already there.
 - **Skipped** the Mac only pieces: Oh My Zsh, Maccy, gh-review-notify,
   terminal-notifier and twg.
 - **Repos** land in `C:\Programming\WorkbenchSoft`, or in `DEV_DIR`.
+- **Python** mise installs 3.15, and `python3` runs it as on the Mac. Without
+  that, `python3` reaches the Windows Store stub and fails.
 
 ## Self-hosted CI runner
 

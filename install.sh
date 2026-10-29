@@ -58,8 +58,8 @@ append_once "$zshrc" 'export PATH="$HOME/.local/bin:$PATH"'
 append_once "$zshrc" 'eval "$(mise activate zsh)"'
 
 # --- Node toolchain ----------------------------------------------------------
-step "Installing node, pnpm and yarn through mise"
-mise use -g node@22 pnpm@latest yarn@1
+step "Installing node, pnpm, yarn and python through mise"
+mise use -g node@22 pnpm@latest yarn@1 python@3.15
 
 step "Installing the Copilot CLI"
 mise exec -- npm install -g @github/copilot

@@ -76,14 +76,23 @@ New-Item -ItemType Directory -Force -Path $localBin | Out-Null
 Add-ToUserPath $localBin
 # mise activate needs PowerShell 7, so Windows PowerShell 5.1 gets the shims.
 Add-ToUserPath (Join-Path $env:LOCALAPPDATA 'mise\shims')
+# WindowsApps holds Store stubs named python and python3, so it goes last.
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { $_ }
+$storeDirs = @($userPath | Where-Object { $_ -like '*\Microsoft\WindowsApps' })
+[Environment]::SetEnvironmentVariable('Path', ((@($userPath | Where-Object { $storeDirs -notcontains $_ }) + $storeDirs) -join ';'), 'User')
 Sync-SessionPath
 $documents = [Environment]::GetFolderPath('MyDocuments')
 Add-LineOnce "$documents\PowerShell\profile.ps1" '(&mise activate pwsh) | Out-String | Invoke-Expression'
 
 # --- Node toolchain ----------------------------------------------------------
-Write-Step 'Installing node, pnpm and yarn through mise'
-mise use -g node@22 pnpm@latest yarn@1
+Write-Step 'Installing node, pnpm, yarn and python through mise'
+mise use -g node@22 pnpm@latest yarn@1 python@3.15
 if ($LASTEXITCODE -ne 0) { throw 'mise use failed' }
+
+# mise's Windows Python has no python3, so that name reaches the Store stub in
+# WindowsApps, which exits 49. These forwarders sit ahead of it in PATH.
+Set-Content -LiteralPath (Join-Path $localBin 'python3') -Encoding ascii -NoNewline -Value "#!/bin/sh`nexec python `"`$@`"`n"
+Set-Content -LiteralPath (Join-Path $localBin 'python3.cmd') -Encoding ascii -Value '@python %*'
 
 Write-Step 'Installing the Copilot CLI and agent-browser'
 # Windows PowerShell drops a bare -- on its way to mise, so the quotes stay.

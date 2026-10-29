@@ -113,7 +113,7 @@ the script first.
 | --- | --- |
 | [git](https://formulae.brew.sh/formula/git) | newer than the one Apple ships |
 | [gh](https://formulae.brew.sh/formula/gh) | GitHub CLI |
-| [mise](https://formulae.brew.sh/formula/mise) | node, pnpm and yarn versions per project |
+| [mise](https://formulae.brew.sh/formula/mise) | node, pnpm, yarn and Python 3.15 versions per project. On Windows a `python3` forwarder in `.local/bin` of the home folder runs the same Python |
 | [fzf](https://formulae.brew.sh/formula/fzf) | the branch picker behind `git sb` |
 | [jq](https://formulae.brew.sh/formula/jq) | git-aliases and gh-review-notify read JSON with it |
 | [shellcheck](https://formulae.brew.sh/formula/shellcheck) | `lint.sh` in git-aliases calls it |
