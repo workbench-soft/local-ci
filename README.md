@@ -54,6 +54,8 @@ runner. The runner scripts also work alone:
 - **Tool cache** the runners share `~/actions-runner/_tool`, so a `setup-*`
   action downloads node, Java or Python once per machine. A rerun of the
   script moves old runners onto it.
+- **pnpm store** every job uses the machine's pnpm store through
+  `pnpm_config_store_dir`, so `pnpm install` downloads a package once.
 - **Defender** on Windows the script excludes `~/actions-runner`,
   `~/.gradle` and the pnpm, npm and mise caches from scans, so
   `pnpm install` runs faster. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.

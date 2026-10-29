@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Runner jobs share the machine's pnpm store. Before, each job kept its
+  store in `_temp`, lost it at the end and downloaded every package again.
+
 - The usual time of a running job comes from the 10 latest finished runs of
   its workflow, in place of the 3 latest successful ones. A cancelled or
   failed job counts as at least the time it ran.
