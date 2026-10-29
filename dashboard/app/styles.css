@@ -204,3 +204,204 @@ a:hover {
 	color: var(--bad);
 	margin: 0;
 }
+
+.icon {
+	width: 16px;
+	height: 16px;
+	flex: none;
+	margin-right: 6px;
+	vertical-align: -3px;
+}
+
+.icon.running {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.icon.running,
+	.dot.busy {
+		animation: none;
+	}
+}
+
+.result.ok {
+	color: var(--ok);
+}
+
+.result.busy,
+.icon.local,
+.place.local {
+	color: var(--busy);
+}
+
+.result.warn,
+.icon.waiting,
+.place.waiting {
+	color: var(--warn);
+}
+
+.result.bad {
+	color: var(--bad);
+}
+
+.place {
+	font-size: 12px;
+	margin-top: 2px;
+}
+
+.place.elsewhere,
+.icon.elsewhere {
+	color: var(--muted);
+}
+
+/* The jobs of this PC matter most, so their column and rows carry the busy color. */
+.live {
+	display: grid;
+	grid-template-columns: 1.4fr 1fr 1fr;
+	gap: 16px;
+}
+
+@media (max-width: 760px) {
+	.live {
+		grid-template-columns: 1fr;
+	}
+}
+
+.live-column {
+	border: 1px solid var(--line);
+	border-radius: 8px;
+	padding: 12px;
+	min-width: 0;
+}
+
+.live-column.local {
+	border-color: var(--busy);
+	border-width: 2px;
+}
+
+h3 {
+	display: flex;
+	align-items: center;
+	margin: 0 0 8px;
+	font-size: 14px;
+}
+
+.live-column.local h3 {
+	color: var(--busy);
+}
+
+.live-column.waiting h3 {
+	color: var(--warn);
+}
+
+.count {
+	margin-left: 6px;
+	min-width: 20px;
+	padding: 0 6px;
+	border-radius: 999px;
+	background: var(--line);
+	color: var(--text);
+	font-size: 12px;
+	text-align: center;
+}
+
+.jobs {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 8px;
+}
+
+.jobs li {
+	display: flex;
+	align-items: flex-start;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.jobs .icon {
+	margin-top: 3px;
+}
+
+.toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-bottom: 12px;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	font: inherit;
+	font-size: 13px;
+	padding: 3px 10px;
+	border: 1px solid var(--line);
+	border-radius: 999px;
+	background: var(--card);
+	color: var(--text);
+	cursor: pointer;
+}
+
+.chip[aria-pressed='true'] {
+	background: var(--busy);
+	border-color: var(--busy);
+	color: #fff;
+}
+
+.chip[aria-pressed='true'] .count {
+	background: rgb(255 255 255 / 0.25);
+	color: #fff;
+}
+
+input[type='search'] {
+	font: inherit;
+	font-size: 14px;
+	padding: 5px 10px;
+	min-width: 220px;
+	flex: 1 1 220px;
+	max-width: 320px;
+	border: 1px solid var(--line);
+	border-radius: 6px;
+	background: var(--bg);
+	color: var(--text);
+}
+
+.sort {
+	font: inherit;
+	color: inherit;
+	background: none;
+	border: 0;
+	padding: 0;
+	cursor: pointer;
+}
+
+.sort:hover {
+	color: var(--text);
+}
+
+.arrow {
+	display: inline-block;
+	width: 1em;
+	margin-left: 4px;
+	font-size: 10px;
+}
+
+.local-row td {
+	background: color-mix(in srgb, var(--busy) 9%, transparent);
+}
