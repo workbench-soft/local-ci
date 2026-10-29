@@ -66,11 +66,13 @@ icon: a white loop arrow around a green play sign on blue.
 - **Headline** counts jobs on this PC first, then jobs on other runners, then
   jobs waiting on GitHub. Red when a runner of this PC is down, or sits idle
   while a job it fits waits on GitHub over a minute.
-- **Now** a column per place. On this PC lists every runner of this PC with
-  the job it builds, or idle, or stopped, and counts busy runners out of all.
-  Then the jobs waiting on GitHub with the labels they ask for, and the jobs on
-  another runner. Each job links to its GitHub log. A column longer than
-  420 px scrolls inside the card.
+- **Running now** the top card, with a blue frame and the count of jobs
+  that build. A column per place. Building on this PC lists every runner of
+  this PC with the job it builds, or idle, or stopped, and counts busy runners
+  out of all. Then the jobs queued on GitHub with the labels they ask for, and
+  the jobs on another runner. Each job links to its GitHub log. A column
+  longer than 420 px scrolls inside the card. The frame turns red, with a
+  line on what to do, when a runner of this PC sits idle while jobs wait.
 - **Progress** a running job gets a bar with its step, such as
   `step 4 of 9: Build`, and `about 3 min left`. The time comes from the
   same job in the 10 latest finished runs of its workflow. A successful job
@@ -86,11 +88,6 @@ icon: a white loop arrow around a green play sign on blue.
   this PC also show their boot task and when their last job started. The
   list stops at 420 px and scrolls. Each row names the job its runner
   builds, linked to the log, or says `No job`.
-- **Running now** a card with a blue frame right above the runs table. Each
-  job that builds right now gets a large row: the runner, repo, workflow and
-  job, the progress bar and Stop. With no job building, the card says how
-  many wait. The frame turns red when a runner of this PC sits idle while
-  jobs wait.
 - **Runs** the latest 5 runs of each org repo and every unfinished one, with
   an icon for the result and for the place. An unfinished run says where it builds: Building on this
   PC, Queued on GitHub or Building on another runner. A finished run shows

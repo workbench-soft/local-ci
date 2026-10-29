@@ -73,7 +73,6 @@
 - Left: a fine-grained token for the page in place of the `gh` login (needs a new PAT made by a person).
 - Left: restart the old page task when an `install.ps1` build fails (needs an admin run to test).
 - Left: a warning headline when some repos fail to load (a new headline state).
-- Left: a running job shows in Now and in Running now, each with Stop and Purge (product call on which card keeps them).
 - Left: Purge all on the All filter after one generic confirm (product call).
 - Left: one module for run states and a split of `org-status.ts` (refactor, effort M).
 - Left: npm globals in a mise `npm:` backend and a node pin (installer change, and a `mise.toml` needs `mise trust` on each machine).
