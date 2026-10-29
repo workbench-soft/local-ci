@@ -16,16 +16,29 @@ export function countSteps(steps: { name: string; status: string }[] | undefined
 	};
 }
 
-/** The median time of the finished jobs with this name, or null when none finished. */
-export function typicalDuration(name: string, past: { name: string; startedAt: string | null; completedAt: string | null }[]): number | null {
+type PastJob = { name: string; conclusion: string | null; startedAt: string | null; completedAt: string | null };
+
+/**
+ * The Kaplan-Meier median time of the finished jobs with this name, or null when none ran.
+ * A successful job gives its full time. A cancelled or failed one ran at least this long, so it only
+ * leaves the pool and doesn't pull the median down. With no full time past the middle, the longest time wins.
+ */
+export function typicalDuration(name: string, past: PastJob[]): number | null {
 	const times = past
-		.filter((job) => job.name === name && job.startedAt && job.completedAt)
-		.map((job) => Date.parse(job.completedAt as string) - Date.parse(job.startedAt as string))
-		.filter((ms) => ms > 0)
-		.sort((a, b) => a - b);
+		.filter((job) => job.name === name && job.conclusion !== 'skipped' && job.startedAt && job.completedAt)
+		.map((job) => ({ ms: Date.parse(job.completedAt as string) - Date.parse(job.startedAt as string), full: job.conclusion === 'success' }))
+		.filter((time) => time.ms > 0)
+		// At the same time a full one goes first, since a lower bound of that time outlasted it.
+		.sort((a, b) => a.ms - b.ms || Number(b.full) - Number(a.full));
 	if (!times.length) return null;
-	const middle = Math.floor(times.length / 2);
-	return times.length % 2 ? times[middle] : Math.round((times[middle - 1] + times[middle]) / 2);
+	let left = 1;
+	for (const [index, time] of times.entries()) {
+		if (!time.full) continue;
+		const atRisk = times.length - index;
+		left *= (atRisk - 1) / atRisk;
+		if (left <= 0.5) return time.ms;
+	}
+	return times[times.length - 1].ms;
 }
 
 /** Fills by time when a past run gives the usual length, else by finished steps. */

@@ -52,7 +52,7 @@ export type RunJob = {
 	/** The first step that failed, for a failed job. */
 	failedStep: string | null;
 	steps: StepCount;
-	/** How long this job took in the latest successful runs of its workflow. Set only on running jobs. */
+	/** How long this job takes, from the 10 latest finished runs of its workflow. Set only on running jobs. */
 	typicalMs: number | null;
 };
 
@@ -180,7 +180,7 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 	return runs;
 }
 
-/** The 3 latest successful runs of a workflow give the usual length of each of its running jobs. */
+/** The 10 latest finished runs of a workflow give the usual length of each of its running jobs. */
 async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<void> {
 	const running = runs.flatMap((run) => run.jobs.filter((job) => job.status === 'in_progress').map((job) => ({ run, job })));
 	if (!running.length) return;
@@ -188,19 +188,19 @@ async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<v
 	const pastByWorkflow = new Map<number, RunJob[]>();
 	await Promise.all(
 		[...workflowIds].map(async (workflowId) => {
-			const ids = await latestSuccessfulRuns(fullName, workflowId);
+			const ids = await latestFinishedRuns(fullName, workflowId);
 			const jobs = await Promise.all(ids.map((id) => finishedRunJobs(fullName, id)));
-			pastByWorkflow.set(workflowId, jobs.flat().filter((job) => job.conclusion === 'success'));
+			pastByWorkflow.set(workflowId, jobs.flat());
 		}),
 	);
 	for (const { run, job } of running) job.typicalMs = typicalDuration(job.name, pastByWorkflow.get(run.workflowId) ?? []);
 }
 
-// The latest 5 runs of a busy repo are often all queued, so the successful ones come from a call of their own.
-async function latestSuccessfulRuns(fullName: string, workflowId: number): Promise<number[]> {
+// The latest runs of a busy repo are often all queued, so the finished ones come from a call of their own.
+async function latestFinishedRuns(fullName: string, workflowId: number): Promise<number[]> {
 	try {
 		const { workflow_runs } = await getJson<{ workflow_runs: { id: number }[] }>(
-			`/repos/${fullName}/actions/workflows/${workflowId}/runs?status=success&per_page=3`,
+			`/repos/${fullName}/actions/workflows/${workflowId}/runs?status=completed&per_page=10`,
 		);
 		return workflow_runs.map((run) => run.id);
 	} catch {

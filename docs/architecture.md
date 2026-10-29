@@ -78,9 +78,10 @@ The server renders the page for each request.
   runners of this PC that sit idle while a job with their labels waits over a
   minute.
 - **Progress** for a workflow with a running job, `status/org-status.ts`
-  reads the jobs of its 3 latest successful runs and keeps them in memory.
-  `status/progress.ts` turns their median time and the job's steps into the
-  bar and the time left.
+  reads the jobs of its 10 latest finished runs and keeps them in memory.
+  `status/progress.ts` takes their Kaplan-Meier median, with cancelled and
+  failed jobs as lower bounds, and turns it and the job's steps into the bar
+  and the time left.
 - **Runners** `status/runners.ts` joins the runner folders of this PC with
   the org runners on GitHub by name, and adds a hint where the two disagree.
 - **Headline** `status/headline.ts` turns all that into the headline and the
