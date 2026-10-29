@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The status page shows one Runners card in place of This PC and Runners of
+  workbench-soft. Each runner says where it lives and its state on this PC and
+  on GitHub, with a hint when the two disagree.
+
 - `START.cmd` in the repo root starts the runners and the status page with a
   double click, then opens the page in the browser.
 

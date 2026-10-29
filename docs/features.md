@@ -54,8 +54,11 @@ icon: a white loop arrow around a green play sign on blue.
   the job it builds, or idle, or stopped, and counts busy runners out of all.
   Then the jobs waiting on GitHub with the labels they ask for, and the jobs on
   another runner. Each job links to its GitHub log.
-- **This PC** a row per runner: the job it runs, idle or stopped, its boot
-  task, and when its last job started.
+- **Runners** one row per runner of the org. Each row says whether the
+  runner lives on this PC or another machine, and its state on each side:
+  `this PC` from the runner folder and processes, `GitHub` from the API. A row
+  whose sides disagree turns yellow, with a hint on what to check. Runners of
+  this PC also show their boot task and when their last job started.
 - **Runs** the latest 5 runs of each org repo, with an icon for the result and
   for the place. Filter chips pick this PC, waiting, other runners, failed or
   passed. A search box matches repo, workflow and branch. A click on a column
@@ -65,5 +68,5 @@ icon: a white loop arrow around a green play sign on blue.
   with its logs and artifacts. A finished run gets Purge only. A job's
   buttons act on its whole run, since GitHub cancels runs only.
 - **Limits** a job counts as local when its runner name matches a runner
-  folder of this PC, so the This PC parts need Windows. After a new gh login,
+  folder of this PC, so the this PC checks need Windows. After a new gh login,
   run the install script again.

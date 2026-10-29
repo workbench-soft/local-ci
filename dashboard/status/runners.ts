@@ -48,7 +48,7 @@ function judge(here: PcRunner, github: OrgRunner | null, listed: boolean): { ton
 		return { tone: 'warn', hint: 'The process runs here, but GitHub sees it offline. Check the network, or register the runner again.' };
 	}
 	if (local === 'stopped' && remote !== 'offline') {
-		return { tone: 'warn', hint: 'Stopped here, but GitHub sees it online, so a runner with this name runs on another machine.' };
+		return { tone: 'warn', hint: 'The checks here see it stopped, but GitHub sees it online. It may run outside its boot task, or on another machine with the same name.' };
 	}
 	if (local === 'stopped') return { tone: 'bad', hint: 'Stopped. Start it with START.cmd.' };
 	return { tone: toneOf(remote === 'busy' ? 'busy' : local), hint: null };

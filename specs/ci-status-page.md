@@ -217,8 +217,9 @@ browser at each logon.
   - Runs here, GitHub sees it offline: the process is alive, check the
     network or register the runner again.
   - Folder here, GitHub has no runner with that name: register it again.
-  - Stopped here, GitHub sees it online: a runner with this name runs on
-    another machine.
+  - Stopped here, GitHub sees it online: it runs outside its boot task, so
+    the log check misses it, or a runner with this name runs on another
+    machine. The first case showed up on the live page.
   - Stopped here, offline on GitHub: start it with `START.cmd`.
 - **Steps**
   1. This spec.

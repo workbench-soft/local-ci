@@ -69,6 +69,8 @@ The server renders the page for each request.
 - **Place** `status/placement.ts` puts each job on this PC, on another runner
   or in the GitHub queue. A job is local when its runner name matches the
   `agentName` in a runner folder's `.runner` file.
+- **Runners** `status/runners.ts` joins the runner folders of this PC with
+  the org runners on GitHub by name, and adds a hint where the two disagree.
 - **Headline** `status/headline.ts` turns all that into the headline and the
   dot colors. The cards in `cards/` draw the rest. The runs table filters and
   sorts in the browser.
