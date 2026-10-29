@@ -25,6 +25,9 @@
 - CI runs the page checks and lints the installers on each PR, and
   Dependabot proposes updates.
 
+- The runner script turns on long paths for git and, in an admin run, for
+  Windows. git clean failed on the deep `.open-next` cache before.
+
 - `START.cmd` pulls the default branch and rebuilds the status page when its
   code changed, so a double click runs the latest version.
 

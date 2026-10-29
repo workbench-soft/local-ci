@@ -59,6 +59,9 @@ runner. The runner scripts also work alone:
 - **Defender** on Windows the script excludes `~/actions-runner`,
   `~/.gradle` and the pnpm, npm and mise caches from scans, so
   `pnpm install` runs faster. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
+- **Long paths** the script sets `git config --global core.longpaths true`
+  and, in an admin run, `LongPathsEnabled` in the registry. `node_modules`
+  and the `.open-next` cache hold paths over 260 characters.
 - **Folders** the first runner sits in `~/actions-runner/workbench-soft`, the
   next in `workbench-soft-2` and up. `RUNNER_ORG` picks another org.
 - **Fewer runners** a lower `RUNNER_COUNT` leaves the extra ones registered.
