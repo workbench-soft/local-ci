@@ -59,3 +59,15 @@ minutes.
 - `README.md`
 - `docs/architecture.md`, `docs/user-flows.md`, `docs/features.md`
 - `CHANGELOG.md`
+
+## 2026-10-30: Android SDK set up once for every runner
+
+Release builds failed because each Gradle run downloaded missing SDK parts into
+the shared `%LOCALAPPDATA%\Android\Sdk`. Two runners at once left NDK 27.1
+without `source.properties`, and Platform 37 was missing.
+
+- `runner/install.ps1` installs the NDK, platforms and build tools the org's
+  apps build with, through `sdkmanager`.
+- Each runner's `.env` sets `ORG_GRADLE_PROJECT_android.builder.sdkDownload=false`,
+  so a job fails fast on a missing part and doesn't touch the shared SDK.
+- A new SDK part goes into `$androidPackages`, then the script runs again.
