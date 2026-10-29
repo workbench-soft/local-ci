@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The status page shows one Runners card in place of This PC and Runners of
+  workbench-soft. Each runner says where it lives and its state on this PC and
+  on GitHub, with a hint when the two disagree.
+
 - The runs table of the status page gets a Release column. It links to the
   release a run published, and Install puts its APK on the phone over adb. A
   failed run names its failed step, and each run links to its branch and PR.

@@ -36,6 +36,9 @@ browser at each logon.
   from a process to its folder.
 - **Org runners** `GET /orgs/workbench-soft/actions/runners` gives each runner
   online or offline, busy or idle, with its labels.
+- **Runners card** one card joins both sources by runner name. A row says
+  where the runner lives, its state on this PC and on GitHub, and a hint when
+  the two disagree.
 - **Runs** `GET /repos/{repo}/actions/runs` gives the latest runs of each org
   repo. `GET /repos/{repo}/actions/runs/{id}/jobs` gives the jobs of each
   unfinished run, with the runner name of each job.
@@ -73,8 +76,8 @@ browser at each logon.
 
 ## Limits
 
-- **Windows only** the This PC block reads Windows tools. On a Mac it says
-  the checks are skipped.
+- **Windows only** the this PC checks read Windows tools. On a Mac the
+  Runners card shows the GitHub side only and says the checks are skipped.
 - **Token** GitHub data shows only while the token in `.env.local` works.
   After a new gh login, run the install script again.
 - **Repos** up to 100 org repos, with 5 runs each.
@@ -242,3 +245,32 @@ browser at each logon.
   4. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2025-10-29 One Runners card in place of This PC and Runners of the org
+
+- **Why** the person saw two runner cards and couldn't tell them apart. This
+  PC read the runner folders, Runners of workbench-soft read GitHub, and the
+  page said neither.
+- **Changes**
+  - **`status/runners.ts`** `mergeRunners` joins the runners of this PC and
+    the org runners from GitHub by name. Each row gets its place, this PC or
+    another machine, its state on each side, and a hint when the two sides
+    disagree.
+  - **`cards/runners-card.tsx`** one Runners card. A row per runner: a dot,
+    the name, `this PC: ...` and `GitHub: ...`, the labels, the boot task and
+    the last job. A row with a hint gets a warning style.
+  - **`cards/this-pc-card.tsx`**, **`cards/org-runners-card.tsx`** removed.
+- **Hints**
+  - Runs here, GitHub sees it offline: the process is alive, check the
+    network or register the runner again.
+  - Folder here, GitHub has no runner with that name: register it again.
+  - Stopped here, GitHub sees it online: it runs outside its boot task, so
+    the log check misses it, or a runner with this name runs on another
+    machine. The first case showed up on the live page.
+  - Stopped here, offline on GitHub: start it with `START.cmd`.
+- **Steps**
+  1. This spec.
+  2. `mergeRunners` with its tests.
+  3. The Runners card.
+  4. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
