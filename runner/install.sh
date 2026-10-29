@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Registers this Mac as self-hosted GitHub Actions runners for the org and
 # starts each under launchd. A runner takes one job at a time, so RUNNER_COUNT
-# runners build that many jobs at once. Running it again leaves a registered
-# runner as it is. runner/install.ps1 is the Windows version.
+# runners build that many jobs at once. Running it again keeps the registrations
+# and only rewrites the job variables. runner/install.ps1 is the Windows version.
 set -euo pipefail
 
 org="${RUNNER_ORG:-workbench-soft}"
@@ -21,6 +21,35 @@ fi
 # The first runner keeps the folder and name it had before runners got numbers.
 suffix() { if [ "$1" -eq 1 ]; then printf ''; else printf -- '-%s' "$1"; fi; }
 runner_dir() { printf '%s' "$HOME/actions-runner/$org$(suffix "$1")"; }
+# The setup-* actions then download a tool once for every runner, not once per runner.
+tool_cache="$HOME/actions-runner/_tool"
+
+# config.sh writes .env with LANG and the like. This keeps those lines and
+# rewrites the ones the script owns. Prints changed when the file changed.
+write_env() {
+	local file="$1/.env" before after
+	before=$(cat "$file" 2>/dev/null || true)
+	after=$(
+		printf '%s\n' "$before" | grep -vE '^(ANDROID_HOME|ANDROID_SDK_ROOT|RUNNER_TOOL_CACHE|AGENT_TOOLSDIRECTORY)=|^$' || true
+		printf 'RUNNER_TOOL_CACHE=%s\nAGENT_TOOLSDIRECTORY=%s\n' "$tool_cache" "$tool_cache"
+		if [ -n "${ANDROID_HOME:-}" ]; then
+			printf 'ANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\n' "$ANDROID_HOME" "$ANDROID_HOME"
+		fi
+	)
+	if [ "$before" != "$after" ]; then
+		printf '%s\n' "$after" >"$file"
+		echo changed
+	fi
+}
+
+# The runner reads .env at start. A restart would kill the job it builds now.
+restart_when_idle() {
+	if pgrep -f "$1/bin/Runner.Worker" >/dev/null; then
+		echo "The runner in $1 is running a job, waiting for it to finish"
+	fi
+	while pgrep -f "$1/bin/Runner.Worker" >/dev/null; do sleep 10; done
+	(cd "$1" && ./svc.sh stop && ./svc.sh start)
+}
 
 # GitHub hands out a token only to an org admin whose login has the admin:org scope.
 registration_token() {
@@ -34,11 +63,17 @@ registration_token() {
 	printf '%s' "$token"
 }
 
+mkdir -p "$tool_cache"
 missing=()
 for n in $(seq 1 "$count"); do
-	if [ -f "$(runner_dir "$n")/.runner" ]; then
-		step "The runner in $(runner_dir "$n") is already registered"
-		(cd "$(runner_dir "$n")" && ./svc.sh status) || true
+	dir=$(runner_dir "$n")
+	if [ -f "$dir/.runner" ]; then
+		step "The runner in $dir is already registered"
+		if [ -n "$(write_env "$dir")" ]; then
+			step "Restarting the runner in $dir with the new job variables"
+			restart_when_idle "$dir"
+		fi
+		(cd "$dir" && ./svc.sh status) || true
 	else
 		missing+=("$n")
 	fi
@@ -68,9 +103,7 @@ for n in "${missing[@]}"; do
 	mkdir -p "$dir"
 	tar -xzf "$download_dir/$file" -C "$dir"
 	"$dir/config.sh" --unattended --url "https://github.com/$org" --token "$token" --name "$name" --labels "$labels"
-	if [ -n "${ANDROID_HOME:-}" ]; then
-		printf 'ANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\n' "$ANDROID_HOME" "$ANDROID_HOME" >>"$dir/.env"
-	fi
+	write_env "$dir" >/dev/null
 
 	step "Starting $name"
 	# launchd keeps the service up only while the user is logged in.

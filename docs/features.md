@@ -30,6 +30,9 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   how many runners the machine gets: 4 on Windows and 1 on a Mac by default.
 - **Limit** extra runners speed up only work split into jobs. Jobs at the
   same time share ports, the Android emulator and the Gradle cache.
+- **Shared tool cache** the runners of a machine keep `setup-*` downloads in
+  `~/actions-runner/_tool`. Node of one version downloads once for all of
+  them.
 
 ## Start button
 

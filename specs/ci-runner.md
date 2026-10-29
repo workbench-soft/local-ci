@@ -60,3 +60,25 @@ machine with several runners builds several jobs at once.
   4. Docs and changelog.
 - **Docs** `README.md`, `docs/architecture.md`, `docs/user-flows.md`,
   `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Faster jobs on the runners
+
+- **Why** each runner downloads its own copy of node, Java and Python through
+  the `setup-*` actions.
+- **Changes**
+  - **Shared tool cache** both scripts point `RUNNER_TOOL_CACHE` and
+    `AGENT_TOOLSDIRECTORY` of each runner at `~/actions-runner/_tool`. A tool
+    the `setup-*` actions download once then serves every runner.
+  - **Mac rerun** `runner/install.sh` rewrites `.env` of each registered
+    runner too, and restarts the runner once its job ends.
+- **Left out** Defender exclusions for the runner folders and the package
+  caches. They weaken the PC's protection, so the person decides on them.
+- **Limits**
+  - **Same tool at once** 2 jobs that download the same new tool version at
+    the same moment both download it. The `setup-*` actions mark a finished
+    copy, so neither job takes a half written one.
+- **Steps**
+  1. This spec.
+  2. Both runner scripts.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
