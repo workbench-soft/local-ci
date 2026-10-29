@@ -82,6 +82,10 @@ once, from the main checkout:
   org runners, and the latest runs with a filter and sorting.
 - **Stop and Purge** each run gets a Stop button to cancel it, and a Purge
   button to force cancel it and delete it from GitHub with its logs.
+- **Old runs die** the page server force cancels a run that a newer run of
+  its workflow and branch replaced, or whose PR is merged or closed. Each
+  cancel goes to `dashboard.log`. `CANCEL_SUPERSEDED=off` in
+  `dashboard.env.local` turns it off.
 - **Release and Install** a run that published a release links to it in the
   Release column. Install puts its APK on the phone plugged in over USB,
   through `adb install -r`. adb comes from `ADB_PATH`, `PATH` or the

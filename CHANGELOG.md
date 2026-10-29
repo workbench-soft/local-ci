@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The status page server force cancels a run once a newer run of its
+  workflow and branch shows, or once its PR is merged or closed.
+
 - The runs table of the status page gets a Release column. It links to the
   release a run published, and Install puts its APK on the phone over adb. A
   failed run names its failed step, and each run links to its branch and PR.

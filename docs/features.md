@@ -64,6 +64,11 @@ icon: a white loop arrow around a green play sign on blue.
   run on GitHub. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's
   buttons act on its whole run, since GitHub cancels runs only.
+- **Old runs die** every 10 seconds the page server force cancels an
+  unfinished run when a newer run of the same repo, workflow, branch and
+  event exists, or when it checks a PR that is merged or closed. Main and
+  open PRs keep building. `CANCEL_SUPERSEDED=off` in `.env.local` turns it
+  off.
 - **Release and Install** the Release column links to the release a run
   published. Install puts its APK on the phone plugged in over USB through
   adb. adb's error shows in a red box under the button. Needs exactly one
