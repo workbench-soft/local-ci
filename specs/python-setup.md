@@ -19,8 +19,8 @@ PC and in each runner job. A script written on one machine runs on the others.
 - **`install.sh`** `mise use -g python@3.15`. mise's Python on the Mac has
   `python3` of its own.
 - **`install.ps1`** the same `mise use`, then the 2 forwarders in
-  `~\.local\bin`. The install already puts that folder ahead of WindowsApps in
-  the user PATH.
+  `~\.local\bin`. It moves WindowsApps to the end of the user PATH, so the
+  forwarders and the mise shims come first.
 - **`runner/install.ps1`** `Get-ToolDirs` adds `~\.local\bin` and the mise
   shims after Git, so a job finds them before WindowsApps.
 

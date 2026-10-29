@@ -76,6 +76,10 @@ New-Item -ItemType Directory -Force -Path $localBin | Out-Null
 Add-ToUserPath $localBin
 # mise activate needs PowerShell 7, so Windows PowerShell 5.1 gets the shims.
 Add-ToUserPath (Join-Path $env:LOCALAPPDATA 'mise\shims')
+# WindowsApps holds Store stubs named python and python3, so it goes last.
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User') -split ';' | Where-Object { $_ }
+$storeDirs = @($userPath | Where-Object { $_ -like '*\Microsoft\WindowsApps' })
+[Environment]::SetEnvironmentVariable('Path', ((@($userPath | Where-Object { $storeDirs -notcontains $_ }) + $storeDirs) -join ';'), 'User')
 Sync-SessionPath
 $documents = [Environment]::GetFolderPath('MyDocuments')
 Add-LineOnce "$documents\PowerShell\profile.ps1" '(&mise activate pwsh) | Out-String | Invoke-Expression'
