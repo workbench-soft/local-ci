@@ -72,7 +72,7 @@ machine with several runners builds several jobs at once.
   - **Mac rerun** `runner/install.sh` rewrites `.env` of each registered
     runner too, and restarts the runner once its job ends.
 - **Left out** Defender exclusions for the runner folders and the package
-  caches. They weaken the PC's protection, so the person decides on them.
+  caches. The next entry adds them.
 - **Limits**
   - **Same tool at once** 2 jobs that download the same new tool version at
     the same moment both download it. The `setup-*` actions mark a finished
