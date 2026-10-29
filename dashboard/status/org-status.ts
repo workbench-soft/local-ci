@@ -63,6 +63,9 @@ export type OrgStatus =
 const execFileAsync = promisify(execFile);
 const cacheTtlMs = 20_000;
 const runsPerRepo = 5;
+// One call reads 30 runs as cheaply as 5, and an unfinished run sits among the recent ones.
+const runsRead = 30;
+const queuedJobsTtlMs = 60_000;
 
 let cached: { at: number; status: Promise<OrgStatus> } | null = null;
 let ghToken: string | null = null;
@@ -139,11 +142,19 @@ async function listLatestRuns(): Promise<WorkflowRun[]> {
 	return perRepo.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
 }
 
+/**
+ * The latest runs of a repo, plus every unfinished run among the runs read.
+ * A busy repo queues newer runs on top of the one that builds, so the latest 5 alone hide it.
+ */
+export function pickRuns<T extends Pick<ApiRun, 'status'>>(runs: T[]): T[] {
+	return runs.filter((run, index) => index < runsPerRepo || activeStatuses.has(run.status));
+}
+
 async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
-	const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(`/repos/${fullName}/actions/runs?per_page=${runsPerRepo}`);
+	const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(`/repos/${fullName}/actions/runs?per_page=${runsRead}`);
 	const repo = fullName.split('/')[1];
 	const runs = await Promise.all(
-		workflow_runs.map(async (run) => ({
+		pickRuns(workflow_runs).map(async (run) => ({
 			id: run.id,
 			repo,
 			workflow: run.name,
@@ -158,7 +169,11 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 			url: run.html_url,
 			branchUrl: `https://github.com/${fullName}/tree/${run.head_branch.split('/').map(encodeURIComponent).join('/')}`,
 			pullRequests: (run.pull_requests ?? []).map(({ number }) => ({ number, url: `https://github.com/${fullName}/pull/${number}` })),
-			jobs: activeStatuses.has(run.status) || failedConclusions.has(run.conclusion ?? '') ? await listRunJobs(fullName, run.id) : [],
+			jobs: activeStatuses.has(run.status)
+				? await activeRunJobs(fullName, run)
+				: failedConclusions.has(run.conclusion ?? '')
+					? await listRunJobs(fullName, run.id)
+					: [],
 		})),
 	);
 	await addTypicalTimes(fullName, runs);
@@ -191,6 +206,27 @@ async function latestSuccessfulRuns(fullName: string, workflowId: number): Promi
 	} catch {
 		return [];
 	}
+}
+
+// A queue of 20 runs would cost 20 calls a load. GitHub bumps updated_at when a job of the run starts.
+const queuedJobs = new Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>();
+
+async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
+	if (run.status !== 'queued') {
+		queuedJobs.delete(run.id);
+		return listRunJobs(fullName, run.id);
+	}
+	const kept = queuedJobs.get(run.id);
+	// A queued run can hold a job that builds already, and its steps move on each load.
+	if (kept && kept.updatedAt === run.updated_at && Date.now() - kept.at < queuedJobsTtlMs) {
+		const jobs = await kept.jobs;
+		// A failed call gave no jobs, so it gets another try.
+		if (jobs.length && !jobs.some((job) => job.status === 'in_progress')) return jobs;
+	}
+	const jobs = listRunJobs(fullName, run.id);
+	queuedJobs.set(run.id, { at: Date.now(), updatedAt: run.updated_at, jobs });
+	for (const [id, entry] of queuedJobs) if (Date.now() - entry.at >= queuedJobsTtlMs) queuedJobs.delete(id);
+	return jobs;
 }
 
 // A finished run never changes, so its jobs are read once. The oldest entry goes past 200 runs.

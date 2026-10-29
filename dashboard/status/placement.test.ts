@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import type { RunJob, WorkflowRun } from './org-status.ts';
-import { type LiveJob, liveJobs, localRunnerNames, placeOfJob, placeOfRun, runnerSlots } from './placement.ts';
+import type { OrgRunner, RunJob, WorkflowRun } from './org-status.ts';
+import { idleWhileQueued, type LiveJob, liveJobs, localRunnerNames, placeOfJob, placeOfRun, runnerSlots } from './placement.ts';
 import type { PcRunner } from './this-pc.ts';
 
 const local = new Set(['pc', 'pc-2']);
@@ -113,4 +113,35 @@ test('runnerSlots gives every runner of this PC a row, idle ones too', () => {
 test('runnerSlots keeps a local job whose runner has no folder', () => {
 	const slots = runnerSlots({ supported: false }, [liveJob('gone')]);
 	assert.deepEqual(slots.map((slot) => [slot.runner, slot.job?.runnerName]), [[null, 'gone']]);
+});
+
+const orgRunner = (name: string, busy: boolean, labels = ['self-hosted', 'Windows', 'X64', 'local']): OrgRunner => ({ id: 1, name, os: 'Windows', status: 'online', busy, labels });
+const waitingSince = (since: string, labels = ['self-hosted', 'local']): LiveJob => ({
+	key: since,
+	runId: 1,
+	repo: 'app',
+	workflow: 'ci',
+	name: 'test',
+	place: 'waiting',
+	runnerName: null,
+	labels,
+	since,
+	url: 'u',
+	steps: null,
+	typicalMs: null,
+});
+const at = Date.parse('2025-10-29T12:05:00Z');
+
+test('idleWhileQueued names a free runner of this PC while a job it fits waits over a minute', () => {
+	const jobs = [waitingSince('2025-10-29T12:00:00Z')];
+	assert.deepEqual(idleWhileQueued([orgRunner('pc', false), orgRunner('pc-2', true)], local, jobs, at), { idle: ['pc'], waiting: jobs });
+});
+
+test('idleWhileQueued keeps quiet for a fresh job, a busy runner, a job for macOS and a runner of another machine', () => {
+	const none = { idle: [], waiting: [] };
+	assert.deepEqual(idleWhileQueued([orgRunner('pc', false)], local, [waitingSince('2025-10-29T12:04:30Z')], at), none);
+	assert.deepEqual(idleWhileQueued([orgRunner('pc', true)], local, [waitingSince('2025-10-29T12:00:00Z')], at), none);
+	assert.deepEqual(idleWhileQueued([orgRunner('pc', false)], local, [waitingSince('2025-10-29T12:00:00Z', ['self-hosted', 'macOS'])], at), none);
+	assert.deepEqual(idleWhileQueued([orgRunner('mac', false)], local, [waitingSince('2025-10-29T12:00:00Z')], at), none);
+	assert.deepEqual(idleWhileQueued(null, local, [waitingSince('2025-10-29T12:00:00Z')], at), none);
 });

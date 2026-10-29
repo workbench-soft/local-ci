@@ -91,3 +91,10 @@ test('a failed run names its failed job and step, and releases come from the pub
 	assert.deepEqual(status.runs[0].pullRequests, [{ number: 4, url: 'https://github.com/workbench-soft/good/pull/4' }]);
 	assert.equal(status.runs[0].branchUrl, 'https://github.com/workbench-soft/good/tree/main');
 });
+
+test('pickRuns keeps the latest 5 runs and every unfinished run past them', async () => {
+	const { pickRuns } = await freshModule();
+	const statuses = ['queued', 'queued', 'queued', 'queued', 'queued', 'in_progress', 'completed', 'queued', 'completed'];
+	const picked = pickRuns(statuses.map((status, index) => ({ status, index })));
+	assert.deepEqual(picked.map((run) => run.index), [0, 1, 2, 3, 4, 5, 7]);
+});

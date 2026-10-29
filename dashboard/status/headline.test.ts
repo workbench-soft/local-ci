@@ -117,3 +117,8 @@ test('summarizeCi puts jobs on this PC first, then other runners, then the GitHu
 	assert.deepEqual(summarize([run('queued'), run('requested')]), { tone: 'warn', text: '2 jobs waiting on GitHub for a runner' });
 	assert.deepEqual(summarize([run('completed', 'failure')]), { tone: 'ok', text: 'CI is up and idle' });
 });
+
+test('summarizeCi turns red when a runner of this PC sits idle while jobs wait', () => {
+	const runs = [run('queued')];
+	assert.deepEqual(summarizeCi(pcUp, orgWith(runs), liveJobs(runs, new Set(['pc'])), ['pc']), { tone: 'bad', text: 'pc sits idle while 1 job waits on GitHub' });
+});
