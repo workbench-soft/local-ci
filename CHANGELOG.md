@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The status page gets an icon, in the browser tab and on its Startup
+  shortcut.
+
 - Both installs put Python 3.15 in through mise. On Windows `python3` now runs
   it in place of the Store stub, in a terminal and in runner jobs.
 

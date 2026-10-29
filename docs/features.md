@@ -35,7 +35,8 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 
 `http://localhost:4280` shows the local CI at a glance. `dashboard\install.ps1`
 sets it up. The page starts with Windows and opens in the browser after the
-install build and at each logon.
+install build and at each logon. The tab and the Startup shortcut show its
+icon: a white loop arrow around a green play sign on blue.
 
 - **Headline** counts jobs on this PC first, then jobs on other runners, then
   jobs waiting on GitHub. Red when a runner of this PC is down.
