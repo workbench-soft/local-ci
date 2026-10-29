@@ -372,3 +372,21 @@ browser at each logon.
   4. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/user-flows.md`, `docs/architecture.md`,
   `README.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Place labels that say what they mean
+
+- **Why** the person read "On this PC" in Latest runs and asked what it means,
+  since every run of theirs builds on this PC. The label shows only while a
+  run builds, and the page didn't say so.
+- **Changes**
+  - **`cards/icons.tsx`** each place gets a label with a verb and a hint:
+    Building on this PC, Queued on GitHub, Building on another runner. The
+    hint names who builds the job, for example a GitHub hosted runner.
+  - **`cards/latest-runs-table.tsx`** the filter chips use the same labels,
+    and each chip and place label shows its hint on hover. A line under the
+    heading says the place shows only while a run is unfinished.
+- **Steps**
+  1. This spec.
+  2. The labels, the hints and the line.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.

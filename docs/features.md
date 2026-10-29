@@ -67,10 +67,13 @@ icon: a white loop arrow around a green play sign on blue.
   this PC also show their boot task and when their last job started. The
   list stops at 420 px and scrolls.
 - **Runs** the latest 5 runs of each org repo, with an icon for the result and
-  for the place. Filter chips pick this PC, waiting, other runners, failed or
-  passed. A search box matches repo, workflow and branch. A click on a column
-  head sorts by it. The table stops at 70% of the window height and scrolls,
-  with its head row pinned.
+  for the place. An unfinished run says where it builds: Building on this
+  PC, Queued on GitHub or Building on another runner. A finished run shows
+  only its result. Each place label and chip explains itself on hover.
+  Filter chips pick one of those places, failed or passed. A search box
+  matches repo, workflow and branch. A click on a column head sorts by it. The
+  table stops at 70% of the window height and scrolls, with its head row
+  pinned.
 - **Stop and Purge** buttons on each run and each live job. Stop cancels the
   run on GitHub. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's

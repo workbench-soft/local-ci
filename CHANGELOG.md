@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The runs table of the status page says Building on this PC, Queued on
+  GitHub or Building on another runner, with a hint on hover. A line under
+  the heading says a finished run shows only its result.
+
 - The runs table gets a Purge all button. After a confirm, it purges every
   run the filter and search match.
 
