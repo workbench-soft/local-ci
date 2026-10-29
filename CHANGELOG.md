@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The runs table of the status page says Building on this PC, Queued on
+  GitHub or Building on another runner, with a hint on hover. A line under
+  the heading says a finished run shows only its result.
+
 - Each running job on the status page gets a progress bar with its current
   step and the time left, from the 3 latest successful runs of its workflow.
 
