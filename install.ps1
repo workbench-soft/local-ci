@@ -1,38 +1,57 @@
-# Installs everything README.md lists on Windows. Safe to run again: each step
-# checks whether its piece is already in place. install.sh does the same on a Mac.
+# Sets up Windows with everything README.md lists. Running it again is safe,
+# since each step looks for its piece first. install.sh is the Mac version.
 $ErrorActionPreference = 'Stop'
 
 $devDir = if ($env:DEV_DIR) { $env:DEV_DIR } else { 'C:\Programming\WorkbenchSoft' }
 $env:GH_PAGER = 'cat'
 
-function Say([string]$text) { Write-Host "`n==> $text" }
+$wingetPackages = @(
+	'Git.Git', 'GitHub.cli', 'jdx.mise', 'junegunn.fzf', 'jqlang.jq',
+	'koalaman.shellcheck', 'mvdan.shfmt', 'FiloSottile.mkcert',
+	'Microsoft.VisualStudioCode', 'Docker.DockerDesktop', 'Anthropic.Claude', 'Google.PlatformTools'
+)
+$vscodeExtensions = @(
+	'anthropic.claude-code',
+	'dbaeumer.vscode-eslint',
+	'esbenp.prettier-vscode',
+	'formulahendry.auto-rename-tag',
+	'huizhou.githd',
+	'nrwl.angular-console',
+	'oleg-chibikov.open-in-remote-repo',
+	'orta.vscode-jest'
+)
 
-# No console (piped, CI) means no changes that need a decision.
-function Ask([string]$question) {
+function Write-Step([string]$text) { Write-Host "`n==> $text" }
+
+# Without a console (piped, CI) every question gets a no.
+function Confirm-Choice([string]$question) {
 	if ([Console]::IsInputRedirected) { return $false }
 	return (Read-Host "$question [y/N]") -match '^(y|yes)$'
 }
 
-# winget adds to PATH in the registry, and this session keeps the old copy.
-function Update-Path {
+# winget writes PATH to the registry, while this session holds the old copy.
+function Sync-SessionPath {
 	$env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
 }
 
-$docs = [Environment]::GetFolderPath('MyDocuments')
-$profile51 = "$docs\WindowsPowerShell\profile.ps1"
-$profile7 = "$docs\PowerShell\profile.ps1"
-
-function Add-ProfileLine([string]$file, [string]$line) {
+function Add-LineOnce([string]$file, [string]$line) {
 	New-Item -ItemType Directory -Force -Path (Split-Path $file) | Out-Null
 	$text = if (Test-Path -LiteralPath $file) { Get-Content -Raw -LiteralPath $file } else { '' }
 	if ($text -notlike "*$line*") { Add-Content -LiteralPath $file -Value $line }
 }
 
-function Add-UserPath([string]$dir) {
+function Add-ToUserPath([string]$dir) {
 	$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 	if (($userPath -split ';') -notcontains $dir) {
 		[Environment]::SetEnvironmentVariable('Path', "$dir;$userPath", 'User')
 	}
+}
+
+function Copy-IfMissing([string]$from, [string]$to, [string]$step) {
+	if (Test-Path -LiteralPath $to) { return }
+	Write-Step $step
+	New-Item -ItemType Directory -Force -Path (Split-Path $to) | Out-Null
+	Copy-Item $from $to
 }
 
 # --- winget ------------------------------------------------------------------
@@ -40,43 +59,39 @@ if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
 	throw 'winget is missing. Install App Installer from the Microsoft Store and run this again.'
 }
 
-Say 'Installing tools with winget'
-$packages = @(
-	'Git.Git', 'GitHub.cli', 'jdx.mise', 'junegunn.fzf', 'jqlang.jq',
-	'koalaman.shellcheck', 'mvdan.shfmt', 'FiloSottile.mkcert',
-	'Microsoft.VisualStudioCode', 'Docker.DockerDesktop', 'Anthropic.Claude', 'Google.PlatformTools'
-)
-foreach ($id in $packages) {
-	# winget list cuts long ids to fit the console, so ask about each one.
+Write-Step 'Installing tools with winget'
+foreach ($id in $wingetPackages) {
+	# winget list trims long ids to the console width, so each id gets its own query.
 	winget list --id $id --exact --accept-source-agreements | Out-Null
 	if ($LASTEXITCODE -eq 0) { continue }
 	Write-Host "  $id"
 	winget install --id $id --exact --source winget --silent --accept-source-agreements --accept-package-agreements
 }
-Update-Path
+Sync-SessionPath
 
 # --- PATH and the PowerShell profile -----------------------------------------
-Say 'Updating PATH and the PowerShell profile'
+Write-Step 'Updating PATH and the PowerShell profile'
 $localBin = Join-Path $HOME '.local\bin'
 New-Item -ItemType Directory -Force -Path $localBin | Out-Null
-Add-UserPath $localBin
-# mise activate needs PowerShell 7. Windows PowerShell 5.1 gets the shims.
-Add-UserPath (Join-Path $env:LOCALAPPDATA 'mise\shims')
-Update-Path
-Add-ProfileLine $profile7 '(&mise activate pwsh) | Out-String | Invoke-Expression'
+Add-ToUserPath $localBin
+# mise activate needs PowerShell 7, so Windows PowerShell 5.1 gets the shims.
+Add-ToUserPath (Join-Path $env:LOCALAPPDATA 'mise\shims')
+Sync-SessionPath
+$documents = [Environment]::GetFolderPath('MyDocuments')
+Add-LineOnce "$documents\PowerShell\profile.ps1" '(&mise activate pwsh) | Out-String | Invoke-Expression'
 
 # --- Node toolchain ----------------------------------------------------------
-Say 'Installing node, pnpm and yarn through mise'
+Write-Step 'Installing node, pnpm and yarn through mise'
 mise use -g node@22 pnpm@latest yarn@1
 if ($LASTEXITCODE -ne 0) { throw 'mise use failed' }
 
-Say 'Installing the Copilot CLI and agent-browser'
-# Windows PowerShell drops a bare -- before it reaches mise, so it stays quoted.
+Write-Step 'Installing the Copilot CLI and agent-browser'
+# Windows PowerShell drops a bare -- on its way to mise, so the quotes stay.
 mise exec '--' npm install -g @github/copilot agent-browser
 if ($LASTEXITCODE -ne 0) { throw 'npm install failed' }
 
 # --- Git config --------------------------------------------------------------
-Say 'Setting git config'
+Write-Step 'Setting git config'
 git config --global color.ui true
 git config --global push.autosetupremote true
 # input keeps LF on checkout, so bash scripts run in Git Bash and on the runner.
@@ -85,79 +100,63 @@ if (-not (git config --global user.name)) { git config --global user.name (Read-
 if (-not (git config --global user.email)) { git config --global user.email (Read-Host 'git user.email') }
 
 # --- GitHub CLI --------------------------------------------------------------
-# The repos below are private in workbench-soft, so the login comes first.
-# Windows PowerShell turns native stderr into an error that Stop would throw.
+# The repos below are private in workbench-soft, so the login goes first.
+# Windows PowerShell turns native stderr into an error, and Stop would throw it.
 $loggedIn = try { gh auth status *> $null; $LASTEXITCODE -eq 0 } catch { $false }
 if (-not $loggedIn) {
-	Say 'Logging into GitHub'
+	Write-Step 'Logging into GitHub'
 	gh auth login
 }
 
 # --- My repos ----------------------------------------------------------------
-# gh-review-notify is a macOS LaunchAgent, so it stays on the Mac.
+# gh-review-notify is a macOS LaunchAgent, so only the Mac gets it.
 New-Item -ItemType Directory -Force -Path $devDir | Out-Null
 foreach ($repo in 'git-aliases', 'agent-skills') {
-	$dir = Join-Path $devDir $repo
-	if (-not (Test-Path -LiteralPath $dir)) {
-		Say "Cloning $repo"
-		gh repo clone "workbench-soft/$repo" $dir
+	$repoDir = Join-Path $devDir $repo
+	if (-not (Test-Path -LiteralPath $repoDir)) {
+		Write-Step "Cloning $repo"
+		gh repo clone "workbench-soft/$repo" $repoDir
 	}
-	Say "Running $repo\install.ps1"
-	# With no console, agent-skills can't ask for the language, so it gets one.
+	Write-Step "Running $repo\install.ps1"
+	$repoInstaller = Join-Path $repoDir 'install.ps1'
+	# Without a console agent-skills can't ask for the language, so it gets English.
 	if ($repo -eq 'agent-skills' -and [Console]::IsInputRedirected) {
-		& (Join-Path $dir 'install.ps1') -Lang English -Yes
+		& $repoInstaller -Lang English -Yes
 	} else {
-		& (Join-Path $dir 'install.ps1')
+		& $repoInstaller
 	}
 }
 
 # --- gh extensions -----------------------------------------------------------
-$extensions = try { gh extension list 2>$null | Out-String } catch { '' }
-if ($extensions -notmatch 'gh-stack') {
-	Say 'Installing gh-stack'
+$ghExtensions = try { gh extension list 2>$null | Out-String } catch { '' }
+if ($ghExtensions -notmatch 'gh-stack') {
+	Write-Step 'Installing gh-stack'
 	gh extension install github/gh-stack
 }
 
 # --- VS Code extensions ------------------------------------------------------
-Say 'Installing VS Code extensions'
-foreach ($ext in @(
-		'anthropic.claude-code',
-		'dbaeumer.vscode-eslint',
-		'esbenp.prettier-vscode',
-		'formulahendry.auto-rename-tag',
-		'huizhou.githd',
-		'nrwl.angular-console',
-		'oleg-chibikov.open-in-remote-repo',
-		'orta.vscode-jest'
-	)) {
-	code --install-extension $ext | Out-Null
+Write-Step 'Installing VS Code extensions'
+foreach ($extension in $vscodeExtensions) {
+	code --install-extension $extension | Out-Null
 }
 
 # --- Claude Code memory ------------------------------------------------------
 $claudeDir = Join-Path $HOME '.claude'
 New-Item -ItemType Directory -Force -Path $claudeDir | Out-Null
-if (-not (Test-Path -LiteralPath (Join-Path $claudeDir 'MEMORY.md'))) {
-	Say 'Copying Claude memory'
-	Copy-Item (Join-Path $PSScriptRoot 'claude\MEMORY.md') (Join-Path $claudeDir 'MEMORY.md')
-}
+Copy-IfMissing (Join-Path $PSScriptRoot 'claude\MEMORY.md') (Join-Path $claudeDir 'MEMORY.md') 'Copying Claude memory'
 $claudeMd = Join-Path $claudeDir 'CLAUDE.md'
 $claudeText = if (Test-Path -LiteralPath $claudeMd) { Get-Content -Raw -LiteralPath $claudeMd } else { '' }
 if ($claudeText -notmatch '(?m)^@~/\.claude/MEMORY\.md\s*$') {
-	# Set-Content in Windows PowerShell writes a BOM, and the import has to open the file.
+	# Set-Content in Windows PowerShell adds a BOM, and the import line has to start the file.
 	[IO.File]::WriteAllText($claudeMd, "@~/.claude/MEMORY.md`n`n$claudeText", [Text.UTF8Encoding]::new($false))
 }
 
 # --- MCP servers -------------------------------------------------------------
-$mcp = Join-Path $HOME '.copilot\mcp-config.json'
-if (-not (Test-Path -LiteralPath $mcp)) {
-	Say 'Copying MCP config'
-	New-Item -ItemType Directory -Force -Path (Split-Path $mcp) | Out-Null
-	Copy-Item (Join-Path $PSScriptRoot 'mcp-config.json') $mcp
-}
+Copy-IfMissing (Join-Path $PSScriptRoot 'mcp-config.json') (Join-Path $HOME '.copilot\mcp-config.json') 'Copying MCP config'
 
 # --- CI runner ---------------------------------------------------------------
-if (Ask 'Register this PC as a GitHub Actions runner for workbench-soft?') {
+if (Confirm-Choice 'Register this PC as a GitHub Actions runner for workbench-soft?') {
 	& (Join-Path $PSScriptRoot 'runner\install.ps1')
 }
 
-Say 'Done. Open a new terminal to pick up the PATH and mise.'
+Write-Step 'Done. Open a new terminal to pick up the PATH and mise.'
