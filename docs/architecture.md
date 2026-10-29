@@ -126,7 +126,9 @@ The server renders the page for each request.
   Startup folder runs `dashboard/open.ps1`, which waits for the port and opens
   the page.
 - **Stop and Purge** the buttons call server actions in
-  `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/cancel`. Purge
+  `status/run-actions.ts`. Stop posts to `/actions/runs/{id}/force-cancel`,
+  then the button asks `runFinished` every 2 seconds until the run is
+  completed. Purge
   runs `status/purge.ts`: it posts to `force-cancel`, polls the run until it
   is completed, then sends `DELETE` on the run. Purge all sends the run ids
   the table matches, and `purgeRuns` purges them 5 at a time. The page holds

@@ -14,6 +14,10 @@
 - Latest runs has a PR column with the PR number of each run, linked to the
   PR and sortable.
 
+- Stop on the status page reads Stopping at once and Stopped when GitHub
+  ends the run, disabled the whole time. Stop force cancels now, so the
+  runner takes the next release without waiting for `if: always()` steps.
+
 - The status page shows one Running now card at the top in place of the
   Now card and the Running now card, which listed the same jobs.
 

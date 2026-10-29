@@ -77,7 +77,7 @@ function RunnerRow({ slot: { runner, job }, now }: { slot: RunnerSlot; now: numb
 					<>
 						<div className="muted small">started {formatAge(job.since, now)}</div>
 						<JobProgress job={job} now={now} />
-						<RunControls repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
+						<RunControls key={job.runId} repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
 					</>
 				)}
 			</div>
@@ -100,7 +100,7 @@ function JobItem({ job, now }: { job: LiveJob; now: number }) {
 					{job.place === 'waiting' ? 'queued' : 'started'} {formatAge(job.since, now)}
 				</div>
 				{job.place !== 'waiting' && <JobProgress job={job} now={now} />}
-				<RunControls repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
+				<RunControls key={job.runId} repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
 			</div>
 		</li>
 	);
