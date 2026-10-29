@@ -137,6 +137,15 @@ if ($missing.Count) {
 Write-Step 'Adding the runner folders and the package caches to the Defender exclusions'
 Add-DefenderExclusions
 
+# node_modules and the .open-next cache hold paths over 260 characters.
+Write-Step 'Turning on long paths for git and Windows'
+git config --global core.longpaths true
+try {
+	Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem' -Name LongPathsEnabled -Value 1 -Type DWord -ErrorAction Stop
+} catch {
+	Write-Host "Windows long paths need an admin run: $($_.Exception.Message)"
+}
+
 $toolDirs = Get-ToolDirs
 $toolCache = Join-Path $HOME 'actions-runner\_tool'
 New-Item -ItemType Directory -Force -Path $toolCache | Out-Null

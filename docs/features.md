@@ -38,6 +38,8 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 - **Defender exclusions** on Windows Defender skips the runner folders and
   the package caches. `RUNNER_DEFENDER_EXCLUSIONS=off` skips the step.
 - **Limit** Defender then skips the code that jobs check out.
+- **Long paths** git and Windows accept paths over 260 characters, so a
+  checkout can delete a deep `node_modules` or build cache.
 
 ## Start button
 
