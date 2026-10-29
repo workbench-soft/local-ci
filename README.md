@@ -54,6 +54,9 @@ runner. The runner scripts also work alone:
 - **Tool cache** the runners share `~/actions-runner/_tool`, so a `setup-*`
   action downloads node, Java or Python once per machine. A rerun of the
   script moves old runners onto it.
+- **Defender** on Windows the script excludes `~/actions-runner`,
+  `~/.gradle` and the pnpm, npm and mise caches from scans, so
+  `pnpm install` runs faster. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
 - **Folders** the first runner sits in `~/actions-runner/workbench-soft`, the
   next in `workbench-soft-2` and up. `RUNNER_ORG` picks another org.
 - **Fewer runners** a lower `RUNNER_COUNT` leaves the extra ones registered.
