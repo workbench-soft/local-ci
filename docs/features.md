@@ -28,6 +28,8 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   Windows runner starts at boot.
 - **Several runners** a runner takes one job at a time. `RUNNER_COUNT` sets
   how many runners the machine gets: 4 on Windows and 1 on a Mac by default.
+  On Windows the count stays in `~/actions-runner/runner-count` for the next
+  run, and a lower count removes the extra runners.
 - **Limit** extra runners speed up only work split into jobs. Jobs at the
   same time share ports, the Android emulator and the Gradle cache.
 - **Shared tool cache** the runners of a machine keep `setup-*` downloads in
@@ -89,6 +91,16 @@ icon: a white loop arrow around a green play sign on blue.
   this PC also show their boot task and when their last job started. The
   list stops at 420 px and scrolls. Each entry names the job its runner
   builds, linked to the log, or says `No job`.
+- **Runner count** on Windows the top of the Runners card has a field for
+  the number of runners and the count this PC suits, such as
+  `16 logical processors and 31 GB of memory suit 4 runners`. Use 4 fills the
+  field with it. Apply runs `runner\install.ps1` as admin in a window on the
+  desktop, which adds or removes runners. A runner on a job leaves once the
+  job ends. The suggestion is 1 runner per 4 logical processors and per
+  4 GB of memory past 8 GB, and heavy Gradle builds may want fewer.
+- **Limit** Apply needs a person logged on, and one run of
+  `runner\install.ps1` after this change to add the task it starts. Mac
+  runners change only through `RUNNER_COUNT`.
 - **Runs** the latest 5 runs of each org repo and every unfinished one, with
   an icon for the result and for the place. An unfinished run says where it builds: Building on this
   PC, Queued on GitHub or Building on another runner. A finished run shows

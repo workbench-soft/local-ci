@@ -103,6 +103,9 @@ flowchart TD
 8. Plug the phone in over USB with USB debugging on. Press Install in the
    Release column. The button says the device, or shows adb's error in red.
 9. Click the branch or the PR link to open it on GitHub.
+10. To change the number of runners, type it in Runners on this PC, or press
+    Use with the suggested count. Press Apply, and watch
+    `runner\install.ps1` add or remove runners in its window.
 
 ```mermaid
 flowchart TD
@@ -121,5 +124,7 @@ flowchart TD
   H -- Purge all, confirmed --> P[gray the rows, purge them 5 at a time, reload, repeat until none match]
   H -- Install --> K[adb devices, download the APK, adb install]
   K --> L[installed on the device, or adb's error in red]
-  I & J & P --> G
+  H -- Apply runner count --> R[write runner-count, start the count task]
+  R --> T[runner/install.ps1 as admin adds or removes runners]
+  I & J & P & T --> G
 ```
