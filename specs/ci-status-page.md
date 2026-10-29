@@ -59,8 +59,10 @@ browser at each logon.
   `.env.local` and registers the `local-ci dashboard` task at boot.
 - **Port** `4280`, on `127.0.0.1` only. `DASHBOARD_PORT` picks another one.
 - **Stop and Purge** server actions in `status/run-actions.ts`. Stop calls
-  `POST /repos/{repo}/actions/runs/{id}/cancel`. Purge calls `force-cancel`,
-  which also stops steps with `if: always()`. It then waits up to 60 seconds
+  `POST /repos/{repo}/actions/runs/{id}/force-cancel`, which also stops steps
+  with `if: always()`, so the runner is free at once. The button shows
+  Stopping until `runFinished` reads the run as completed, then Stopped.
+  Purge calls `force-cancel` too. It then waits up to 60 seconds
   for the run to finish and calls `DELETE /repos/{repo}/actions/runs/{id}`.
   Each action drops the 20 second cache, so the next render shows the change.
 - **Releases** the app repos are private, so each release goes to the public
@@ -573,3 +575,26 @@ browser at each logon.
   2. The merged card.
   3. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/user-flows.md`, `CHANGELOG.md`.
+
+### 2026-10-30 Stop shows Stopping, then Stopped, and frees the runner at once
+
+- **Why** the person pressed Stop and the button went back to Stop while
+  GitHub was still cancelling. They asked for Stopping at once, then
+  Stopped, with the button disabled the whole time. A cancelled run kept its
+  runner busy through its `if: always()` steps, so the next release waited.
+- **Changes**
+  - **`status/run-actions.ts`** Stop calls `force-cancel`, so the runner
+    takes the next job as soon as the run ends. A new `runFinished` action
+    reads whether a run is completed.
+  - **`cards/run-controls.tsx`** Stop goes to Stopping on the click and stays
+    disabled. The button asks `runFinished` every 2 seconds and then shows
+    Stopped. An error puts Stop back with the message.
+  - **`cards/live-jobs-card.tsx`** the buttons get the run id as their key,
+    so a new job on the same runner starts with a fresh Stop.
+- **Steps**
+  1. This spec.
+  2. Force cancel and the Stopping, Stopped states.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
+- **Limits** Stop skips `if: always()` steps now, like Purge.
