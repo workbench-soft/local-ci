@@ -13,7 +13,8 @@ export function AutoRefresh({ renderedAt }: { renderedAt: string }) {
 		return () => clearInterval(timer);
 	}, [router]);
 	return (
-		<span className="muted">
+		// The server and the browser may format the time in different locales, so React keeps the browser's text.
+		<span className="muted" suppressHydrationWarning>
 			Updated {new Date(renderedAt).toLocaleTimeString()}, refreshes every {refreshMs / 1000} s
 		</span>
 	);
