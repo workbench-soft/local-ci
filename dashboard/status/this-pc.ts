@@ -30,8 +30,10 @@ const pcCacheTtlMs = 5_000;
 const powershellTimeoutMs = 15_000;
 type PcCache = { doneAt: number | null; status: Promise<ThisPcStatus> };
 let pcCache: PcCache | null = null;
-// A failed or hung PowerShell would read as every runner down, so the last good answer stays.
-let lastSnapshot: ProcessSnapshot = { tasks: [], logs: [] };
+// A failed or hung PowerShell would read as every runner down, so the last good answer stays for a
+// minute. Past that the runners show as down, since one may have died meanwhile.
+const snapshotKeepMs = 60_000;
+let lastSnapshot: { at: number; snapshot: ProcessSnapshot } | null = null;
 
 /** runner/install.ps1 numbers the folders and tasks from the second runner on. */
 export function runnerNumber(folder: string): number | null {
@@ -112,11 +114,14 @@ async function readProcessSnapshot(folders: string[]): Promise<ProcessSnapshot> 
 	try {
 		const { stdout } = await execFileAsync('powershell', ['-NoProfile', '-Command', script], { timeout: powershellTimeoutMs });
 		const parsed = JSON.parse(stdout);
-		lastSnapshot = { tasks: parsed.tasks ?? [], logs: parsed.logs ?? [] };
+		const snapshot = { tasks: parsed.tasks ?? [], logs: parsed.logs ?? [] };
+		lastSnapshot = { at: Date.now(), snapshot };
+		return snapshot;
 	} catch (error) {
-		console.error(`${new Date().toISOString()} Couldn't read the runner processes, so the page keeps the last answer: ${error}`);
+		const kept = lastSnapshot && Date.now() - lastSnapshot.at < snapshotKeepMs ? lastSnapshot.snapshot : null;
+		console.error(`${new Date().toISOString()} Couldn't read the runner processes${kept ? ', so the page keeps the last answer' : ''}: ${error}`);
+		return kept ?? { tasks: [], logs: [] };
 	}
-	return lastSnapshot;
 }
 
 async function readRunnerName(dir: string): Promise<string | null> {
