@@ -68,7 +68,7 @@ browser at each logon.
 
 ## Changes
 
-### 2026-10-29 A web page with the CI status that starts with Windows
+### 2025-10-29 A web page with the CI status that starts with Windows
 
 - **Why** the person wants to see at a glance whether the runner is up and
   what it builds, without opening GitHub.
@@ -82,7 +82,7 @@ browser at each logon.
 - **Docs** `README.md`, `docs/architecture.md`, `docs/user-flows.md`,
   `docs/features.md`.
 
-### 2026-10-29 A row per runner of this PC
+### 2025-10-29 A row per runner of this PC
 
 - **Why** `runner/install.ps1` now installs several runners, see
   `specs/ci-runner.md`.
@@ -91,7 +91,7 @@ browser at each logon.
   runners are down.
 - **Docs** `docs/features.md`, `docs/architecture.md`.
 
-### 2026-10-29 Local jobs first, sorting, a filter, icons, and the page opens on its own
+### 2025-10-29 Local jobs first, sorting, a filter, icons, and the page opens on its own
 
 - **Why** the person wants to see at once what builds on this PC and what
   waits on GitHub. The runs list needs sorting and a filter. The page should
@@ -119,7 +119,7 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 
-### 2026-10-29 An icon for the page and its shortcut
+### 2025-10-29 An icon for the page and its shortcut
 
 - **Why** the browser tab and the Startup shortcut show a blank default icon.
 - **Changes**
@@ -134,7 +134,7 @@ browser at each logon.
   3. Docs and changelog.
 - **Docs** `docs/features.md`, `CHANGELOG.md`.
 
-### 2026-10-29 Stop and purge runs from the page
+### 2025-10-29 Stop and purge runs from the page
 
 - **Why** the person wants to kill a stuck or unwanted run from the page,
   including a full purge, without opening GitHub.
@@ -157,7 +157,7 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 
-### 2026-10-29 Every runner of this PC in the Now card
+### 2025-10-29 Every runner of this PC in the Now card
 
 - **Why** the person wants all runners of this PC at the top, idle ones too,
   without scrolling to the This PC card.

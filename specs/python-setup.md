@@ -33,7 +33,7 @@ PC and in each runner job. A script written on one machine runs on the others.
 
 ## Changes
 
-### 2026-10-29 python3 works on Windows, Python 3.15 everywhere
+### 2025-10-29 python3 works on Windows, Python 3.15 everywhere
 
 - **Why** the Keeppad release failed on the Windows runner. `fetch-models.sh`
   calls `python3`, which reached the Windows Store stub and exited 49. The
