@@ -33,6 +33,9 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 - **Shared tool cache** the runners of a machine keep `setup-*` downloads in
   `~/actions-runner/_tool`. Node of one version downloads once for all of
   them.
+- **Defender exclusions** on Windows Defender skips the runner folders and
+  the package caches. `RUNNER_DEFENDER_EXCLUSIONS=off` skips the step.
+- **Limit** Defender then skips the code that jobs check out.
 
 ## Start button
 

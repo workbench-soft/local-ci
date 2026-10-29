@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `runner/install.ps1` excludes the runner folders and the pnpm, npm, mise
+  and Gradle caches from Defender scans. `RUNNER_DEFENDER_EXCLUSIONS=off`
+  skips it.
+
 - The runners of a machine share one tool cache in `~/actions-runner/_tool`.
   Node, Java or Python from a `setup-*` action downloads once for all of
   them. Run `runner/install.ps1` or `runner/install.sh` again to switch.

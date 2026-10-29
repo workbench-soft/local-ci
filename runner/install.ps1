@@ -87,6 +87,26 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
 
+# Defender scans each file a job writes, and pnpm install writes tens of
+# thousands. The runners build only the org's own repos.
+function Add-DefenderExclusions {
+	if ($env:RUNNER_DEFENDER_EXCLUSIONS -eq 'off') { Write-Host 'RUNNER_DEFENDER_EXCLUSIONS=off, skipping'; return }
+	$paths = @(
+		(Join-Path $HOME 'actions-runner'),
+		(Join-Path $HOME '.gradle'),
+		(Join-Path $env:LOCALAPPDATA 'pnpm'),
+		(Join-Path $env:LOCALAPPDATA 'npm-cache'),
+		(Join-Path $env:LOCALAPPDATA 'mise')
+	)
+	# Another antivirus switches Defender off, and Add-MpPreference then fails.
+	try {
+		Add-MpPreference -ExclusionPath $paths
+		$paths | ForEach-Object { Write-Host "Excluded  $_" }
+	} catch {
+		Write-Host "Defender refused the exclusions: $($_.Exception.Message)"
+	}
+}
+
 function Start-Runner($runner) {
 	# A restart would kill the job this runner builds now.
 	$ownWorker = { Get-Process Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } }
@@ -111,6 +131,9 @@ if ($missing.Count) {
 	foreach ($runner in $missing) { Install-Runner $runner $zip $token }
 	Remove-Item $zip
 }
+
+Write-Step 'Adding the runner folders and the package caches to the Defender exclusions'
+Add-DefenderExclusions
 
 $toolDirs = Get-ToolDirs
 $toolCache = Join-Path $HOME 'actions-runner\_tool'
