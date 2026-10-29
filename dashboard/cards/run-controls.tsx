@@ -24,12 +24,12 @@ export function RunControls({ repo, runId, active, label }: { repo: string; runI
 	return (
 		<div className="run-controls">
 			{active && (
-				<button type="button" className="action" disabled={pending} onClick={() => run('stop')} title="Cancel the run on GitHub">
+				<button type="button" className="action" disabled={pending} onClick={() => run('stop')} aria-label={`Stop ${label}`} title="Cancel the run on GitHub">
 					<Icon name="stop" />
 					{busy === 'stop' ? 'Stopping' : 'Stop'}
 				</button>
 			)}
-			<button type="button" className="action danger" disabled={pending} onClick={() => run('purge')} title="Force cancel the run, then delete it with its logs and artifacts">
+			<button type="button" className="action danger" disabled={pending} onClick={() => run('purge')} aria-label={`Purge ${label}`} title="Force cancel the run, then delete it with its logs and artifacts">
 				<Icon name="trash" />
 				{busy === 'purge' ? 'Purging' : 'Purge'}
 			</button>

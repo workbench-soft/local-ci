@@ -19,7 +19,7 @@ export function InstallButton({ tag, name }: { tag: string; name: string }) {
 
 	return (
 		<div className="install">
-			<button type="button" className="action" disabled={pending} onClick={install} title={`Install ${name} on the phone over adb`}>
+			<button type="button" className="action" disabled={pending} onClick={install} aria-label={`Install ${name}`} title={`Install ${name} on the phone over adb`}>
 				<Icon name="phone" />
 				{pending ? 'Installing' : 'Install'}
 			</button>
