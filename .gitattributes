@@ -1,2 +1,4 @@
 # The Mac's bash fails on CRLF, so shell scripts keep LF on Windows too.
 *.sh text eol=lf
+# cmd reads batch files line by line and can misread LF endings.
+*.cmd text eol=crlf

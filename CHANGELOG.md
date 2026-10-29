@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- `START.cmd` in the repo root starts the runners and the status page with a
+  double click, then opens the page in the browser.
+
 - The Now card of the status page lists every runner of this PC, idle ones
   too, with the job each one builds.
 
