@@ -480,6 +480,11 @@ input[type='search'] {
 	background: color-mix(in srgb, var(--busy) 9%, transparent);
 }
 
+.purging-row td {
+	opacity: 0.45;
+	cursor: progress;
+}
+
 .grow {
 	flex: 1;
 	min-width: 0;
@@ -594,7 +599,7 @@ td .run-controls {
 	word-break: break-word;
 }
 
-.pr-link {
+.pr-link + .pr-link {
 	margin-left: 6px;
 }
 

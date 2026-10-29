@@ -20,7 +20,7 @@ export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & {
 	failure: RunFailure | null;
 };
 
-type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'started' | 'took';
+type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'pr' | 'started' | 'took';
 
 const rowLimit = 60;
 
@@ -45,6 +45,8 @@ const compareBy: Record<SortKey, (a: RunRow, b: RunRow) => number> = {
 	repo: (a, b) => a.repo.localeCompare(b.repo),
 	workflow: (a, b) => a.workflow.localeCompare(b.workflow),
 	branch: (a, b) => a.branch.localeCompare(b.branch),
+	// Runs with no PR sort before every PR.
+	pr: (a, b) => (a.pullRequests[0]?.number ?? -1) - (b.pullRequests[0]?.number ?? -1),
 	started: (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt),
 	took: (a, b) => (a.tookMs ?? -1) - (b.tookMs ?? -1),
 };
@@ -54,6 +56,7 @@ const columns: { key: SortKey; text: string }[] = [
 	{ key: 'repo', text: 'Repo' },
 	{ key: 'workflow', text: 'Workflow' },
 	{ key: 'branch', text: 'Branch' },
+	{ key: 'pr', text: 'PR' },
 	{ key: 'started', text: 'Started' },
 	{ key: 'took', text: 'Took' },
 ];
@@ -62,10 +65,11 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 	const [filter, setFilter] = useState<FilterKey>('all');
 	const [search, setSearch] = useState('');
 	const [sort, setSort] = useState<{ key: SortKey; descending: boolean }>({ key: 'place', descending: false });
+	const [purging, setPurging] = useState<ReadonlySet<number>>(new Set());
 
 	const words = search.toLowerCase().split(/\s+/).filter(Boolean);
 	const matches = (row: RunRow) => {
-		const text = `${row.repo} ${row.workflow} ${row.title} ${row.branch} ${row.event} ${row.release?.tag ?? ''}`.toLowerCase();
+		const text = `${row.repo} ${row.workflow} ${row.title} ${row.branch} ${row.event} ${row.pullRequests.map((pr) => `#${pr.number}`).join(' ')} ${row.release?.tag ?? ''}`.toLowerCase();
 		return words.every((word) => text.includes(word));
 	};
 	const direction = sort.descending ? -1 : 1;
@@ -100,8 +104,8 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 						</button>
 					))}
 				</div>
-				<input type="search" aria-label="Search runs" placeholder="Search repo, workflow, branch" value={search} onChange={(event) => setSearch(event.target.value)} />
-				<PurgeAllButton runs={shown} />
+				<input type="search" aria-label="Search runs" placeholder="Search repo, workflow, branch, PR" value={search} onChange={(event) => setSearch(event.target.value)} />
+				<PurgeAllButton runs={shown} loadedAt={runs} onPurging={setPurging} />
 			</div>
 			<div className="table-scroll">
 				<table>
@@ -123,7 +127,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 					</thead>
 					<tbody>
 						{rows.map((run) => (
-							<RunRowItem key={run.id} run={run} now={now} />
+							<RunRowItem key={run.id} run={run} now={now} purging={purging.has(run.id)} />
 						))}
 					</tbody>
 				</table>
@@ -138,14 +142,18 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 	);
 }
 
-function RunRowItem({ run, now }: { run: RunRow; now: number }) {
+function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: boolean }) {
 	const result = resultOf(run.status, run.conclusion);
 	const place = run.place === 'done' ? null : placeIcons[run.place];
 	const [open, setOpen] = useState(false);
+	// A Purge of this row alone grays it too, until the next load drops it.
+	const [purgingSelf, setPurgingSelf] = useState(false);
 	const active = run.status !== 'completed';
+	const gray = purging || purgingSelf;
+	const rowClass = [run.place === 'local' && 'local-row', gray && 'purging-row'].filter(Boolean).join(' ');
 	return (
 		<Fragment>
-		<tr className={run.place === 'local' ? 'local-row' : undefined}>
+		<tr className={rowClass || undefined} aria-busy={gray || undefined}>
 			<td className="nowrap">
 				<span className={`result ${toneOfRun(run)}`}>
 					<Icon name={result.icon} />
@@ -174,14 +182,14 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 				<a href={run.branchUrl} target="_blank" rel="noreferrer">
 					{run.branch}
 				</a>
-				<div className="muted small">
-					{run.event}
-					{run.pullRequests.map((pr) => (
-						<a key={pr.number} className="pr-link" href={pr.url} target="_blank" rel="noreferrer">
-							PR #{pr.number}
-						</a>
-					))}
-				</div>
+				<div className="muted small">{run.event}</div>
+			</td>
+			<td className="nowrap">
+				{run.pullRequests.map((pr) => (
+					<a key={pr.number} className="pr-link" href={pr.url} target="_blank" rel="noreferrer">
+						#{pr.number}
+					</a>
+				))}
 			</td>
 			<td className="nowrap">{formatAge(run.createdAt, now)}</td>
 			<td>
@@ -202,7 +210,11 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 				)}
 			</td>
 			<td>
-				<RunControls repo={run.repo} runId={run.id} active={active} label={`the ${run.repo} / ${run.workflow} run`} />
+				{purging ? (
+					<span className="muted small nowrap">Purging</span>
+				) : (
+					<RunControls repo={run.repo} runId={run.id} active={active} label={`the ${run.repo} / ${run.workflow} run`} onPurging={setPurgingSelf} />
+				)}
 			</td>
 		</tr>
 		{open && (

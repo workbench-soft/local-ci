@@ -6,6 +6,13 @@
   and jobs no longer download SDK parts. Two Release builds at once broke NDK
   27.1 for every runner before.
 
+- Purge all clears every run the filter and search match, the older runs
+  behind the 5 a repo shows included. It grays each row it purges at once,
+  and a single Purge grays its row too.
+
+- Latest runs has a PR column with the PR number of each run, linked to the
+  PR and sortable.
+
 - The status page shows one Running now card at the top in place of the
   Now card and the Running now card, which listed the same jobs.
 
