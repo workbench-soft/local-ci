@@ -5,7 +5,19 @@ import { purgeRunById, stopRun } from '@/status/run-actions';
 import { Icon } from './icons';
 
 /** Stop and Purge for one run. A finished run gets Purge only. */
-export function RunControls({ repo, runId, active, label }: { repo: string; runId: number; active: boolean; label: string }) {
+export function RunControls({
+	repo,
+	runId,
+	active,
+	label,
+	onPurging,
+}: {
+	repo: string;
+	runId: number;
+	active: boolean;
+	label: string;
+	onPurging?: (purging: boolean) => void;
+}) {
 	const [pending, startTransition] = useTransition();
 	const [busy, setBusy] = useState<'stop' | 'purge' | null>(null);
 	const [error, setError] = useState<string | null>(null);
@@ -14,9 +26,13 @@ export function RunControls({ repo, runId, active, label }: { repo: string; runI
 		if (kind === 'purge' && !window.confirm(`Purge ${label}? GitHub stops the run and deletes it with its logs and artifacts.`)) return;
 		setBusy(kind);
 		setError(null);
+		if (kind === 'purge') onPurging?.(true);
 		startTransition(async () => {
 			const result = await (kind === 'stop' ? stopRun(repo, runId) : purgeRunById(repo, runId));
-			if (!result.ok) setError(result.error);
+			if (!result.ok) {
+				setError(result.error);
+				if (kind === 'purge') onPurging?.(false);
+			}
 			setBusy(null);
 		});
 	};

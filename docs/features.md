@@ -110,11 +110,15 @@ icon: a white loop arrow around a green play sign on blue.
   stays in the history, and steps with `if: always()` still run. A queued
   run gets Stop too, so it leaves the queue before a runner takes it. Purge
   is for a run you want gone: it force cancels, skipping `if: always()`
-  steps, then deletes the run with its logs and artifacts.
+  steps, then deletes the run with its logs and artifacts. Its row turns
+  gray the moment Purge starts.
 - **Purge all** a button in the Latest runs toolbar with the count of runs
   the filter and search match, past the 60 rows the table shows too. It asks
-  to confirm, purges them 5 at a time, then shows how many it purged and the
-  first error. A run that won't stop within 60 seconds stays.
+  to confirm, grays each row it purges, and purges 5 at a time. The table
+  holds the latest 5 runs of a repo, so it goes on with the older runs that
+  show next, until the filter and search match none. Then it shows how many
+  it purged and the first error. A run that won't stop within 60 seconds
+  stays.
 - **Old runs die** every 10 seconds the page server force cancels an
   unfinished push or PR run when a newer run of the same repo, workflow,
   branch and event exists, or when it checks a PR that is merged or closed.
