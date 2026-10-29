@@ -1,19 +1,21 @@
 # Architecture
 
-local-ci is a set of scripts, plus one local web page. Each script runs on the
-machine it sets up and talks to package managers and GitHub. The page in
+local-ci is a set of scripts and one local web page. Each script runs on the
+machine it sets up, and it talks to package managers and GitHub. The page in
 `dashboard/` shows the runner and the latest runs.
 
 ## Modules
 
-- **`install.sh`** sets up a Mac with Homebrew, mise, Oh My Zsh and the repos.
-- **`install.ps1`** sets up Windows with winget, mise and the repos.
-- **`runner/install.sh`** registers a Mac as a GitHub Actions runner.
-- **`runner/install.ps1`** registers a Windows PC as a GitHub Actions runner.
-- **`dashboard/`** a Next.js app with the CI status page, started at boot by
-  `dashboard/install.ps1`.
-- **Data files** `mcp-config.json` and `claude/MEMORY.md`, copied into the home
-  folder when missing.
+- **Machine setup** `install.sh` sets up a Mac with Homebrew, mise, Oh My Zsh
+  and the repos. `install.ps1` sets up Windows with winget, mise and the repos.
+- **Runner setup** `runner/install.sh` registers a Mac as a GitHub Actions
+  runner, and `runner/install.ps1` does the same for a Windows PC.
+- **Boot task** `windows/boot-task.ps1` holds the admin check and the
+  scheduled task that both Windows boot scripts use.
+- **Status page** `dashboard/` is a Next.js app. `dashboard/install.ps1`
+  builds it and starts it at boot.
+- **Data files** `mcp-config.json` and `claude/MEMORY.md`, copied into the
+  home folder when missing.
 
 ```mermaid
 flowchart LR
@@ -24,6 +26,7 @@ flowchart LR
   gh --> repos[git-aliases, agent-skills, gh-review-notify on Mac]
   sh --> rsh[runner/install.sh]
   ps --> rps[runner/install.ps1]
+  rps & dps[dashboard/install.ps1] --> boot[windows/boot-task.ps1]
   rsh & rps --> gha[GitHub: workbench-soft runners]
 ```
 
@@ -45,16 +48,24 @@ sequenceDiagram
   participant R as runner on the machine
   S->>G: latest release and SHA256
   S->>G: registration token (or the person pastes one)
-  S->>R: config with labels, then launchd or a logon task
+  S->>R: config with labels, then launchd or a boot task
   R->>G: long poll for jobs
   G-->>R: a job whose runs-on matches the labels
 ```
 
 ## How the status page gets its data
 
-The page renders on the server for each request. `lib/local.ts` reads this PC,
-`lib/github.ts` reads GitHub with the token from `.env.local`. GitHub answers
-stay in memory for 20 seconds.
+The server renders the page for each request.
+
+- **This PC** `status/this-pc.ts` reads the boot task, the runner processes
+  and the runner's `_diag` folder.
+- **GitHub** `status/org-status.ts` calls the API with the token from
+  `.env.local`. It keeps the answer in memory for 20 seconds, and requests
+  that arrive during a load wait for that load.
+- **Headline** `status/headline.ts` turns both into the headline and the dot
+  colors. The cards in `cards/` draw the rest.
+- **Repo errors** a repo whose runs call fails drops out of the list, and the
+  other repos still show.
 
 ```mermaid
 sequenceDiagram

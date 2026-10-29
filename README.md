@@ -1,8 +1,9 @@
 # local-ci
 
-Sets up a dev machine, Mac or Windows, with the same tools. Then it can
-register the machine as a self-hosted GitHub Actions runner, so CI of the
-`workbench-soft` repos builds on it for free. IT-managed software stays out.
+One script gives a Mac or a Windows PC the same dev tools. A second script can
+then make the machine a self-hosted GitHub Actions runner. CI of the
+`workbench-soft` repos then builds there for free. Software that IT manages
+stays out of both.
 
 On a Mac:
 
@@ -18,145 +19,153 @@ git clone https://github.com/workbench-soft/local-ci.git
 .\local-ci\install.ps1
 ```
 
-Both scripts are idempotent: run one again and it skips what is already there.
-A fresh Windows needs Git first: `winget install Git.Git`.
-
-The repo is private in the `workbench-soft` org. On a new machine, `git clone`
-asks for your GitHub user name and a token as the password. The old
-`mac-setup` address redirects here.
+- **Run it again** each script skips the pieces already in place.
+- **Fresh Windows** install Git first: `winget install Git.Git`.
+- **Private repo** it sits in the `workbench-soft` org. On a new machine
+  `git clone` asks for your GitHub user name, with a token as the password.
+- **Old name** the `mac-setup` address redirects here.
 
 ## CI runner
 
-Each installer asks at the end whether to register the machine as a runner.
-The runner scripts also run on their own:
+The last question of each installer is whether to register the machine as a
+runner. The runner scripts also work alone:
 
 | Machine | Script | Labels | Starts |
 | --- | --- | --- | --- |
 | Mac | `runner/install.sh` | `self-hosted, macOS, ARM64, android, local` | launchd service while logged in |
 | Windows | `runner/install.ps1` | `self-hosted, Windows, X64, local` | scheduled task at boot, before anyone logs in |
 
-- **Token** the script asks `gh api` for a registration token. Without the
-  `admin:org` scope it prints the runner settings URL, and you paste the token.
-- **Checksum** the download is checked against the SHA256 in the runner
-  release notes.
+- **Token** the script gets a registration token from `gh api`. A login
+  without the `admin:org` scope gets the runner settings URL to copy a token
+  from.
+- **Checksum** the script checks the download against the SHA256 in the
+  runner release notes.
 - **After a reboot** the Windows runner starts at boot as you, before anyone
-  logs in. The script asks Windows for admin rights once to set that up.
+  logs in. Setting that up takes admin rights, so the script asks Windows once.
 - **Git Bash** the task starts `start.cmd`, which puts Git Bash first on PATH.
-  Otherwise `shell: bash` takes the WSL one from WindowsApps.
-- **GitHub access** jobs on Windows see mise and `~/.gitconfig`, but not the
-  `gh` login in the Windows credential store. Use the job's `GITHUB_TOKEN`.
-- **Folder** `~/actions-runner/workbench-soft`. Set `RUNNER_ORG` for another org.
-- **In a workflow** `runs-on: [self-hosted, local]` runs on whichever machine
-  is on. A job that needs macOS asks for `[self-hosted, macOS]`.
+  Without it `shell: bash` would get the WSL bash from WindowsApps.
+- **GitHub access** jobs on Windows see mise and `~/.gitconfig`. The `gh`
+  login in the Windows credential store stays out of reach, so use the job's
+  `GITHUB_TOKEN`.
+- **Folder** `~/actions-runner/workbench-soft`. `RUNNER_ORG` picks another org.
+- **In a workflow** `runs-on: [self-hosted, local]` takes whichever machine is
+  on. A job that needs macOS asks for `[self-hosted, macOS]`.
 
 ## CI status page
 
-A page at `http://localhost:4280` shows whether the runner is up and what it
-builds. It starts with Windows. Set it up once, from the main checkout:
+`http://localhost:4280` shows whether the runner is up and what it builds. The
+page starts with Windows. Set it up once, from the main checkout:
 
 ```powershell
 .\dashboard\install.ps1
 ```
 
-- **What it shows** this PC's runner task and job, the org runners, and the latest runs of each org repo.
-- **Token** the script copies `gh auth token` into `dashboard\.env.local`, since the boot task can't read the gh login.
-- **Rerun** after a `git pull` or a new gh login. It rebuilds and restarts the page.
-- **Develop** `mise x -- pnpm dev` in `dashboard` serves it on port 4281.
+- **Shows** this PC's runner task and job, the org runners, and the latest
+  runs of each org repo.
+- **Token** the boot task can't read the gh login, so the script copies
+  `gh auth token` into `dashboard\.env.local`.
+- **Rerun** after a `git pull` or a new gh login. The script rebuilds the page
+  and restarts it.
+- **Develop and test** in `dashboard`, `mise x -- pnpm dev` serves the page on
+  port 4281. `mise x -- pnpm typecheck` and `mise x -- pnpm test` are the
+  checks.
 - **Logs** `dashboard\dashboard.log`.
 
 ## Windows
 
-[winget](https://learn.microsoft.com/windows/package-manager/winget/) installs
-what Homebrew gives the Mac: git, gh, mise, fzf, jq, shellcheck, shfmt,
-mkcert, VS Code, Docker Desktop, Claude and the Android platform tools.
-`agent-browser` comes from npm.
+[winget](https://learn.microsoft.com/windows/package-manager/winget/) stands in
+for Homebrew. It installs git, gh, mise, fzf, jq, shellcheck, shfmt, mkcert,
+VS Code, Docker Desktop, Claude and the Android platform tools. npm adds
+`agent-browser`.
 
-Mac only, so `install.ps1` skips them:
+`install.ps1` leaves out the Mac only pieces:
 
-- **Oh My Zsh** the PowerShell 7 profile gets `mise activate pwsh` instead. Windows PowerShell 5.1 finds node and pnpm through the mise shims on PATH.
-- **Maccy** Windows keeps clipboard history under Win+V.
-- **terminal-notifier and gh-review-notify** both need macOS notifications.
+- **Oh My Zsh** the PowerShell 7 profile gets `mise activate pwsh` in its
+  place. Windows PowerShell 5.1 reaches node and pnpm through the mise shims on
+  PATH.
+- **Maccy** Windows has its own clipboard history under Win+V.
+- **terminal-notifier and gh-review-notify** both depend on macOS
+  notifications.
 - **twg** its installer is a bash script for macOS.
 
-Repos go to `C:\Programming\WorkbenchSoft`. Set `DEV_DIR` for another folder.
-Git gets `core.autocrlf input` on top of the Mac config, so checkouts keep LF
-and bash scripts run on the Windows runner.
+- **Repos** land in `C:\Programming\WorkbenchSoft`. `DEV_DIR` picks another
+  folder.
+- **Line endings** git gets `core.autocrlf input` on top of the Mac config.
+  Checkouts keep LF, so bash scripts run on the Windows runner.
 
 ## Homebrew (Mac)
 
-Source: [brew.sh](https://brew.sh). The script installs Homebrew itself when
-missing.
+[brew.sh](https://brew.sh) is the source. A Mac without Homebrew gets it from
+the script first.
 
 | Formula | Why |
 | --- | --- |
-| [git](https://formulae.brew.sh/formula/git) | newer than the Apple one |
+| [git](https://formulae.brew.sh/formula/git) | newer than the one Apple ships |
 | [gh](https://formulae.brew.sh/formula/gh) | GitHub CLI |
 | [mise](https://formulae.brew.sh/formula/mise) | node, pnpm and yarn versions per project |
-| [fzf](https://formulae.brew.sh/formula/fzf) | the branch picker in `git sb` |
-| [jq](https://formulae.brew.sh/formula/jq) | git-aliases and gh-review-notify parse JSON with it |
-| [shellcheck](https://formulae.brew.sh/formula/shellcheck) | `lint.sh` in git-aliases runs it |
-| [shfmt](https://formulae.brew.sh/formula/shfmt) | same `lint.sh` formats with it |
-| [terminal-notifier](https://formulae.brew.sh/formula/terminal-notifier) | gh-review-notify pops macOS notifications through it |
-| [mkcert](https://formulae.brew.sh/formula/mkcert) | local HTTPS certificates |
-| [agent-browser](https://agent-browser.dev/) | browser automation for coding agents |
+| [fzf](https://formulae.brew.sh/formula/fzf) | the branch picker behind `git sb` |
+| [jq](https://formulae.brew.sh/formula/jq) | git-aliases and gh-review-notify read JSON with it |
+| [shellcheck](https://formulae.brew.sh/formula/shellcheck) | `lint.sh` in git-aliases calls it |
+| [shfmt](https://formulae.brew.sh/formula/shfmt) | the same `lint.sh` formats with it |
+| [terminal-notifier](https://formulae.brew.sh/formula/terminal-notifier) | gh-review-notify shows macOS notifications with it |
+| [mkcert](https://formulae.brew.sh/formula/mkcert) | HTTPS certificates for local servers |
+| [agent-browser](https://agent-browser.dev/) | a browser that coding agents drive |
 
 | Cask | Why |
 | --- | --- |
 | [visual-studio-code](https://formulae.brew.sh/cask/visual-studio-code) | editor |
 | [docker-desktop](https://formulae.brew.sh/cask/docker-desktop) | containers |
 | [maccy](https://formulae.brew.sh/cask/maccy) | clipboard history |
-| [claude](https://formulae.brew.sh/cask/claude) | Claude desktop app |
-| [android-platform-tools](https://formulae.brew.sh/cask/android-platform-tools) | adb for mobile testing |
+| [claude](https://formulae.brew.sh/cask/claude) | the Claude desktop app |
+| [android-platform-tools](https://formulae.brew.sh/cask/android-platform-tools) | adb, for testing on a phone |
 
 ## Node toolchain
 
-[mise](https://mise.jdx.dev) pins the versions globally:
+[mise](https://mise.jdx.dev) sets the global versions:
 
 ```sh
 mise use -g node@22 pnpm@latest yarn@1
 ```
 
-On top, one npm global:
-[`@github/copilot`](https://www.npmjs.com/package/@github/copilot), the Copilot
-CLI.
+One npm global goes on top: the Copilot CLI,
+[`@github/copilot`](https://www.npmjs.com/package/@github/copilot).
 
 ## Git
 
-Global config the script sets:
+The script sets this global config:
 
 ```sh
 git config --global color.ui true
 git config --global push.autosetupremote true
 ```
 
-`user.name` and `user.email` are prompted on first run, so the script carries
-no personal data.
-
-Aliases come from
-[workbench-soft/git-aliases](https://github.com/workbench-soft/git-aliases). Its
-own `install.sh` wires the `include.path` and offers to source `git-sb.zsh`.
-That wrapper is separate from the aliases on purpose: `git sb` can land on a
-branch in another worktree, and only a shell function can `cd` the parent
-shell there.
+- **Name and email** the first run asks for `user.name` and `user.email`. The
+  script itself holds no personal data.
+- **Aliases** come from
+  [workbench-soft/git-aliases](https://github.com/workbench-soft/git-aliases).
+  Its own `install.sh` adds the `include.path` and offers to source
+  `git-sb.zsh`.
+- **Why a separate wrapper** `git sb` can switch to a branch in another
+  worktree. Only a shell function can `cd` the parent shell there.
 
 ## Shell
 
-- **Oh My Zsh** from [ohmyz.sh](https://ohmyz.sh), default `robbyrussell`
-  theme, `git` plugin.
-- **`~/.local/bin` on PATH** for the self-written CLIs.
+- **Oh My Zsh** from [ohmyz.sh](https://ohmyz.sh), with the default
+  `robbyrussell` theme and the `git` plugin.
+- **`~/.local/bin` on PATH** for the CLIs I write myself.
 - **`mise activate zsh`** in `.zshrc`.
 
 ## My repos
 
-Private in `workbench-soft`, so the script logs into `gh` first. Then
-`gh repo clone` puts each one in `~/Documents/Dev`, and its own `install.sh`
-installs it:
+They are private in `workbench-soft`, so the script logs into `gh` first. Then
+`gh repo clone` puts each one in `~/Documents/Dev`, and the repo's own
+`install.sh` installs it:
 
 | Repo | What it gives |
 | --- | --- |
-| [git-aliases](https://github.com/workbench-soft/git-aliases) | short git commands: `git sb`, `git db`, `git m` and the rest |
+| [git-aliases](https://github.com/workbench-soft/git-aliases) | short git commands: `git sb`, `git db`, `git m` and more |
 | [agent-skills](https://github.com/workbench-soft/agent-skills) | Copilot skills: writing-style, review, create-pr, implement-ticket, address-comments |
-| [gh-review-notify](https://github.com/workbench-soft/gh-review-notify) | macOS notification for every new PR review comment, runs as a LaunchAgent |
+| [gh-review-notify](https://github.com/workbench-soft/gh-review-notify) | a macOS notification for each new PR review comment, from a LaunchAgent |
 
 ## GitHub CLI
 
@@ -165,21 +174,23 @@ gh auth login
 gh extension install github/gh-stack
 ```
 
-[gh-stack](https://github.com/github/gh-stack) manages stacked PRs.
+[gh-stack](https://github.com/github/gh-stack) handles stacked PRs.
 
 ## Teamwork Graph CLI
 
-`twg` reads and writes Jira and Confluence from the terminal and from agents.
-Source: [teamwork-graph.atlassian.com](https://teamwork-graph.atlassian.com).
+`twg` reads and writes Jira and Confluence, for you in the terminal and for
+agents. The source is
+[teamwork-graph.atlassian.com](https://teamwork-graph.atlassian.com).
 
 ```sh
 bash <(curl -fsSL https://teamwork-graph.atlassian.com/cli/install)
 ```
 
-The installer puts `twg` in `~/.local/bin`, asks you to accept Atlassian's
-terms and log in. It also adds the `com.atlassian.twg.upkeep` LaunchAgent,
-which runs `twg upkeep` every 12 minutes to keep the CLI updated. Skip npm: the
-package there is too old to run.
+- **Install** the installer puts `twg` in `~/.local/bin`. It asks you to accept
+  Atlassian's terms and to log in.
+- **Updates** it adds the `com.atlassian.twg.upkeep` LaunchAgent. That agent
+  runs `twg upkeep` every 12 minutes to keep the CLI current.
+- **Skip npm** the package there is too old to run.
 
 ## VS Code extensions
 
@@ -194,23 +205,23 @@ package there is too old to run.
 
 ## MCP servers
 
-The script copies [mcp-config.json](./mcp-config.json) to
-`~/.copilot/mcp-config.json` when the file is missing. It wires the Atlassian
-and GitHub MCP servers.
+[mcp-config.json](./mcp-config.json) wires the Atlassian and GitHub MCP
+servers. The script copies it to `~/.copilot/mcp-config.json` when that file
+is missing.
 
 ## Claude Code memory
 
-[claude/MEMORY.md](./claude/MEMORY.md) holds notes Claude Code reads in every
-project:
+[claude/MEMORY.md](./claude/MEMORY.md) holds notes that Claude Code reads in
+every project:
 
-- **pnpm version** comes from `packageManager`, pinned per repo through mise.
-- **`GH_PAGER=cat`** keeps `gh` from opening a pager and hanging the agent.
+- **pnpm version** mise pins it per repo, from `packageManager`.
+- **`GH_PAGER=cat`** stops `gh` from opening a pager that hangs the agent.
 - **Review asks** load the `review` skill from agent-skills first.
 
-The script copies the file to `~/.claude/MEMORY.md` when missing and imports
-it at the top of `~/.claude/CLAUDE.md`. The writing-style import in the same
-file comes from the agent-skills installer.
+The script copies the file to `~/.claude/MEMORY.md` when that file is missing.
+It also imports it at the top of `~/.claude/CLAUDE.md`. The agent-skills
+installer adds the writing-style import to the same file.
 
-## Not scripted
+## Left to do by hand
 
-- **Secrets** go into 1Password, no dotfile keeps them.
+- **Secrets** live in 1Password, and no dotfile holds them.

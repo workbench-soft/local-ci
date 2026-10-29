@@ -1,2 +1,2 @@
-# Bash on the Mac chokes on CRLF, so shell scripts keep LF on Windows too.
+# The Mac's bash fails on CRLF, so shell scripts keep LF on Windows too.
 *.sh text eol=lf

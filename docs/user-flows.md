@@ -2,10 +2,10 @@
 
 ## Set up a new Mac
 
-1. Clone `workbench-soft/local-ci` with a GitHub token.
+1. Clone `workbench-soft/local-ci`, with a GitHub token as the password.
 2. Run `./local-ci/install.sh`.
-3. Type the git name and email when asked, then log into `gh`.
-4. Answer the runner question.
+3. Give the git name and email when the script asks, then log into `gh`.
+4. Say yes or no to the runner question.
 
 ```mermaid
 flowchart TD
@@ -22,10 +22,10 @@ flowchart TD
 ## Set up a new Windows PC
 
 1. Install Git: `winget install Git.Git`.
-2. Clone `workbench-soft/local-ci` with a GitHub token.
-3. Run `.\local-ci\install.ps1` in PowerShell.
-4. Type the git name and email when asked, then log into `gh`.
-5. Answer the runner question.
+2. Clone `workbench-soft/local-ci`, with a GitHub token as the password.
+3. In PowerShell, run `.\local-ci\install.ps1`.
+4. Give the git name and email when the script asks, then log into `gh`.
+5. Say yes or no to the runner question.
 
 ```mermaid
 flowchart TD
@@ -41,9 +41,9 @@ flowchart TD
 
 ## Register a machine as a runner
 
-1. Run `runner/install.sh` on a Mac or `runner\install.ps1` on Windows.
+1. Run `runner/install.sh` on a Mac, or `runner\install.ps1` on Windows.
 2. Paste a registration token if the script asks for one.
-3. Check the runner shows as Idle under the org's Actions runners.
+3. Look under the org's Actions runners: the new runner shows as Idle.
 
 ```mermaid
 flowchart TD
@@ -54,17 +54,17 @@ flowchart TD
   D -- no --> E[person pastes a token]
   D -- yes --> F[config with labels]
   E --> F
-  F --> G[start: launchd or logon task]
+  F --> G[start: launchd or boot task]
 ```
 
 ## See the CI status
 
-1. Run `.\dashboard\install.ps1` once, from the main checkout.
+1. From the main checkout, run `.\dashboard\install.ps1` once.
 2. Approve the admin prompt. The script builds the page and registers the
    `local-ci dashboard` task.
-3. Open `http://localhost:4280`. After a reboot the page is there again.
-4. The headline says whether the runner is up, builds or has a queue. The
-   cards below show this PC, the org runners and the latest runs.
+3. Open `http://localhost:4280`. The page comes back after each reboot.
+4. Read the headline: the runner is up, builds or has a queue. The cards
+   below show this PC, the org runners and the latest runs.
 
 ```mermaid
 flowchart TD

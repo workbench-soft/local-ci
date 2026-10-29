@@ -1,14 +1,14 @@
 # Memory index
 
-Long-term notes that apply to every project. Keep each line short.
+Notes for every project, kept for the long run. Each line stays short.
 
 ## Environment
 
-- Package manager pinned per repo via mise; `pnpm` version comes from `packageManager`.
-- `gh` opens a pager and hangs an agent terminal. Prefix with `GH_PAGER=cat`.
+- mise pins the package manager per repo, and the `pnpm` version comes from `packageManager`.
+- `gh` opens a pager that hangs an agent terminal, so prefix it with `GH_PAGER=cat`.
 
 ## Reviews
 
-- Any ask to review code, a PR, a diff, a branch or a file, including a bare
-  "review <github url>", means read `~/.agents/skills/review/SKILL.md` first and
-  follow it. Load it before fetching the link.
+- Any ask to review code, a PR, a diff, a branch or a file, a bare
+  "review <github url>" too, means reading `~/.agents/skills/review/SKILL.md`
+  first and following it. Load it before fetching the link.
