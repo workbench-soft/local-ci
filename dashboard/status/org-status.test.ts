@@ -25,6 +25,7 @@ const apiRun = (id: number) => ({
 	created_at: '2025-10-29T12:00:00Z',
 	updated_at: '2025-10-29T12:00:00Z',
 	html_url: `https://github.com/run/${id}`,
+	pull_requests: [{ number: 4 }],
 });
 
 const repos = [
@@ -65,4 +66,28 @@ test('tabs that load at the same moment share one set of GitHub calls', async ()
 	const { fetchOrgStatus } = await freshModule();
 	await Promise.all([fetchOrgStatus(), fetchOrgStatus(), fetchOrgStatus()]);
 	assert.equal(calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length, 1);
+});
+
+test('a failed run names its failed job and step, and releases come from the public repo', async () => {
+	route = (path) => {
+		if (path.includes('/workbench-soft.github.io/releases')) {
+			return { status: 200, body: [{ tag_name: 'good-v1', name: 'Good v1', html_url: 'https://r', created_at: '2025-10-29T12:00:00Z', assets: [] }] };
+		}
+		if (path.endsWith('/jobs?per_page=100')) {
+			return {
+				status: 200,
+				body: { jobs: [{ id: 7, name: 'build', status: 'completed', conclusion: 'failure', runner_name: 'pc', labels: [], started_at: null, html_url: 'https://job/7', steps: [{ name: 'Checkout', conclusion: 'success' }, { name: 'Test', conclusion: 'failure' }] }] },
+			};
+		}
+		if (path.includes('/actions/runs?')) return { status: 200, body: { workflow_runs: [{ ...apiRun(1), conclusion: 'failure' }] } };
+		return healthyOrg(path);
+	};
+	const { fetchOrgStatus, failureOf } = await freshModule();
+	const status = await fetchOrgStatus();
+	assert.equal(status.ok, true);
+	if (!status.ok) return;
+	assert.deepEqual(failureOf(status.runs[0]), { job: 'build', step: 'Test', url: 'https://job/7' });
+	assert.deepEqual(status.releases.map((release) => release.tag), ['good-v1']);
+	assert.deepEqual(status.runs[0].pullRequests, [{ number: 4, url: 'https://github.com/workbench-soft/good/pull/4' }]);
+	assert.equal(status.runs[0].branchUrl, 'https://github.com/workbench-soft/good/tree/main');
 });

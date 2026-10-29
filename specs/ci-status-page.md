@@ -21,6 +21,7 @@ browser at each logon.
    in over USB.
 7. A failed run names its failed job and step under the result, with a link
    to that job's log. A failed install shows adb's error under the button.
+8. The branch of a run opens on GitHub, and so does its PR.
 
 ## How it works: modules, files, data
 
@@ -67,6 +68,8 @@ browser at each logon.
   from `ADB_PATH`, `PATH`, `ANDROID_HOME` or `%LOCALAPPDATA%\Android\Sdk`.
 - **Failed step** for a failed run the page reads its jobs and names the
   first failed job and step.
+- **PR and branch** `pull_requests` of a run gives its PR numbers. GitHub
+  leaves out PRs from forks and pushes to the default branch.
 
 ## Limits
 
@@ -214,20 +217,23 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 
-### 2026-10-29 A release column with an Install button, and the failed step
+### 2026-10-29 A release column with an Install button, the failed step, PR and branch links
 
 - **Why** the person wants to open the release a run made and put it on an
   Android phone over adb in one click, from a column of its own. Errors, of
-  the install and of a failed run, should be easy to see.
+  the install and of a failed run, should be easy to see. The branch and its
+  PR should open from the row.
 - **Changes**
   - **`status/releases.ts`** reads the releases of the public repo and pairs
     each with the run that made it.
   - **`status/install-apk.ts`** a server action: download the APK, run
     `adb install -r`, return adb's output on failure.
   - **`status/org-status.ts`** reads the jobs of failed runs too, with their
-    steps, and the releases.
+    steps, and the releases. Each run gets its branch link and the links of
+    its PRs from `pull_requests`.
   - **`cards/latest-runs-table.tsx`** a Release column with the link and an
-    Install button. A failed run names its failed job and step.
+    Install button. A failed run names its failed job and step. The branch
+    is a link, with a PR link beside the event.
   - **`cards/install-button.tsx`** the button, its progress and its error.
 - **Steps**
   1. This spec.

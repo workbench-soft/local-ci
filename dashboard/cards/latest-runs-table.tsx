@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { formatAge, toneOfRun } from '@/status/headline';
-import type { WorkflowRun } from '@/status/org-status';
+import type { RunFailure, WorkflowRun } from '@/status/org-status';
 import { type Place, placeOrder } from '@/status/placement';
+import type { Release } from '@/status/releases';
 import { Icon, placeIcons, resultOf } from './icons';
+import { InstallButton } from './install-button';
 import { RunControls } from './run-controls';
 
-export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & { place: Place };
+export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & { place: Place; release: Release | null; failure: RunFailure | null };
 
 type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'started';
 
@@ -50,7 +52,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 
 	const words = search.toLowerCase().split(/\s+/).filter(Boolean);
 	const matches = (row: RunRow) => {
-		const text = `${row.repo} ${row.workflow} ${row.title} ${row.branch} ${row.event}`.toLowerCase();
+		const text = `${row.repo} ${row.workflow} ${row.title} ${row.branch} ${row.event} ${row.release?.tag ?? ''}`.toLowerCase();
 		return words.every((word) => text.includes(word));
 	};
 	const direction = sort.descending ? -1 : 1;
@@ -88,6 +90,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 								</button>
 							</th>
 						))}
+						<th>Release</th>
 						<th>
 							<span className="sr-only">Actions</span>
 						</th>
@@ -119,6 +122,11 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 					<Icon name={result.icon} />
 					{result.text}
 				</span>
+				{run.failure && (
+					<a className="failed-step small" href={run.failure.url} target="_blank" rel="noreferrer" title="Open the log of the failed job">
+						{run.failure.step ? `${run.failure.job}: ${run.failure.step}` : run.failure.job}
+					</a>
+				)}
 				{place && (
 					<div className={`place ${run.place}`}>
 						<Icon name={place.icon} />
@@ -134,10 +142,30 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 				<div className="muted small">{run.title}</div>
 			</td>
 			<td>
-				{run.branch}
-				<div className="muted small">{run.event}</div>
+				<a href={run.branchUrl} target="_blank" rel="noreferrer">
+					{run.branch}
+				</a>
+				<div className="muted small">
+					{run.event}
+					{run.pullRequests.map((pr) => (
+						<a key={pr.number} className="pr-link" href={pr.url} target="_blank" rel="noreferrer">
+							PR #{pr.number}
+						</a>
+					))}
+				</div>
 			</td>
 			<td className="nowrap">{formatAge(run.createdAt, now)}</td>
+			<td>
+				{run.release && (
+					<>
+						<a className="release-link" href={run.release.url} target="_blank" rel="noreferrer">
+							<Icon name="package" />
+							{run.release.name}
+						</a>
+						{run.release.apk && <InstallButton tag={run.release.tag} name={run.release.name} />}
+					</>
+				)}
+			</td>
 			<td>
 				<RunControls repo={run.repo} runId={run.id} active={run.status !== 'completed'} label={`the ${run.repo} / ${run.workflow} run`} />
 			</td>
