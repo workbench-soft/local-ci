@@ -70,12 +70,8 @@ function Get-ToolDirs {
 	$git = Get-Command git -CommandType Application -ErrorAction SilentlyContinue | Where-Object { $_.Source -like '*\Git\cmd\git.exe' } | Select-Object -First 1
 	$gitRoot = if ($git) { Split-Path (Split-Path $git.Source) } else { Join-Path $env:ProgramFiles 'Git' }
 	$dirs = @("$gitRoot\bin", "$gitRoot\usr\bin")
-	$python = Get-Command python -All -CommandType Application -ErrorAction SilentlyContinue | Where-Object { $_.Source -notlike '*\WindowsApps\*' } | Select-Object -First 1
-	# The python.org installer leaves PATH alone unless asked, so its own folder gets a look too.
-	$pythonDir = if ($python) { Split-Path $python.Source } else {
-		Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Programs\Python') -Directory -Filter 'Python3*' -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
-	}
-	if ($pythonDir) { $dirs += $pythonDir }
+	# install.ps1 puts mise's python in the shims and python3 forwarders in .local\bin.
+	$dirs += (Join-Path $HOME '.local\bin'), (Join-Path $env:LOCALAPPDATA 'mise\shims')
 	return $dirs
 }
 

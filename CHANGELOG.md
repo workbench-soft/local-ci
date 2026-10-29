@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Both installs put Python 3.15 in through mise. On Windows `python3` now runs
+  it in place of the Store stub, in a terminal and in runner jobs.
+
 - The status page puts the jobs that build on this PC first and lists the jobs
   that wait on GitHub for a runner. The runs table gets icons, filter chips, a
   search box and sorting. The page opens in the browser after the install
