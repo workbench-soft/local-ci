@@ -10,11 +10,24 @@ export type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PurgeAllResult = { purged: number; failed: number; error: string | null };
 
-/** Cancels a run, the way the Cancel workflow button on GitHub does. */
+/** Force cancels a run. It also skips steps with if: always(), so the runner takes the next job at once. */
 export async function stopRun(repo: string, runId: number): Promise<ActionResult> {
 	return runAction(repo, runId, async (path) => {
-		await callGitHub(`${path}/cancel`, 'POST');
+		await callGitHub(`${path}/force-cancel`, 'POST');
 	});
+}
+
+/** Whether GitHub reads the run as completed. It only reads, so the page stays as it is. */
+export async function runFinished(repo: string, runId: number): Promise<{ ok: true; finished: boolean } | { ok: false; error: string }> {
+	if (!isRun(repo, runId)) return { ok: false, error: 'Unknown run.' };
+	try {
+		const { status } = (await (await callGitHub(runPath(repo, runId))).json()) as { status: string };
+		return { ok: true, finished: status === 'completed' };
+	} catch (error) {
+		// A run deleted meanwhile has stopped too.
+		if (githubStatus(error) === 404) return { ok: true, finished: true };
+		return { ok: false, error: error instanceof Error ? error.message : String(error) };
+	}
 }
 
 /** The jobs and steps of a run with their times. It only reads, so the page stays as it is. */
