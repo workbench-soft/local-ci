@@ -506,3 +506,18 @@ browser at each logon.
   3. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 Runners card spans the page
+
+- **Why** the Runners card was the one card without `wide`, so it sat in a
+  300px cell beside two empty ones and scrolled its list in a narrow box.
+- **Changes**
+  - **Width** the card spans the full row, like the other cards.
+  - **Columns** the runners sit in a grid of columns at least 300px wide, so
+    four runners fit in one or two rows on a desktop and one column on a
+    phone.
+- **Steps**
+  1. This spec.
+  2. The layout.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.
