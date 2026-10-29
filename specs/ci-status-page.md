@@ -119,6 +119,21 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 
+### 2026-10-29 An icon for the page and its shortcut
+
+- **Why** the browser tab and the Startup shortcut show a blank default icon.
+- **Changes**
+  - **`app/icon.svg`** a blue rounded square with a white loop arrow around a
+    green play sign: a build that runs again and again. Next serves it as the
+    favicon.
+  - **`dashboard/icon.ico`** the same icon at 16, 24, 32, 48 and 256 px.
+    `install.ps1` sets it on the `local-ci dashboard.lnk` shortcut.
+- **Steps**
+  1. This spec.
+  2. The icon, the favicon and the shortcut.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.
+
 ### 2026-10-29 Stop and purge runs from the page
 
 - **Why** the person wants to kill a stuck or unwanted run from the page,
@@ -126,8 +141,8 @@ browser at each logon.
 - **Changes**
   - **`status/org-status.ts`** a shared GitHub call for any method, and a way
     to drop the cache.
-  - **`status/run-actions.ts`** server actions: Stop cancels a run. Purge, in
-    `status/purge.ts`,
+  - **`status/run-actions.ts`** server actions: Stop cancels a run. Purge,
+    in `status/purge.ts`,
     force cancels it, waits for it to finish, then deletes it.
   - **`cards/run-controls.tsx`** Stop and Purge buttons. Purge asks to
     confirm first. An error shows next to the buttons.

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The status page gets an icon, in the browser tab and on its Startup
+  shortcut.
+
 - The status page gets Stop and Purge buttons on each run and live job. Stop
   cancels the run. Purge force cancels it and deletes it from GitHub with its
   logs and artifacts.
