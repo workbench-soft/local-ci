@@ -51,6 +51,9 @@ runner. The runner scripts also work alone:
   runners and a Mac 1, so Windows builds 4 jobs at once. `RUNNER_COUNT` picks
   another number. Jobs speed up only when the workflow splits its work into
   jobs or a `matrix`.
+- **Tool cache** the runners share `~/actions-runner/_tool`, so a `setup-*`
+  action downloads node, Java or Python once per machine. A rerun of the
+  script moves old runners onto it.
 - **Folders** the first runner sits in `~/actions-runner/workbench-soft`, the
   next in `workbench-soft-2` and up. `RUNNER_ORG` picks another org.
 - **Fewer runners** a lower `RUNNER_COUNT` leaves the extra ones registered.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The runners of a machine share one tool cache in `~/actions-runner/_tool`.
+  Node, Java or Python from a `setup-*` action downloads once for all of
+  them. Run `runner/install.ps1` or `runner/install.sh` again to switch.
+
 - The runs table of the status page says Building on this PC, Queued on
   GitHub or Building on another runner, with a hint on hover. A line under
   the heading says a finished run shows only its result.
