@@ -64,11 +64,19 @@ The server renders the page for each request.
   each it reads the boot task and which `_diag` logs a live process holds open.
 - **GitHub** `status/org-status.ts` calls the API with the token from
   `.env.local`. It keeps the answer in memory for 20 seconds, and requests
-  that arrive during a load wait for that load. For each unfinished run it
-  also reads the jobs, with the runner that took each one.
+  that arrive during a load wait for that load. Each repo call reads 30 runs.
+  The page keeps the latest 5 and every unfinished one, so a run that builds
+  under a pile of newer queued runs stays on the page. For each unfinished
+  run it also reads the jobs, with the runner that took each one. The jobs of
+  a queued run stay in memory while its `updated_at` holds, for up to 60 s.
+- **Rate limit** each GET sends back the ETag of its last answer. GitHub
+  answers 304 when the data is the same, and a 304 costs no part of the 5000
+  calls an hour.
 - **Place** `status/placement.ts` puts each job on this PC, on another runner
   or in the GitHub queue. A job is local when its runner name matches the
-  `agentName` in a runner folder's `.runner` file.
+  `agentName` in a runner folder's `.runner` file. `idleWhileQueued` finds
+  runners of this PC that sit idle while a job with their labels waits over a
+  minute.
 - **Progress** for a workflow with a running job, `status/org-status.ts`
   reads the jobs of its 3 latest successful runs and keeps them in memory.
   `status/progress.ts` turns their median time and the job's steps into the
@@ -115,7 +123,7 @@ sequenceDiagram
   participant G as GitHub API
   B->>N: GET / every 15 s
   N->>W: Get-ScheduledTask, the open _diag logs of each runner
-  N->>G: org runners, org repos, 5 runs per repo, jobs of unfinished and failed runs, releases
+  N->>G: org runners, org repos, 30 runs per repo with ETags, jobs of unfinished and failed runs, releases
   N-->>B: HTML with the headline, cards and runs
   B->>N: Stop or Purge, a server action
   N->>G: cancel, or force-cancel, poll, DELETE

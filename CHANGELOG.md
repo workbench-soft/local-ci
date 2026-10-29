@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- The status page gets a Running now card above Latest runs, and each
+  runner in Runners names its job. The page reads 30 runs per repo, so a
+  run that builds under newer queued runs stays in view. ETags keep the page
+  under the GitHub rate limit. The headline turns red when a runner of this
+  PC sits idle while jobs wait.
+
 - `runner/install.ps1` excludes the runner folders and the pnpm, npm, mise
   and Gradle caches from Defender scans. `RUNNER_DEFENDER_EXCLUSIONS=off`
   skips it.

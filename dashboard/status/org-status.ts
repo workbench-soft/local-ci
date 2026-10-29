@@ -63,6 +63,9 @@ export type OrgStatus =
 const execFileAsync = promisify(execFile);
 const cacheTtlMs = 20_000;
 const runsPerRepo = 5;
+// One call reads 30 runs as cheaply as 5, and an unfinished run sits among the recent ones.
+const runsRead = 30;
+const queuedJobsTtlMs = 60_000;
 
 let cached: { at: number; status: Promise<OrgStatus> } | null = null;
 let ghToken: string | null = null;
@@ -139,11 +142,19 @@ async function listLatestRuns(): Promise<WorkflowRun[]> {
 	return perRepo.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
 }
 
+/**
+ * The latest runs of a repo, plus every unfinished run among the runs read.
+ * A busy repo queues newer runs on top of the one that builds, so the latest 5 alone hide it.
+ */
+export function pickRuns<T extends Pick<ApiRun, 'status'>>(runs: T[]): T[] {
+	return runs.filter((run, index) => index < runsPerRepo || activeStatuses.has(run.status));
+}
+
 async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
-	const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(`/repos/${fullName}/actions/runs?per_page=${runsPerRepo}`);
+	const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(`/repos/${fullName}/actions/runs?per_page=${runsRead}`);
 	const repo = fullName.split('/')[1];
 	const runs = await Promise.all(
-		workflow_runs.map(async (run) => ({
+		pickRuns(workflow_runs).map(async (run) => ({
 			id: run.id,
 			repo,
 			workflow: run.name,
@@ -158,7 +169,11 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 			url: run.html_url,
 			branchUrl: `https://github.com/${fullName}/tree/${run.head_branch.split('/').map(encodeURIComponent).join('/')}`,
 			pullRequests: (run.pull_requests ?? []).map(({ number }) => ({ number, url: `https://github.com/${fullName}/pull/${number}` })),
-			jobs: activeStatuses.has(run.status) || failedConclusions.has(run.conclusion ?? '') ? await listRunJobs(fullName, run.id) : [],
+			jobs: activeStatuses.has(run.status)
+				? await activeRunJobs(fullName, run)
+				: failedConclusions.has(run.conclusion ?? '')
+					? await listRunJobs(fullName, run.id)
+					: [],
 		})),
 	);
 	await addTypicalTimes(fullName, runs);
@@ -191,6 +206,27 @@ async function latestSuccessfulRuns(fullName: string, workflowId: number): Promi
 	} catch {
 		return [];
 	}
+}
+
+// A queue of 20 runs would cost 20 calls a load. GitHub bumps updated_at when a job of the run starts.
+const queuedJobs = new Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>();
+
+async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
+	if (run.status !== 'queued') {
+		queuedJobs.delete(run.id);
+		return listRunJobs(fullName, run.id);
+	}
+	const kept = queuedJobs.get(run.id);
+	// A queued run can hold a job that builds already, and its steps move on each load.
+	if (kept && kept.updatedAt === run.updated_at && Date.now() - kept.at < queuedJobsTtlMs) {
+		const jobs = await kept.jobs;
+		// A failed call gave no jobs, so it gets another try.
+		if (jobs.length && !jobs.some((job) => job.status === 'in_progress')) return jobs;
+	}
+	const jobs = listRunJobs(fullName, run.id);
+	queuedJobs.set(run.id, { at: Date.now(), updatedAt: run.updated_at, jobs });
+	for (const [id, entry] of queuedJobs) if (Date.now() - entry.at >= queuedJobsTtlMs) queuedJobs.delete(id);
+	return jobs;
 }
 
 // A finished run never changes, so its jobs are read once. The oldest entry goes past 200 runs.
@@ -246,22 +282,37 @@ async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 	}
 }
 
+// A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.
+const etagged = new Map<string, { etag: string; body: string }>();
+const etaggedMax = 500;
+
 async function getJson<T>(path: string): Promise<T> {
-	return (await callGitHub(path)).json() as Promise<T>;
+	const kept = etagged.get(path);
+	const response = await callGitHub(path, 'GET', kept ? { 'If-None-Match': kept.etag } : {});
+	if (response.status === 304 && kept) return JSON.parse(kept.body) as T;
+	const body = await response.text();
+	const etag = response.headers.get('etag');
+	if (etag) {
+		etagged.delete(path);
+		etagged.set(path, { etag, body });
+		if (etagged.size > etaggedMax) etagged.delete(etagged.keys().next().value as string);
+	}
+	return JSON.parse(body) as T;
 }
 
-/** One GitHub API call with the page's token. A status outside 2xx throws with the path in the message. */
-export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET'): Promise<Response> {
+/** One GitHub API call with the page's token. A status outside 2xx and 304 throws with the path in the message. */
+export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', extra: Record<string, string> = {}): Promise<Response> {
 	const response = await fetch(`https://api.github.com${path}`, {
 		method,
 		headers: {
 			Authorization: `Bearer ${await resolveToken()}`,
 			Accept: 'application/vnd.github+json',
 			'X-GitHub-Api-Version': '2022-11-28',
+			...extra,
 		},
 		cache: 'no-store',
 	});
-	if (!response.ok) throw new Error(`GitHub answered ${response.status} to ${method} ${path}`);
+	if (!response.ok && response.status !== 304) throw new Error(`GitHub answered ${response.status} to ${method} ${path}`);
 	return response;
 }
 

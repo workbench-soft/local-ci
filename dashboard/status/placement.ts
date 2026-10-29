@@ -1,4 +1,4 @@
-import type { RunJob, WorkflowRun } from './org-status.ts';
+import type { OrgRunner, RunJob, WorkflowRun } from './org-status.ts';
 import type { StepCount } from './progress.ts';
 import type { PcRunner, ThisPcStatus } from './this-pc.ts';
 
@@ -81,4 +81,22 @@ export function runnerSlots(pc: ThisPcStatus, jobs: LiveJob[]): RunnerSlot[] {
 	const slots: RunnerSlot[] = runners.map((runner) => ({ runner, job: local.find((job) => job.runnerName === runner.name) }));
 	const names = new Set(runners.map((runner) => runner.name));
 	return [...slots, ...local.filter((job) => !names.has(job.runnerName)).map((job) => ({ runner: null, job }))];
+}
+
+// GitHub hands a job to a free runner within seconds, so a shorter wait is normal.
+const stuckAfterMs = 60_000;
+
+/** A runner takes a job when it has each label the job asks for. */
+function fits(job: LiveJob, runner: OrgRunner): boolean {
+	const labels = new Set(runner.labels.map((label) => label.toLowerCase()));
+	return job.labels.every((label) => labels.has(label.toLowerCase()));
+}
+
+/** Runners of this PC that sit idle while a job they could take waits on GitHub for over a minute. */
+export function idleWhileQueued(runners: OrgRunner[] | null, local: Set<string>, jobs: LiveJob[], now: number): { idle: string[]; waiting: LiveJob[] } {
+	const building = new Set(jobs.filter((job) => job.place === 'local').map((job) => job.runnerName));
+	const free = (runners ?? []).filter((runner) => local.has(runner.name) && runner.status === 'online' && !runner.busy && !building.has(runner.name));
+	const waiting = jobs.filter((job) => job.place === 'waiting' && now - Date.parse(job.since) > stuckAfterMs && free.some((runner) => fits(job, runner)));
+	const idle = free.filter((runner) => waiting.some((job) => fits(job, runner))).map((runner) => runner.name);
+	return { idle, waiting };
 }

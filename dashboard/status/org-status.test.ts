@@ -91,3 +91,33 @@ test('a failed run names its failed job and step, and releases come from the pub
 	assert.deepEqual(status.runs[0].pullRequests, [{ number: 4, url: 'https://github.com/workbench-soft/good/pull/4' }]);
 	assert.equal(status.runs[0].branchUrl, 'https://github.com/workbench-soft/good/tree/main');
 });
+
+test('pickRuns keeps the latest 5 runs and every unfinished run past them', async () => {
+	const { pickRuns } = await freshModule();
+	const statuses = ['queued', 'queued', 'queued', 'queued', 'queued', 'in_progress', 'completed', 'queued', 'completed'];
+	const picked = pickRuns(statuses.map((status, index) => ({ status, index })));
+	assert.deepEqual(picked.map((run) => run.index), [0, 1, 2, 3, 4, 5, 7]);
+});
+
+test('a second load sends the ETag back, and a 304 answer reuses the runs read before', async () => {
+	const realFetch = globalThis.fetch;
+	const sent: (string | undefined)[] = [];
+	globalThis.fetch = (async (url: string, init: RequestInit) => {
+		const path = url.replace('https://api.github.com', '');
+		const tag = (init.headers as Record<string, string>)['If-None-Match'];
+		if (path.includes('/repos/workbench-soft/good/actions/runs?')) sent.push(tag);
+		if (tag) return new Response(null, { status: 304 });
+		const { status, body } = healthyOrg(path);
+		return new Response(JSON.stringify(body), { status, headers: { etag: `"${path}"` } });
+	}) as typeof fetch;
+	try {
+		const { fetchOrgStatus, forgetOrgStatus } = await freshModule();
+		const first = await fetchOrgStatus();
+		forgetOrgStatus();
+		const second = await fetchOrgStatus();
+		assert.deepEqual(sent, [undefined, '"/repos/workbench-soft/good/actions/runs?per_page=30"']);
+		assert.deepEqual(second, first);
+	} finally {
+		globalThis.fetch = realFetch;
+	}
+});
