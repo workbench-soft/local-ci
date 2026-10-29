@@ -591,3 +591,16 @@ browser at each logon.
   2. The merged card.
   3. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/user-flows.md`, `CHANGELOG.md`.
+
+### 2026-10-30 PR column in Latest runs
+
+- **Why** the person asked for a column with the PR number.
+- **Changes**
+  - **`cards/latest-runs-table.tsx`** a PR column after Branch lists each PR
+    of the run as a `#number` link, and sorts by the first PR number. The PR
+    links leave the Branch cell. Search matches the PR number.
+- **Steps**
+  1. This spec.
+  2. The column.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.

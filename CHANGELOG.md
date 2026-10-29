@@ -6,6 +6,9 @@
   behind the 5 a repo shows included. It grays each row it purges at once,
   and a single Purge grays its row too.
 
+- Latest runs has a PR column with the PR number of each run, linked to the
+  PR and sortable.
+
 - The status page shows one Running now card at the top in place of the
   Now card and the Running now card, which listed the same jobs.
 

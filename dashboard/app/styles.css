@@ -599,7 +599,7 @@ td .run-controls {
 	word-break: break-word;
 }
 
-.pr-link {
+.pr-link + .pr-link {
 	margin-left: 6px;
 }
 
