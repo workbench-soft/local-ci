@@ -5,6 +5,9 @@
 - The status page shows one Running now card at the top in place of the
   Now card and the Running now card, which listed the same jobs.
 
+- The Runners card spans the page and lists its runners in columns. It sat
+  in a narrow cell beside empty space before.
+
 - The cancel sweep keeps the first run of a new PR, keeps `workflow_run` and
   `schedule` runs, goes on when one repo's PR list fails, and stays off in
   `pnpm dev`. Each `dashboard.log` line gets a time and a reason.

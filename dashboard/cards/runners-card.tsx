@@ -10,7 +10,7 @@ export function RunnersCard({ pc, org, jobs, now }: { pc: ThisPcStatus; org: Org
 	const githubRunners = org.ok ? org.runners : null;
 	const rows = mergeRunners(pc.supported ? pc.runners : [], githubRunners);
 	return (
-		<section className="card">
+		<section className="card wide">
 			<h2>Runners</h2>
 			{rows.length ? (
 				<ul className="runners">
