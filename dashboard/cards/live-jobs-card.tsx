@@ -1,6 +1,7 @@
 import { formatAge } from '@/status/headline';
 import type { LiveJob } from '@/status/placement';
 import { Icon, placeIcons } from './icons';
+import { RunControls } from './run-controls';
 
 const columns: { place: LiveJob['place']; empty: string }[] = [
 	{ place: 'local', empty: 'No job builds on this PC.' },
@@ -46,7 +47,7 @@ function JobItem({ job, now }: { job: LiveJob; now: number }) {
 	return (
 		<li>
 			<Icon name={job.place === 'waiting' ? 'queued' : 'running'} className={job.place} />
-			<div>
+			<div className="grow">
 				<a href={job.url} target="_blank" rel="noreferrer">
 					{job.repo} / {job.workflow}
 					{job.name && ` / ${job.name}`}
@@ -55,6 +56,7 @@ function JobItem({ job, now }: { job: LiveJob; now: number }) {
 					{where && `${where}, `}
 					{job.place === 'waiting' ? 'queued' : 'started'} {formatAge(job.since, now)}
 				</div>
+				<RunControls repo={job.repo} runId={job.runId} active label={`the ${job.repo} / ${job.workflow} run`} />
 			</div>
 		</li>
 	);

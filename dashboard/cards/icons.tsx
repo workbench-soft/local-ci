@@ -1,6 +1,6 @@
 import type { Place } from '@/status/placement';
 
-export type IconName = 'success' | 'failure' | 'cancelled' | 'running' | 'queued' | 'local' | 'cloud' | 'server';
+export type IconName = 'success' | 'failure' | 'cancelled' | 'running' | 'queued' | 'local' | 'cloud' | 'server' | 'stop' | 'trash';
 
 // Feather-style 24 px strokes, so every icon takes the text color of its tone.
 const paths: Record<IconName, string[]> = {
@@ -12,6 +12,8 @@ const paths: Record<IconName, string[]> = {
 	local: ['M3 4h18v12H3z', 'M8 20h8', 'M12 16v4'],
 	cloud: ['M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.3 12.5 3.5 3.5 0 0 0 6.5 19z'],
 	server: ['M3 3h18v7H3z', 'M3 14h18v7H3z', 'M7 6.5h.01', 'M7 17.5h.01'],
+	stop: ['M6 6h12v12H6z'],
+	trash: ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 14H6L5 6', 'M10 11v6', 'M14 11v6'],
 };
 
 export function Icon({ name, label, className = '' }: { name: IconName; label?: string; className?: string }) {
