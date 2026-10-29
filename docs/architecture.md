@@ -62,9 +62,17 @@ The server renders the page for each request.
   each it reads the boot task and which `_diag` logs a live process holds open.
 - **GitHub** `status/org-status.ts` calls the API with the token from
   `.env.local`. It keeps the answer in memory for 20 seconds, and requests
-  that arrive during a load wait for that load.
-- **Headline** `status/headline.ts` turns both into the headline and the dot
-  colors. The cards in `cards/` draw the rest.
+  that arrive during a load wait for that load. For each unfinished run it
+  also reads the jobs, with the runner that took each one.
+- **Place** `status/placement.ts` puts each job on this PC, on another runner
+  or in the GitHub queue. A job is local when its runner name matches the
+  `agentName` in a runner folder's `.runner` file.
+- **Headline** `status/headline.ts` turns all that into the headline and the
+  dot colors. The cards in `cards/` draw the rest. The runs table filters and
+  sorts in the browser.
+- **Open at logon** the boot task runs without a desktop. A shortcut in the
+  Startup folder runs `dashboard/open.ps1`, which waits for the port and opens
+  the page.
 - **Repo errors** a repo whose runs call fails drops out of the list, and the
   other repos still show.
 
@@ -76,6 +84,6 @@ sequenceDiagram
   participant G as GitHub API
   B->>N: GET / every 15 s
   N->>W: Get-ScheduledTask, the open _diag logs of each runner
-  N->>G: org runners, org repos, 5 runs per repo
+  N->>G: org runners, org repos, 5 runs per repo, jobs of unfinished runs
   N-->>B: HTML with the headline, cards and runs
 ```

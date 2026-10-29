@@ -50,4 +50,16 @@ Set-Content -LiteralPath $startScript -Encoding ascii -Value "@echo off`r`ncd /d
 
 Write-Step 'Starting the page at boot'
 Register-BootTask $taskName $startScript $appDir
-Write-Host "Open http://localhost:$port"
+
+# The boot task runs without a desktop, so a Startup shortcut opens the page at each logon.
+Write-Step 'Opening the page at logon'
+$openScript = Join-Path $appDir 'open.ps1'
+$shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path ([Environment]::GetFolderPath('Startup')) 'local-ci dashboard.lnk'))
+$shortcut.TargetPath = (Get-Command powershell -CommandType Application).Source
+$shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$openScript`" -Port $port"
+$shortcut.WorkingDirectory = $appDir
+$shortcut.WindowStyle = 7
+$shortcut.Save()
+
+Write-Step "Opening http://localhost:$port"
+& $openScript -Port $port

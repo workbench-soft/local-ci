@@ -1,8 +1,9 @@
 import { formatAge } from '@/status/headline';
+import type { LiveJob } from '@/status/placement';
 import type { PcRunner, ThisPcStatus } from '@/status/this-pc';
 import { StatusDot } from './status-dot';
 
-export function ThisPcCard({ pc, now }: { pc: ThisPcStatus; now: number }) {
+export function ThisPcCard({ pc, jobs, now }: { pc: ThisPcStatus; jobs: LiveJob[]; now: number }) {
 	if (!pc.supported) {
 		return (
 			<section className="card">
@@ -17,7 +18,7 @@ export function ThisPcCard({ pc, now }: { pc: ThisPcStatus; now: number }) {
 			{pc.runners.length ? (
 				<ul className="runners">
 					{pc.runners.map((runner) => (
-						<RunnerItem key={runner.folder} runner={runner} now={now} />
+						<RunnerItem key={runner.folder} runner={runner} job={jobs.find((job) => job.place === 'local' && job.runnerName === runner.name)} now={now} />
 					))}
 				</ul>
 			) : (
@@ -27,12 +28,21 @@ export function ThisPcCard({ pc, now }: { pc: ThisPcStatus; now: number }) {
 	);
 }
 
-function RunnerItem({ runner, now }: { runner: PcRunner; now: number }) {
-	const state = !runner.listener ? 'stopped' : runner.worker ? 'running a job' : 'idle';
+function RunnerItem({ runner, job, now }: { runner: PcRunner; job: LiveJob | undefined; now: number }) {
+	const state = !runner.listener ? 'stopped' : runner.worker || job ? 'running a job' : 'idle';
 	return (
 		<li>
-			<StatusDot tone={!runner.listener ? 'bad' : runner.worker ? 'busy' : 'ok'} />
+			<StatusDot tone={!runner.listener ? 'bad' : runner.worker || job ? 'busy' : 'ok'} />
 			<strong>{runner.name ?? runner.folder}</strong> {state}
+			{job && (
+				<div className="small">
+					<a href={job.url} target="_blank" rel="noreferrer">
+						{job.repo} / {job.workflow}
+						{job.name && ` / ${job.name}`}
+					</a>
+					<span className="muted">, started {formatAge(job.since, now)}</span>
+				</div>
+			)}
 			<div className="muted">
 				Boot task {runner.task ?? 'missing'}, last job {runner.lastJobAt ? formatAge(runner.lastJobAt, now) : 'none yet'}
 			</div>

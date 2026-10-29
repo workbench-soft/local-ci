@@ -1,11 +1,9 @@
 import type { OrgStatus, WorkflowRun } from './org-status.ts';
+import { activeStatuses, type LiveJob } from './placement.ts';
 import type { ThisPcStatus } from './this-pc.ts';
 
 /** The color of a status dot: green, blue, amber or red. */
 export type Tone = 'ok' | 'busy' | 'warn' | 'bad';
-
-/** Statuses of a run that hasn't finished. */
-export const activeStatuses = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
 
 const waitingStatuses = new Set(['queued', 'waiting', 'pending']);
 
@@ -18,7 +16,7 @@ export function formatAge(iso: string, now: number): string {
 	return `${Math.round(seconds / 86400)} d ago`;
 }
 
-export function toneOfRun({ status, conclusion }: WorkflowRun): Tone {
+export function toneOfRun({ status, conclusion }: Pick<WorkflowRun, 'status' | 'conclusion'>): Tone {
 	if (waitingStatuses.has(status)) return 'warn';
 	if (activeStatuses.has(status)) return 'busy';
 	if (conclusion === 'success' || conclusion === 'skipped') return 'ok';
@@ -26,8 +24,10 @@ export function toneOfRun({ status, conclusion }: WorkflowRun): Tone {
 	return 'bad';
 }
 
-/** The headline: the worst problem first, then builds, then the queue. */
-export function summarizeCi(pc: ThisPcStatus, org: OrgStatus): { tone: Tone; text: string } {
+const jobs = (count: number) => `${count} job${count === 1 ? '' : 's'}`;
+
+/** The headline: the worst problem first, then jobs on this PC, then other runners, then the GitHub queue. */
+export function summarizeCi(pc: ThisPcStatus, org: OrgStatus, live: LiveJob[]): { tone: Tone; text: string } {
 	if (pc.supported) {
 		const total = pc.runners.length;
 		const down = pc.runners.filter((runner) => !runner.listener).length;
@@ -39,13 +39,14 @@ export function summarizeCi(pc: ThisPcStatus, org: OrgStatus): { tone: Tone; tex
 	if (org.runners && !org.runners.some((runner) => runner.status === 'online')) {
 		return { tone: 'bad', text: 'No runner is online' };
 	}
-	const building = org.runs.filter((run) => run.status === 'in_progress').length;
-	const queued = org.runs.filter((run) => activeStatuses.has(run.status)).length - building;
-	const queue = `${queued} in the queue`;
-	if (building) {
-		const runs = `Building ${building} run${building > 1 ? 's' : ''}`;
-		return { tone: 'busy', text: queued ? `${runs}, ${queue}` : runs };
+	const count = (place: LiveJob['place']) => live.filter((job) => job.place === place).length;
+	const [local, elsewhere, waiting] = [count('local'), count('elsewhere'), count('waiting')];
+	const queue = waiting ? [`${waiting} waiting on GitHub`] : [];
+	if (local) {
+		const others = elsewhere ? [`${elsewhere} on other runners`] : [];
+		return { tone: 'busy', text: [`Building ${jobs(local)} on this PC`, ...others, ...queue].join(', ') };
 	}
-	if (queued) return { tone: 'warn', text: `No run builds, ${queue}` };
+	if (elsewhere) return { tone: 'busy', text: [`${jobs(elsewhere)} on other runners`, ...queue].join(', ') };
+	if (waiting) return { tone: 'warn', text: `${jobs(waiting)} waiting on GitHub for a runner` };
 	return { tone: 'ok', text: 'CI is up and idle' };
 }
