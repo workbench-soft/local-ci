@@ -53,16 +53,19 @@ icon: a white loop arrow around a green play sign on blue.
 - **Now** a column per place. On this PC lists every runner of this PC with
   the job it builds, or idle, or stopped, and counts busy runners out of all.
   Then the jobs waiting on GitHub with the labels they ask for, and the jobs on
-  another runner. Each job links to its GitHub log.
+  another runner. Each job links to its GitHub log. A column longer than
+  420 px scrolls inside the card.
 - **Runners** one row per runner of the org. Each row says whether the
   runner lives on this PC or another machine, and its state on each side:
   `this PC` from the runner folder and processes, `GitHub` from the API. A row
   whose sides disagree turns yellow, with a hint on what to check. Runners of
-  this PC also show their boot task and when their last job started.
+  this PC also show their boot task and when their last job started. The
+  list stops at 420 px and scrolls.
 - **Runs** the latest 5 runs of each org repo, with an icon for the result and
   for the place. Filter chips pick this PC, waiting, other runners, failed or
   passed. A search box matches repo, workflow and branch. A click on a column
-  head sorts by it.
+  head sorts by it. The table stops at 70% of the window height and scrolls,
+  with its head row pinned.
 - **Stop and Purge** buttons on each run and each live job. Stop cancels the
   run on GitHub. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's
