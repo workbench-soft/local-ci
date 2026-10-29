@@ -1,11 +1,12 @@
 import { formatAge } from '@/status/headline';
 import type { OrgStatus } from '@/status/org-status';
+import type { LiveJob } from '@/status/placement';
 import { githubState, mergeRunners, pcState, type RunnerRow } from '@/status/runners';
 import type { ThisPcStatus } from '@/status/this-pc';
 import { StatusDot } from './status-dot';
 
 /** Every runner once, with what this PC and GitHub each say about it. */
-export function RunnersCard({ pc, org, now }: { pc: ThisPcStatus; org: OrgStatus; now: number }) {
+export function RunnersCard({ pc, org, jobs, now }: { pc: ThisPcStatus; org: OrgStatus; jobs: LiveJob[]; now: number }) {
 	const githubRunners = org.ok ? org.runners : null;
 	const rows = mergeRunners(pc.supported ? pc.runners : [], githubRunners);
 	return (
@@ -14,7 +15,7 @@ export function RunnersCard({ pc, org, now }: { pc: ThisPcStatus; org: OrgStatus
 			{rows.length ? (
 				<ul className="runners">
 					{rows.map((row) => (
-						<RunnerItem key={row.name} row={row} listed={githubRunners !== null} now={now} />
+						<RunnerItem key={row.name} row={row} job={jobs.find((job) => job.place !== 'waiting' && job.runnerName === row.name)} listed={githubRunners !== null} now={now} />
 					))}
 				</ul>
 			) : (
@@ -29,7 +30,7 @@ export function RunnersCard({ pc, org, now }: { pc: ThisPcStatus; org: OrgStatus
 	);
 }
 
-function RunnerItem({ row: { name, here, github, tone, hint }, listed, now }: { row: RunnerRow; listed: boolean; now: number }) {
+function RunnerItem({ row: { name, here, github, tone, hint }, job, listed, now }: { row: RunnerRow; job: LiveJob | undefined; listed: boolean; now: number }) {
 	return (
 		<li className={hint ? 'runner-row has-hint' : 'runner-row'}>
 			<StatusDot tone={tone} />
@@ -37,6 +38,20 @@ function RunnerItem({ row: { name, here, github, tone, hint }, listed, now }: { 
 			<div className="sides small">
 				{here && <span>this PC: {pcState(here)}</span>}
 				<span>GitHub: {github ? githubState(github) : listed ? 'not registered' : 'unknown'}</span>
+			</div>
+			<div className="runner-job small">
+				{job ? (
+					<>
+						Builds{' '}
+						<a href={job.url} target="_blank" rel="noreferrer">
+							{job.repo} / {job.workflow}
+							{job.name && ` / ${job.name}`}
+						</a>
+						<span className="muted">, started {formatAge(job.since, now)}</span>
+					</>
+				) : (
+					<span className="muted">{github?.busy || here?.worker ? 'Builds a job the page has yet to read' : 'No job'}</span>
+				)}
 			</div>
 			{hint && <div className="hint small">{hint}</div>}
 			{here && (

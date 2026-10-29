@@ -590,3 +590,45 @@ td .run-controls {
 .pr-link {
 	margin-left: 6px;
 }
+
+/* The jobs that build right now, in large rows above the runs table. */
+.running-now {
+	border: 2px solid var(--busy);
+}
+
+.running-now.stuck {
+	border-color: var(--bad);
+}
+
+.running-now h2 {
+	font-size: 20px;
+}
+
+.running {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 12px;
+}
+
+.running li {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.running .dot {
+	flex: none;
+	margin-top: 8px;
+}
+
+.running .what {
+	font-size: 17px;
+}
+
+.runner-job {
+	margin-left: 18px;
+}

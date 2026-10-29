@@ -2,10 +2,11 @@ import { AutoRefresh } from '@/cards/auto-refresh';
 import { LatestRunsTable, type RunRow } from '@/cards/latest-runs-table';
 import { LiveJobsCard } from '@/cards/live-jobs-card';
 import { RunnersCard } from '@/cards/runners-card';
+import { RunningNowCard } from '@/cards/running-now-card';
 import { StatusDot } from '@/cards/status-dot';
 import { summarizeCi } from '@/status/headline';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
-import { liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
+import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { releaseOfRun } from '@/status/releases';
 import { readThisPc } from '@/status/this-pc';
 
@@ -19,7 +20,8 @@ export default async function StatusPage() {
 	const runs = org.ok ? org.runs : [];
 	const releases = org.ok ? org.releases : [];
 	const live = liveJobs(runs, local);
-	const headline = summarizeCi(pc, org, live);
+	const { idle } = idleWhileQueued(org.ok ? org.runners : null, local, live, now);
+	const headline = summarizeCi(pc, org, live, idle);
 	// The table runs in the browser, so it gets each run without its jobs.
 	const rows: RunRow[] = runs.map((run) => {
 		const { jobs, updatedAt, ...row } = run;
@@ -36,7 +38,8 @@ export default async function StatusPage() {
 			</header>
 			<div className="grid">
 				{org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} now={now} />}
-				<RunnersCard pc={pc} org={org} now={now} />
+				<RunnersCard pc={pc} org={org} jobs={live} now={now} />
+				{org.ok && <RunningNowCard jobs={live} idle={idle} now={now} />}
 				{org.ok && <LatestRunsTable runs={rows} now={now} />}
 			</div>
 		</main>
