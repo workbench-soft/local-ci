@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- The status page server force cancels a run once a newer run of its
+  workflow and branch shows, or once its PR is merged or closed.
+
 - The status page shows one Runners card in place of This PC and Runners of
   workbench-soft. Each runner says where it lives and its state on this PC and
   on GitHub, with a hint when the two disagree.

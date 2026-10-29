@@ -13,6 +13,7 @@ const run = (status: string, conclusion: string | null = null): WorkflowRun => (
 	repo: 'app',
 	workflow: 'ci',
 	title: 't',
+	workflowId: 1,
 	branch: 'main',
 	event: 'push',
 	status,

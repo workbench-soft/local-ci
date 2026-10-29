@@ -274,3 +274,32 @@ browser at each logon.
   3. The Runners card.
   4. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2025-10-29 A new run kills the older runs of its workflow and branch
+
+- **Why** the queue fills with runs of commits that a newer push already
+  replaced, and with PR runs of PRs already merged. They take runners and
+  build for nothing.
+- **Changes**
+  - **`status/superseded.ts`** picks the unfinished runs to kill: a newer
+    run of the same repo, workflow, branch and event replaced them, or they
+    check a PR that is merged or closed. Other workflows of the same push
+    stay, since each builds a different thing. Main and open PRs keep
+    building. Release and deploy workflows run on main only.
+  - **`status/cancel-superseded.ts`** every 10 seconds reads the runs through
+    the shared 20 second cache and force cancels each replaced run.
+    `force-cancel` also stops steps with `if: always()`, so the run frees its
+    runner at once. Each cancel goes to `dashboard.log`. The open PRs of a
+    repo with an unfinished PR run are read once a minute.
+  - **`instrumentation.ts`** starts the loop with the server, so it works
+    with no tab open.
+  - **`CANCEL_SUPERSEDED=off`** in `.env.local` turns it off.
+- **Limits** a run dies up to 30 seconds after the newer one shows. A manual
+  re-run of an older commit dies too while a newer run of its branch exists.
+  The page server must run.
+- **Steps**
+  1. This spec.
+  2. The picker, its tests and the loop.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `CHANGELOG.md`.
