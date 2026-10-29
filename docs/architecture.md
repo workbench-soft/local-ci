@@ -12,6 +12,8 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   runner, and `runner/install.ps1` does the same for a Windows PC.
 - **Boot task** `windows/boot-task.ps1` holds the admin check and the
   scheduled task that both Windows boot scripts use.
+- **Start button** `START.cmd` runs `windows/start.ps1`. The script starts
+  the runner and page tasks that aren't running, then opens the page.
 - **Status page** `dashboard/` is a Next.js app. `dashboard/install.ps1`
   builds it and starts it at boot.
 - **Data files** `mcp-config.json` and `claude/MEMORY.md`, copied into the

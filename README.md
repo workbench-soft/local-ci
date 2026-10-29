@@ -59,6 +59,15 @@ runner. The runner scripts also work alone:
 - **In a workflow** `runs-on: [self-hosted, local]` takes whichever machine is
   on. A job that needs macOS asks for `[self-hosted, macOS]`.
 
+## Start the CI
+
+Double click `START.cmd` in the repo root. It starts each runner and the
+status page that isn't running, then opens `http://localhost:4280`.
+
+- **Admin prompt** shows only when Windows refuses to start a task.
+- **First run** without the page task, it runs `dashboard\install.ps1`. Without
+  a runner task, it names `runner\install.ps1`.
+
 ## CI status page
 
 `http://localhost:4280` shows what builds on this PC and what waits on GitHub.

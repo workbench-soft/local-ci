@@ -58,6 +58,26 @@ flowchart TD
   F --> G[start each: launchd or boot task]
 ```
 
+## Start the CI with a double click
+
+1. Open the `local-ci` folder in Explorer.
+2. Double click `START.cmd`.
+3. A window lists each runner and the page as running or started.
+4. The browser opens `http://localhost:4280`. The window closes on its own,
+   and stays open on an error.
+
+```mermaid
+flowchart TD
+  A[START.cmd] --> B[windows/start.ps1]
+  B --> C{page task exists?}
+  C -- no --> D[dashboard/install.ps1]
+  C -- yes --> E[start stopped runner and page tasks]
+  E --> F{Windows refused?}
+  F -- yes --> G[admin prompt, start again]
+  F -- no --> H[dashboard/open.ps1 opens the page]
+  G --> H
+```
+
 ## See the CI status
 
 1. From the main checkout, run `.\dashboard\install.ps1` once.

@@ -31,6 +31,16 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 - **Limit** extra runners speed up only work split into jobs. Jobs at the
   same time share ports, the Android emulator and the Gradle cache.
 
+## Start button
+
+`START.cmd` in the repo root starts the runners and the status page with a
+double click, then opens `http://localhost:4280`.
+
+- **Starts** each `GitHub Actions runner` task and the `local-ci dashboard`
+  task that isn't running.
+- **Admin** asked for only when Windows refuses to start a task.
+- **Limits** Windows only. A new PC runs the install scripts first.
+
 ## CI status page
 
 `http://localhost:4280` shows the local CI at a glance. `dashboard\install.ps1`
