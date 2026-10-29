@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
+import { formatDuration } from '@/status/durations';
 import { formatAge, toneOfRun } from '@/status/headline';
 import type { RunFailure, WorkflowRun } from '@/status/org-status';
 import { type Place, placeOrder } from '@/status/placement';
@@ -9,10 +10,17 @@ import { Icon, placeIcons, resultOf } from './icons';
 import { InstallButton } from './install-button';
 import { PurgeAllButton } from './purge-all-button';
 import { RunControls } from './run-controls';
+import { RunTimings } from './run-timings';
 
-export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & { place: Place; release: Release | null; failure: RunFailure | null };
+export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & {
+	/** From the start of the run to its end, or up to now. Null while it waits in the queue. */
+	tookMs: number | null;
+	place: Place;
+	release: Release | null;
+	failure: RunFailure | null;
+};
 
-type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'started';
+type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'started' | 'took';
 
 const rowLimit = 60;
 
@@ -38,6 +46,7 @@ const compareBy: Record<SortKey, (a: RunRow, b: RunRow) => number> = {
 	workflow: (a, b) => a.workflow.localeCompare(b.workflow),
 	branch: (a, b) => a.branch.localeCompare(b.branch),
 	started: (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt),
+	took: (a, b) => (a.tookMs ?? -1) - (b.tookMs ?? -1),
 };
 
 const columns: { key: SortKey; text: string }[] = [
@@ -46,6 +55,7 @@ const columns: { key: SortKey; text: string }[] = [
 	{ key: 'workflow', text: 'Workflow' },
 	{ key: 'branch', text: 'Branch' },
 	{ key: 'started', text: 'Started' },
+	{ key: 'took', text: 'Took' },
 ];
 
 export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) {
@@ -65,8 +75,10 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 	const rows = shown.slice(0, rowLimit);
 
 	const sortBy = (key: SortKey) =>
-		// Dates read best newest first, so the first click on Started sorts that way.
-		setSort((current) => (current.key === key ? { key, descending: !current.descending } : { key, descending: key === 'started' }));
+		// Dates read best newest first and times longest first, so the first click sorts that way.
+		setSort((current) =>
+			current.key === key ? { key, descending: !current.descending } : { key, descending: key === 'started' || key === 'took' },
+		);
 
 	return (
 		<section className="card wide">
@@ -129,7 +141,10 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 	const result = resultOf(run.status, run.conclusion);
 	const place = run.place === 'done' ? null : placeIcons[run.place];
+	const [open, setOpen] = useState(false);
+	const active = run.status !== 'completed';
 	return (
+		<Fragment>
 		<tr className={run.place === 'local' ? 'local-row' : undefined}>
 			<td className="nowrap">
 				<span className={`result ${toneOfRun(run)}`}>
@@ -170,6 +185,12 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 			</td>
 			<td className="nowrap">{formatAge(run.createdAt, now)}</td>
 			<td>
+				<button type="button" className="took" aria-expanded={open} onClick={() => setOpen(!open)} title="Show the time of each job and step">
+					<span className="arrow">{open ? '▼' : '▶'}</span>
+					{run.tookMs === null ? 'in queue' : formatDuration(run.tookMs)}
+				</button>
+			</td>
+			<td>
 				{run.release && (
 					<>
 						<a className="release-link" href={run.release.url} target="_blank" rel="noreferrer">
@@ -181,8 +202,16 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 				)}
 			</td>
 			<td>
-				<RunControls repo={run.repo} runId={run.id} active={run.status !== 'completed'} label={`the ${run.repo} / ${run.workflow} run`} />
+				<RunControls repo={run.repo} runId={run.id} active={active} label={`the ${run.repo} / ${run.workflow} run`} />
 			</td>
 		</tr>
+		{open && (
+			<tr className="timings-row">
+				<td colSpan={columns.length + 2}>
+					<RunTimings repo={run.repo} runId={run.id} active={active} now={now} />
+				</td>
+			</tr>
+		)}
+		</Fragment>
 	);
 }

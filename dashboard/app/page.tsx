@@ -4,6 +4,7 @@ import { LiveJobsCard } from '@/cards/live-jobs-card';
 import { RunnersCard } from '@/cards/runners-card';
 import { RunningNowCard } from '@/cards/running-now-card';
 import { StatusDot } from '@/cards/status-dot';
+import { runDuration } from '@/status/durations';
 import { summarizeCi } from '@/status/headline';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
@@ -25,7 +26,7 @@ export default async function StatusPage() {
 	// The table runs in the browser, so it gets each run without its jobs.
 	const rows: RunRow[] = runs.map((run) => {
 		const { jobs, updatedAt, ...row } = run;
-		return { ...row, place: placeOfRun(run, local), release: releaseOfRun(run, releases), failure: failureOf(run) };
+		return { ...row, tookMs: runDuration(run, now), place: placeOfRun(run, local), release: releaseOfRun(run, releases), failure: failureOf(run) };
 	});
 	return (
 		<main>

@@ -94,6 +94,7 @@ flowchart TD
    To clear many runs, pick a filter or type a search, press Purge all and
    confirm. The count of purged runs and the first error show beside it.
 7. A failed run names its failed job and step. Click it to read the log.
+   Click the time in Took to see how long each job and step took.
 8. Plug the phone in over USB with USB debugging on. Press Install in the
    Release column. The button says the device, or shows adb's error in red.
 9. Click the branch or the PR link to open it on GitHub.

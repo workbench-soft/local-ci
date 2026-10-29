@@ -92,6 +92,11 @@ icon: a white loop arrow around a green play sign on blue.
   matches repo, workflow and branch. A click on a column head sorts by it. The
   table stops at 70% of the window height and scrolls, with its head row
   pinned.
+- **Took** how long the run took, from its start on GitHub to its end. A run
+  that builds counts up to now, and a queued one says "in queue". The time
+  includes the wait for a runner after the start. A click on the time opens
+  a row with each job and step, its time and a bar in scale with the longest
+  step. The row of an unfinished run updates on each refresh.
 - **Stop and Purge** buttons on each run and each live job. Stop cancels the
   run on GitHub. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's
