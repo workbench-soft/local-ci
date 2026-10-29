@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- `runner/install.ps1` installs the Android SDK parts the apps build with,
+  and jobs no longer download SDK parts. Two Release builds at once broke NDK
+  27.1 for every runner before.
+
 - The status page shows one Running now card at the top in place of the
   Now card and the Running now card, which listed the same jobs.
 

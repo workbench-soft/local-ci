@@ -88,6 +88,8 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	# action-setup puts PNPM_HOME, and with it the pnpm store, in _temp, which the runner wipes after each job.
 	$jobVars.pnpm_config_store_dir = Join-Path $env:LOCALAPPDATA 'pnpm\store'
 	if (Test-Path -LiteralPath $android) { $jobVars.ANDROID_HOME = $android; $jobVars.ANDROID_SDK_ROOT = $android }
+	# Two jobs downloading the same SDK part at once leave it half written, so jobs only read the SDK.
+	$jobVars.'ORG_GRADLE_PROJECT_android.builder.sdkDownload' = 'false'
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
 
@@ -139,6 +141,18 @@ if ($missing.Count) {
 Write-Step 'Adding the runner folders and the package caches to the Defender exclusions'
 Add-DefenderExclusions
 
+# The SDK parts the org's Android apps build with. Add one here and run the script again.
+$androidPackages = 'ndk;27.1.12297006', 'platforms;android-36', 'platforms;android-37.0', 'build-tools;35.0.0', 'build-tools;36.0.0', 'build-tools;37.0.0'
+
+function Install-AndroidSdk {
+	$android = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
+	$sdkmanager = Join-Path $android 'cmdline-tools\latest\bin\sdkmanager.bat'
+	if (-not (Test-Path -LiteralPath $sdkmanager)) { Write-Host "No sdkmanager at $sdkmanager, skipping the Android SDK"; return }
+	if (-not $env:JAVA_HOME) { $env:JAVA_HOME = mise where java }
+	@('y') * 20 | & $sdkmanager --install @androidPackages | Out-Null
+	if ($LASTEXITCODE -ne 0) { throw "sdkmanager failed with exit code $LASTEXITCODE" }
+}
+
 # node_modules and the .open-next cache hold paths over 260 characters.
 Write-Step 'Turning on long paths for git and Windows'
 git config --global core.longpaths true
@@ -147,6 +161,9 @@ try {
 } catch {
 	Write-Host "Windows long paths need an admin run: $($_.Exception.Message)"
 }
+
+Write-Step 'Installing the Android SDK parts the apps build with'
+Install-AndroidSdk
 
 $toolDirs = Get-ToolDirs
 $toolCache = Join-Path $HOME 'actions-runner\_tool'
