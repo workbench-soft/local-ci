@@ -303,3 +303,18 @@ browser at each logon.
   3. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`.
+
+### 2026-10-29 Long lists scroll inside their card
+
+- **Why** the waiting column, and any list on the page, can grow to dozens of
+  rows and push the rest of the page down.
+- **Changes**
+  - **`app/styles.css`** the job lists of the Now card and the Runners list
+    stop at 420 px and scroll. The runs table stops at 70% of the window
+    height and scrolls, with its head row pinned on top.
+  - **`cards/latest-runs-table.tsx`** the table sits in a scroll box.
+- **Steps**
+  1. This spec.
+  2. The styles and the table box.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.

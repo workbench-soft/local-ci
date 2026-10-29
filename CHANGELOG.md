@@ -5,6 +5,10 @@
 - The status page server force cancels a run once a newer run of its
   workflow and branch shows, or once its PR is merged or closed.
 
+- Long lists on the status page scroll inside their card: the Now columns
+  and the Runners list past 420 px, the runs table past 70% of the window,
+  with its head row pinned.
+
 - The status page shows one Runners card in place of This PC and Runners of
   workbench-soft. Each runner says where it lives and its state on this PC and
   on GitHub, with a hint when the two disagree.
