@@ -10,6 +10,8 @@ $appDir = $PSScriptRoot
 $port = if ($env:DASHBOARD_PORT) { $env:DASHBOARD_PORT } else { '4280' }
 $taskName = 'local-ci dashboard'
 $env:GH_PAGER = 'cat'
+# Next sends usage data to Vercel on each build unless told not to.
+$env:NEXT_TELEMETRY_DISABLED = '1'
 
 function Write-Step([string]$text) { Write-Host "`n==> $text" }
 
