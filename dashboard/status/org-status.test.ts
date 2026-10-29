@@ -40,13 +40,24 @@ const healthyOrg: Route = (path) => {
 	return { status: 200, body: { workflow_runs: [apiRun(1)] } };
 };
 
-// Each test loads its own copy of the module, so the 20 s cache starts empty.
+// Each test drops the shared store and loads its own copy of the module, so the 20 s cache starts empty.
 let copy = 0;
 const freshModule = () => import(`./org-status.ts?copy=${++copy}`) as Promise<typeof import('./org-status.ts')>;
 
 beforeEach(() => {
 	calls = [];
 	route = healthyOrg;
+	delete (globalThis as Record<symbol, unknown>)[Symbol.for('local-ci.org-status')];
+});
+
+test('two copies of the module, as Next bundles for the page and the sweep, share one cache', async () => {
+	const page = await freshModule();
+	const sweep = await freshModule();
+	await Promise.all([page.fetchOrgStatus(), sweep.fetchOrgStatus()]);
+	assert.equal(calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length, 1);
+	sweep.forgetOrgStatus();
+	await page.fetchOrgStatus();
+	assert.equal(calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length, 2);
 });
 
 test('a repo whose runs call fails drops out, the other repos still show', async () => {

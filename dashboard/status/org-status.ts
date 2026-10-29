@@ -67,21 +67,38 @@ const runsPerRepo = 5;
 const runsRead = 30;
 const queuedJobsTtlMs = 60_000;
 
-let cached: { at: number; status: Promise<OrgStatus> } | null = null;
+type Store = {
+	cached: { at: number; status: Promise<OrgStatus> } | null;
+	etagged: Map<string, { etag: string; body: string }>;
+	queuedJobs: Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>;
+	finishedJobs: Map<number, Promise<RunJob[]>>;
+};
+
+/** The key of the store on globalThis. Tests delete it to start empty. */
+export const storeKey = Symbol.for('local-ci.org-status');
+
+// Next bundles this module once for the page and once for the sweep. One store on globalThis
+// lets both share the loads, and a cancel by the sweep drops the status the page shows.
+const store: Store = ((globalThis as Record<symbol, Store | undefined>)[storeKey] ??= {
+	cached: null,
+	etagged: new Map(),
+	queuedJobs: new Map(),
+	finishedJobs: new Map(),
+});
 let ghToken: string | null = null;
 
-/** The org's runners and the latest runs of its repos, kept for 20 s so open tabs share one set of calls. */
+/** The org's runners and the latest runs of its repos, kept for 20 s so open tabs and the sweep share one set of calls. */
 export function fetchOrgStatus(): Promise<OrgStatus> {
-	if (cached && Date.now() - cached.at < cacheTtlMs) return cached.status;
+	if (store.cached && Date.now() - store.cached.at < cacheTtlMs) return store.cached.status;
 	// The promise goes in the cache before it settles, so requests that arrive meanwhile wait for the same load.
 	const status = loadOrgStatus();
-	cached = { at: Date.now(), status };
+	store.cached = { at: Date.now(), status };
 	return status;
 }
 
 /** Drops the cached status, so the next render reads GitHub after a run changed. */
 export function forgetOrgStatus(): void {
-	cached = null;
+	store.cached = null;
 }
 
 async function loadOrgStatus(): Promise<OrgStatus> {
@@ -209,7 +226,7 @@ async function latestSuccessfulRuns(fullName: string, workflowId: number): Promi
 }
 
 // A queue of 20 runs would cost 20 calls a load. GitHub bumps updated_at when a job of the run starts.
-const queuedJobs = new Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>();
+const queuedJobs = store.queuedJobs;
 
 async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
 	if (run.status !== 'queued') {
@@ -230,7 +247,7 @@ async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
 }
 
 // A finished run never changes, so its jobs are read once. The oldest entry goes past 200 runs.
-const finishedJobs = new Map<number, Promise<RunJob[]>>();
+const finishedJobs = store.finishedJobs;
 
 function finishedRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 	let jobs = finishedJobs.get(runId);
@@ -283,7 +300,7 @@ async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 }
 
 // A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.
-const etagged = new Map<string, { etag: string; body: string }>();
+const etagged = store.etagged;
 const etaggedMax = 500;
 
 async function getJson<T>(path: string): Promise<T> {
