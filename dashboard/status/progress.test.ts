@@ -4,7 +4,7 @@ import { countSteps, jobProgress, typicalDuration } from './progress.ts';
 
 const start = '2025-10-29T12:00:00Z';
 const at = (minutes: number) => Date.parse(start) + minutes * 60_000;
-const finished = (name: string, minutes: number) => ({ name, startedAt: start, completedAt: new Date(at(minutes)).toISOString() });
+const finished = (name: string, minutes: number, conclusion = 'success') => ({ name, conclusion, startedAt: start, completedAt: new Date(at(minutes)).toISOString() });
 
 test('countSteps counts finished steps and names the running one', () => {
 	const steps = countSteps([
@@ -19,6 +19,26 @@ test('typicalDuration takes the median of jobs with the same name', () => {
 	const past = [finished('test', 4), finished('test', 10), finished('test', 6), finished('build', 1)];
 	assert.equal(typicalDuration('test', past), 6 * 60_000);
 	assert.equal(typicalDuration('lint', past), null);
+});
+
+test('typicalDuration takes jobs cancelled late as at least that long', () => {
+	const past = [finished('test', 10, 'cancelled'), finished('test', 10, 'cancelled'), finished('test', 10, 'failure')];
+	assert.equal(typicalDuration('test', past), 10 * 60_000);
+});
+
+test('typicalDuration lets lower bounds push the median up, not down', () => {
+	const fast = [finished('test', 4), finished('test', 6)];
+	assert.equal(typicalDuration('test', fast), 4 * 60_000);
+	assert.equal(typicalDuration('test', [...fast, finished('test', 5, 'cancelled'), finished('test', 5, 'cancelled')]), 6 * 60_000);
+	assert.equal(typicalDuration('test', [...fast, finished('test', 1, 'cancelled')]), 4 * 60_000);
+});
+
+test('typicalDuration follows the mix of fast and slow runs and drops skipped jobs', () => {
+	const slow = [finished('test', 10), finished('test', 10), finished('test', 10)];
+	const fast = [finished('test', 2), finished('test', 2), finished('test', 2), finished('test', 2)];
+	assert.equal(typicalDuration('test', [...slow, fast[0]]), 10 * 60_000);
+	assert.equal(typicalDuration('test', [...slow, ...fast]), 2 * 60_000);
+	assert.equal(typicalDuration('test', [finished('test', 30, 'skipped')]), null);
 });
 
 test('with a usual time the bar fills by time and says what is left', () => {
