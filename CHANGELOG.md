@@ -25,6 +25,16 @@
 - CI runs the page checks and lints the installers on each PR, and
   Dependabot proposes updates.
 
+- Runner jobs share the machine's pnpm store. Before, each job kept its
+  store in `_temp`, lost it at the end and downloaded every package again.
+
+- Latest runs gets a Took column with the length of each run, sortable. A
+  click on the time opens the time of each job and step.
+
+- The usual time of a running job comes from the 10 latest finished runs of
+  its workflow, in place of the 3 latest successful ones. A cancelled or
+  failed job counts as at least the time it ran.
+
 - The status page gets a Running now card above Latest runs, and each
   runner in Runners names its job. The page reads 30 runs per repo, so a
   run that builds under newer queued runs stays in view. ETags keep the page

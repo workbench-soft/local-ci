@@ -32,6 +32,7 @@ const run = (status: string, jobs: RunJob[] = []): WorkflowRun => ({
 	status,
 	conclusion: null,
 	createdAt: '2025-10-29T12:00:00Z',
+	startedAt: '2025-10-29T12:00:00Z',
 	updatedAt: '2025-10-29T12:00:00Z',
 	url: 'https://github.com/run/7',
 	branchUrl: 'https://github.com/tree/main',

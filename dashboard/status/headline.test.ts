@@ -19,6 +19,7 @@ const run = (status: string, conclusion: string | null = null): WorkflowRun => (
 	status,
 	conclusion,
 	createdAt: secondsBefore(0),
+	startedAt: secondsBefore(0),
 	updatedAt: secondsBefore(0),
 	url: 'https://github.com',
 	branchUrl: 'https://github.com/tree/main',

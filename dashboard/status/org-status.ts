@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { type JobTiming, toJobTimings } from './durations.ts';
 import { activeStatuses } from './placement.ts';
 import { countSteps, type StepCount, typicalDuration } from './progress.ts';
 import { type ApiRelease, type Release, releasesRepo, toRelease } from './releases.ts';
@@ -25,6 +26,8 @@ export type WorkflowRun = {
 	status: string;
 	conclusion: string | null;
 	createdAt: string;
+	/** When the latest attempt of the run started. */
+	startedAt: string | null;
 	updatedAt: string;
 	url: string;
 	/** The branch on GitHub. */
@@ -52,7 +55,7 @@ export type RunJob = {
 	/** The first step that failed, for a failed job. */
 	failedStep: string | null;
 	steps: StepCount;
-	/** How long this job took in the latest successful runs of its workflow. Set only on running jobs. */
+	/** How long this job takes, from the 10 latest finished runs of its workflow. Set only on running jobs. */
 	typicalMs: number | null;
 };
 
@@ -156,6 +159,7 @@ type ApiRun = {
 	status: string;
 	conclusion: string | null;
 	created_at: string;
+	run_started_at?: string;
 	updated_at: string;
 	html_url: string;
 	pull_requests?: { number: number }[];
@@ -171,7 +175,7 @@ type ApiJob = {
 	started_at: string | null;
 	completed_at: string | null;
 	html_url: string;
-	steps?: { name: string; status: string; conclusion: string | null }[];
+	steps?: { name: string; status: string; conclusion: string | null; started_at?: string | null; completed_at?: string | null }[];
 };
 
 async function listRunners(): Promise<OrgRunner[]> {
@@ -209,6 +213,7 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 			status: run.status,
 			conclusion: run.conclusion,
 			createdAt: run.created_at,
+			startedAt: run.run_started_at ?? null,
 			updatedAt: run.updated_at,
 			url: run.html_url,
 			branchUrl: `https://github.com/${fullName}/tree/${run.head_branch.split('/').map(encodeURIComponent).join('/')}`,
@@ -224,7 +229,7 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
 	return runs;
 }
 
-/** The 3 latest successful runs of a workflow give the usual length of each of its running jobs. */
+/** The 10 latest finished runs of a workflow give the usual length of each of its running jobs. */
 async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<void> {
 	const running = runs.flatMap((run) => run.jobs.filter((job) => job.status === 'in_progress').map((job) => ({ run, job })));
 	if (!running.length) return;
@@ -232,19 +237,19 @@ async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<v
 	const pastByWorkflow = new Map<number, RunJob[]>();
 	await Promise.all(
 		[...workflowIds].map(async (workflowId) => {
-			const ids = await latestSuccessfulRuns(fullName, workflowId);
+			const ids = await latestFinishedRuns(fullName, workflowId);
 			const jobs = await Promise.all(ids.map((id) => finishedRunJobs(fullName, id)));
-			pastByWorkflow.set(workflowId, jobs.flat().filter((job) => job.conclusion === 'success'));
+			pastByWorkflow.set(workflowId, jobs.flat());
 		}),
 	);
 	for (const { run, job } of running) job.typicalMs = typicalDuration(job.name, pastByWorkflow.get(run.workflowId) ?? []);
 }
 
-// The latest 5 runs of a busy repo are often all queued, so the successful ones come from a call of their own.
-async function latestSuccessfulRuns(fullName: string, workflowId: number): Promise<number[]> {
+// The latest runs of a busy repo are often all queued, so the finished ones come from a call of their own.
+async function latestFinishedRuns(fullName: string, workflowId: number): Promise<number[]> {
 	try {
 		const { workflow_runs } = await getJson<{ workflow_runs: { id: number }[] }>(
-			`/repos/${fullName}/actions/workflows/${workflowId}/runs?status=success&per_page=3`,
+			`/repos/${fullName}/actions/workflows/${workflowId}/runs?status=completed&per_page=10`,
 		);
 		return workflow_runs.map((run) => run.id);
 	} catch {
@@ -324,6 +329,12 @@ async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
 	} catch {
 		return [];
 	}
+}
+
+/** The jobs of 1 run with the time of each step, for the breakdown row. It shares the ETag of the jobs call above. */
+export async function readJobTimings(repo: string, runId: number): Promise<JobTiming[]> {
+	const { jobs } = await getJson<{ jobs: ApiJob[] }>(`/repos/${orgName}/${repo}/actions/runs/${runId}/jobs?per_page=100`);
+	return toJobTimings(jobs, Date.now());
 }
 
 // A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.

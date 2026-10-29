@@ -30,8 +30,10 @@ write_env() {
 	local file="$1/.env" before after
 	before=$(cat "$file" 2>/dev/null || true)
 	after=$(
-		printf '%s\n' "$before" | grep -vE '^(ANDROID_HOME|ANDROID_SDK_ROOT|RUNNER_TOOL_CACHE|AGENT_TOOLSDIRECTORY)=|^$' || true
+		printf '%s\n' "$before" | grep -vE '^(ANDROID_HOME|ANDROID_SDK_ROOT|RUNNER_TOOL_CACHE|AGENT_TOOLSDIRECTORY|pnpm_config_store_dir)=|^$' || true
 		printf 'RUNNER_TOOL_CACHE=%s\nAGENT_TOOLSDIRECTORY=%s\n' "$tool_cache" "$tool_cache"
+		# action-setup puts PNPM_HOME, and with it the pnpm store, in _temp, which the runner wipes after each job.
+		printf 'pnpm_config_store_dir=%s\n' "$HOME/Library/pnpm/store"
 		if [ -n "${ANDROID_HOME:-}" ]; then
 			printf 'ANDROID_HOME=%s\nANDROID_SDK_ROOT=%s\n' "$ANDROID_HOME" "$ANDROID_HOME"
 		fi

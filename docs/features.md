@@ -33,6 +33,8 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 - **Shared tool cache** the runners of a machine keep `setup-*` downloads in
   `~/actions-runner/_tool`. Node of one version downloads once for all of
   them.
+- **Shared pnpm store** every job installs from the machine's pnpm store,
+  so a package downloads once for all runners and runs.
 - **Defender exclusions** on Windows Defender skips the runner folders and
   the package caches. `RUNNER_DEFENDER_EXCLUSIONS=off` skips the step.
 - **Limit** Defender then skips the code that jobs check out.
@@ -64,9 +66,12 @@ icon: a white loop arrow around a green play sign on blue.
   420 px scrolls inside the card.
 - **Progress** a running job gets a bar with its step, such as
   `step 4 of 9: Build`, and `about 3 min left`. The time comes from the
-  median of the same job in the 3 latest successful runs of its workflow. A
+  same job in the 10 latest finished runs of its workflow. A successful job
+  counts its full time. A cancelled or failed one counts as at least the time
+  it ran, so 3 jobs cancelled at 10 min give 10 min. Each new run pushes the
+  oldest out, so more fast runs lower the time and more slow ones raise it. A
   job past that time turns yellow and says how long over. A workflow with no
-  successful run yet fills the bar by finished steps.
+  finished run yet fills the bar by finished steps.
 - **Runners** one row per runner of the org. Each row says whether the
   runner lives on this PC or another machine, and its state on each side:
   `this PC` from the runner folder and processes, `GitHub` from the API. A row
@@ -87,6 +92,11 @@ icon: a white loop arrow around a green play sign on blue.
   matches repo, workflow and branch. A click on a column head sorts by it. The
   table stops at 70% of the window height and scrolls, with its head row
   pinned.
+- **Took** how long the run took, from its start on GitHub to its end. A run
+  that builds counts up to now, and a queued one says "in queue". The time
+  includes the wait for a runner after the start. A click on the time opens
+  a row with each job and step, its time and a bar in scale with the longest
+  step. The row of an unfinished run updates on each refresh.
 - **Stop and Purge** buttons on each run and each live job. Stop cancels the
   run on GitHub. Purge asks to confirm, force cancels the run and deletes it
   with its logs and artifacts. A finished run gets Purge only. A job's

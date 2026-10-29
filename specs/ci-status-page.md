@@ -428,6 +428,61 @@ browser at each logon.
   4. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
 
+### 2026-10-29 The usual time counts cancelled and failed runs, over a window of 10
+
+- **Why** the usual time came from the 3 latest successful runs only. A job
+  cancelled after 10 minutes says the job takes 10 minutes or more, and the
+  page dropped that. Three runs also react slowly when a job gets faster or
+  slower.
+- **Changes**
+  - **`status/org-status.ts`** reads the 10 latest finished runs of the
+    workflow, any conclusion, in 1 call. Their jobs stay in memory as before,
+    since a finished run doesn't change.
+  - **`status/progress.ts`** a successful job gives its full time. A
+    cancelled, failed or timed out job gives a lower bound: it ran this long
+    and still had work left. A skipped job counts for nothing. The usual time
+    is the Kaplan-Meier median of these times. A lower bound under the
+    median only shrinks the pool of jobs, and a lower bound above it pushes
+    the median up. With no full time over the middle, the usual time is the
+    longest time seen, so 3 jobs cancelled at 10 minutes give 10 minutes.
+  - **Window** each new finished run pushes the oldest of the 10 out. More
+    fast runs pull the usual time down, more slow ones push it up.
+- **Limits** a run cancelled by a newer push counts as a short lower bound,
+  which moves the median little. A window of 10 cancelled runs and no
+  success gives the longest of them, which can sit under the real time.
+- **Steps**
+  1. This spec.
+  2. The window and the median, with tests.
+  3. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 How long a run took, and the time of each step
+
+- **Why** the person asked to see in Latest runs how long each build took,
+  and where that time went step by step.
+- **Changes**
+  - **`status/org-status.ts`** each run keeps `run_started_at` from the runs
+    call, at no extra cost.
+  - **`status/durations.ts`** the length of a run: from its start to its
+    last update once it has finished, and up to now while it builds. A run
+    still in the queue says "in queue". GitHub starts a run when it is
+    created, so the wait for a runner counts in. The breakdown row shows
+    the time of each job without that wait.
+  - **`cards/latest-runs-table.tsx`** a Took column, sortable. A click on
+    the time opens a row under the run with each job and its steps, each
+    with its time and a bar in scale with the longest step of the run.
+  - **`status/run-actions.ts`** a server action reads the jobs of 1 run with
+    the step times. The page asks only when a row opens, so the rate limit
+    stays as it was. An open row of an unfinished run reads again on each
+    refresh. GitHub answers 304 to an unchanged run, which costs no calls.
+- **Limits** a rerun counts from the start of its latest attempt. GitHub
+  keeps step times to the second, so a short step shows 0 s.
+- **Steps**
+  1. This spec.
+  2. The run length and the step times, with tests.
+  3. The column and the breakdown row.
+  4. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
 ### 2026-10-29 Audit fixes: safer sweep, a host check, faster renders
 
 - **Why** an audit of the whole repo found that the sweep could cancel the
