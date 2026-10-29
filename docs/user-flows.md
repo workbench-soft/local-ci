@@ -42,19 +42,20 @@ flowchart TD
 ## Register a machine as a runner
 
 1. Run `runner/install.sh` on a Mac, or `runner\install.ps1` on Windows.
+   Set `RUNNER_COUNT` first for another number of runners.
 2. Paste a registration token if the script asks for one.
-3. Look under the org's Actions runners: the new runner shows as Idle.
+3. Look under the org's Actions runners: each new runner shows as Idle.
 
 ```mermaid
 flowchart TD
-  A[runner script] --> B{already registered?}
-  B -- yes --> Z[print its state]
-  B -- no --> C[download, check SHA256]
+  A[runner script] --> B{each runner registered?}
+  B -- all --> Z[print their state]
+  B -- some missing --> C[download once, check SHA256]
   C --> D{gh gives a token?}
   D -- no --> E[person pastes a token]
   D -- yes --> F[config with labels]
   E --> F
-  F --> G[start: launchd or boot task]
+  F --> G[start each: launchd or boot task]
 ```
 
 ## See the CI status

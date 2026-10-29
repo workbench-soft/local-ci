@@ -48,7 +48,8 @@ sequenceDiagram
   participant R as runner on the machine
   S->>G: latest release and SHA256
   S->>G: registration token (or the person pastes one)
-  S->>R: config with labels, then launchd or a boot task
+  S->>R: config with labels for each of RUNNER_COUNT runners
+  S->>R: launchd or a boot task per runner
   R->>G: long poll for jobs
   G-->>R: a job whose runs-on matches the labels
 ```
@@ -57,8 +58,8 @@ sequenceDiagram
 
 The server renders the page for each request.
 
-- **This PC** `status/this-pc.ts` reads the boot task, the runner processes
-  and the runner's `_diag` folder.
+- **This PC** `status/this-pc.ts` finds each runner folder of the org. For
+  each it reads the boot task and which `_diag` logs a live process holds open.
 - **GitHub** `status/org-status.ts` calls the API with the token from
   `.env.local`. It keeps the answer in memory for 20 seconds, and requests
   that arrive during a load wait for that load.
@@ -74,7 +75,7 @@ sequenceDiagram
   participant W as Windows
   participant G as GitHub API
   B->>N: GET / every 15 s
-  N->>W: Get-ScheduledTask, tasklist, _diag/Worker_*.log
+  N->>W: Get-ScheduledTask, the open _diag logs of each runner
   N->>G: org runners, org repos, 5 runs per repo
   N-->>B: HTML with the headline, cards and runs
 ```

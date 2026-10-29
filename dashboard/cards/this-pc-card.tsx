@@ -1,5 +1,5 @@
 import { formatAge } from '@/status/headline';
-import { runnerTaskName, type ThisPcStatus } from '@/status/this-pc';
+import type { PcRunner, ThisPcStatus } from '@/status/this-pc';
 import { StatusDot } from './status-dot';
 
 export function ThisPcCard({ pc, now }: { pc: ThisPcStatus; now: number }) {
@@ -13,26 +13,29 @@ export function ThisPcCard({ pc, now }: { pc: ThisPcStatus; now: number }) {
 	}
 	return (
 		<section className="card">
-			<h2>This PC{pc.name ? `: ${pc.name}` : ''}</h2>
-			<dl>
-				<dt>Boot task</dt>
-				<dd>
-					<StatusDot tone={pc.task === 'Running' ? 'ok' : 'bad'} />
-					{pc.task ?? 'missing'} <span className="muted">({runnerTaskName})</span>
-				</dd>
-				<dt>Listener</dt>
-				<dd>
-					<StatusDot tone={pc.listener ? 'ok' : 'bad'} />
-					{pc.listener ? 'running' : 'stopped'}
-				</dd>
-				<dt>Job</dt>
-				<dd>
-					<StatusDot tone={pc.worker ? 'busy' : 'ok'} />
-					{pc.worker ? 'running now' : 'idle'}
-				</dd>
-				<dt>Last job</dt>
-				<dd>{pc.lastJobAt ? formatAge(pc.lastJobAt, now) : 'none yet'}</dd>
-			</dl>
+			<h2>This PC</h2>
+			{pc.runners.length ? (
+				<ul className="runners">
+					{pc.runners.map((runner) => (
+						<RunnerItem key={runner.folder} runner={runner} now={now} />
+					))}
+				</ul>
+			) : (
+				<p className="error">No runner is installed. Run runner\install.ps1.</p>
+			)}
 		</section>
+	);
+}
+
+function RunnerItem({ runner, now }: { runner: PcRunner; now: number }) {
+	const state = !runner.listener ? 'stopped' : runner.worker ? 'running a job' : 'idle';
+	return (
+		<li>
+			<StatusDot tone={!runner.listener ? 'bad' : runner.worker ? 'busy' : 'ok'} />
+			<strong>{runner.name ?? runner.folder}</strong> {state}
+			<div className="muted">
+				Boot task {runner.task ?? 'missing'}, last job {runner.lastJobAt ? formatAge(runner.lastJobAt, now) : 'none yet'}
+			</div>
+		</li>
 	);
 }

@@ -28,7 +28,13 @@ export function toneOfRun({ status, conclusion }: WorkflowRun): Tone {
 
 /** The headline: the worst problem first, then builds, then the queue. */
 export function summarizeCi(pc: ThisPcStatus, org: OrgStatus): { tone: Tone; text: string } {
-	if (pc.supported && !pc.listener) return { tone: 'bad', text: 'The runner on this PC is down' };
+	if (pc.supported) {
+		const total = pc.runners.length;
+		const down = pc.runners.filter((runner) => !runner.listener).length;
+		if (!total) return { tone: 'bad', text: 'No runner is installed on this PC' };
+		if (total === 1 && down) return { tone: 'bad', text: 'The runner on this PC is down' };
+		if (down) return { tone: 'bad', text: `${down} of ${total} runners on this PC are down` };
+	}
 	if (!org.ok) return { tone: 'warn', text: 'GitHub is out of reach' };
 	if (org.runners && !org.runners.some((runner) => runner.status === 'online')) {
 		return { tone: 'bad', text: 'No runner is online' };

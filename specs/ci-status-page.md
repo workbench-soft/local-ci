@@ -16,9 +16,14 @@ The page starts with Windows, so it is back after each reboot.
 ## How it works: modules, files, data
 
 - **`dashboard/`** a Next.js app with one page, rendered on the server.
-- **This PC** the page asks `Get-ScheduledTask` for the runner task state. It
-  asks `tasklist` for `Runner.Listener.exe` and `Runner.Worker.exe`. A worker
-  process means a job is running right now.
+- **This PC** the page finds each runner folder of the org under
+  `~/actions-runner`. For each runner it reads the boot task state. A live
+  listener holds its newest `_diag/Runner_*.log` open, and a live worker its
+  newest `_diag/Worker_*.log`. The page tries to open each log for read only.
+  A refusal means the process runs. A worker means a job is running right now.
+- **Why the logs** the boot task starts the runner without a login, so
+  Windows hides its process path from the page. The path is the only link
+  from a process to its folder.
 - **Org runners** `GET /orgs/workbench-soft/actions/runners` gives each runner
   online or offline, busy or idle, with its labels.
 - **Runs** `GET /repos/{repo}/actions/runs` gives the latest runs of each org
@@ -56,3 +61,12 @@ The page starts with Windows, so it is back after each reboot.
   4. Docs.
 - **Docs** `README.md`, `docs/architecture.md`, `docs/user-flows.md`,
   `docs/features.md`.
+
+### 2026-10-29 A row per runner of this PC
+
+- **Why** `runner/install.ps1` now installs several runners, see
+  `specs/ci-runner.md`.
+- **Changes** `status/this-pc.ts` reads every runner folder.
+  `cards/this-pc-card.tsx` shows a row per runner. The headline says how many
+  runners are down.
+- **Docs** `docs/features.md`, `docs/architecture.md`.
