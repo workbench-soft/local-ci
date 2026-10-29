@@ -97,7 +97,8 @@ flowchart TD
    Stopping, then Stopped, and its runner takes the next job. Press Purge
    and confirm to stop the run and delete it from GitHub. An error shows beside the buttons.
    To clear many runs, pick a filter or type a search, press Purge all and
-   confirm. The count of purged runs and the first error show beside it.
+   confirm. Its rows turn gray, and older runs move up and go too, until none
+   match. The count of purged runs and the first error show beside it.
 7. A failed run names its failed job and step. Click it to read the log.
    Click the time in Took to see how long each job and step took.
 8. Plug the phone in over USB with USB debugging on. Press Install in the
@@ -118,7 +119,7 @@ flowchart TD
   F --> H{button}
   H -- Stop --> I[Stopping: force cancel] --> I2[Stopped: the runner takes the next job]
   H -- Purge, confirmed --> J[force cancel, wait, delete the run]
-  H -- Purge all, confirmed --> P[purge every matched run, 5 at a time]
+  H -- Purge all, confirmed --> P[gray the rows, purge them 5 at a time, reload, repeat until none match]
   H -- Install --> K[adb devices, download the APK, adb install]
   K --> L[installed on the device, or adb's error in red]
   I & J & P --> G

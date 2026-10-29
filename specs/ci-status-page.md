@@ -377,6 +377,24 @@ browser at each logon.
 - **Docs** `docs/features.md`, `docs/user-flows.md`, `docs/architecture.md`,
   `README.md`, `CHANGELOG.md`.
 
+### 2026-10-30 Purge all clears every run
+
+- **Why** the person pressed Purge all to clear the runners and saw 5 runs
+  go while the rest stayed. The page holds the latest 5 runs of a repo, so
+  older runs moved up. The rows also gave no sign they were being purged.
+- **Changes**
+  - **`cards/purge-all-button.tsx`** purges in rounds. After each round it
+    reloads the page and purges the matched runs it hasn't tried, until none
+    are left. A run it tried once stays out, so a run GitHub refuses can't
+    loop. A load that still lists a deleted run is read again, up to 6 times.
+  - **`cards/latest-runs-table.tsx`** grays each row the purge takes, and
+    swaps its buttons for "Purging". A single Purge grays its row the moment
+    it starts, and an error brings the row back.
+  - **`status/run-actions.ts`** the result names the runs that failed.
+- **Limits** a run that starts while the purge runs and matches goes too.
+- **Docs** `docs/features.md`, `docs/user-flows.md`, `docs/architecture.md`,
+  `README.md`, `CHANGELOG.md`.
+
 ### 2026-10-29 Place labels that say what they mean
 
 - **Why** the person read "On this PC" in Latest runs and asked what it means,

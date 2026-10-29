@@ -65,6 +65,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 	const [filter, setFilter] = useState<FilterKey>('all');
 	const [search, setSearch] = useState('');
 	const [sort, setSort] = useState<{ key: SortKey; descending: boolean }>({ key: 'place', descending: false });
+	const [purging, setPurging] = useState<ReadonlySet<number>>(new Set());
 
 	const words = search.toLowerCase().split(/\s+/).filter(Boolean);
 	const matches = (row: RunRow) => {
@@ -104,7 +105,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 					))}
 				</div>
 				<input type="search" aria-label="Search runs" placeholder="Search repo, workflow, branch, PR" value={search} onChange={(event) => setSearch(event.target.value)} />
-				<PurgeAllButton runs={shown} />
+				<PurgeAllButton runs={shown} loadedAt={runs} onPurging={setPurging} />
 			</div>
 			<div className="table-scroll">
 				<table>
@@ -126,7 +127,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 					</thead>
 					<tbody>
 						{rows.map((run) => (
-							<RunRowItem key={run.id} run={run} now={now} />
+							<RunRowItem key={run.id} run={run} now={now} purging={purging.has(run.id)} />
 						))}
 					</tbody>
 				</table>
@@ -141,14 +142,18 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 	);
 }
 
-function RunRowItem({ run, now }: { run: RunRow; now: number }) {
+function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: boolean }) {
 	const result = resultOf(run.status, run.conclusion);
 	const place = run.place === 'done' ? null : placeIcons[run.place];
 	const [open, setOpen] = useState(false);
+	// A Purge of this row alone grays it too, until the next load drops it.
+	const [purgingSelf, setPurgingSelf] = useState(false);
 	const active = run.status !== 'completed';
+	const gray = purging || purgingSelf;
+	const rowClass = [run.place === 'local' && 'local-row', gray && 'purging-row'].filter(Boolean).join(' ');
 	return (
 		<Fragment>
-		<tr className={run.place === 'local' ? 'local-row' : undefined}>
+		<tr className={rowClass || undefined} aria-busy={gray || undefined}>
 			<td className="nowrap">
 				<span className={`result ${toneOfRun(run)}`}>
 					<Icon name={result.icon} />
@@ -205,7 +210,11 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 				)}
 			</td>
 			<td>
-				<RunControls repo={run.repo} runId={run.id} active={active} label={`the ${run.repo} / ${run.workflow} run`} />
+				{purging ? (
+					<span className="muted small nowrap">Purging</span>
+				) : (
+					<RunControls repo={run.repo} runId={run.id} active={active} label={`the ${run.repo} / ${run.workflow} run`} onPurging={setPurgingSelf} />
+				)}
 			</td>
 		</tr>
 		{open && (

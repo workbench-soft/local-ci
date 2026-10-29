@@ -95,7 +95,8 @@ once, from the main checkout:
 - **Stop and Purge** each run gets a Stop button to force cancel it, so its
   runner is free at once. The button reads Stopping, then Stopped. A Purge
   button force cancels a run and deletes it from GitHub with its logs.
-  Purge all, after a confirm, purges every run the filter and search match.
+  Purge all, after a confirm, purges every run the filter and search match,
+  older runs included, until none match.
 - **Old runs die** the page server force cancels a run that a newer run of
   its workflow and branch replaced, or whose PR is merged or closed. Each
   cancel goes to `dashboard.log`. `CANCEL_SUPERSEDED=off` in

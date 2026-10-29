@@ -7,7 +7,19 @@ import { Icon } from './icons';
 const finishCheckMs = 2_000;
 
 /** Stop and Purge for one run. A finished run gets Purge only. */
-export function RunControls({ repo, runId, active, label }: { repo: string; runId: number; active: boolean; label: string }) {
+export function RunControls({
+	repo,
+	runId,
+	active,
+	label,
+	onPurging,
+}: {
+	repo: string;
+	runId: number;
+	active: boolean;
+	label: string;
+	onPurging?: (purging: boolean) => void;
+}) {
 	const [pending, startTransition] = useTransition();
 	const [busy, setBusy] = useState<'stop' | 'purge' | null>(null);
 	const [stop, setStop] = useState<'idle' | 'stopping' | 'stopped'>('idle');
@@ -28,11 +40,13 @@ export function RunControls({ repo, runId, active, label }: { repo: string; runI
 		setBusy(kind);
 		if (kind === 'stop') setStop('stopping');
 		setError(null);
+		if (kind === 'purge') onPurging?.(true);
 		startTransition(async () => {
 			const result = await (kind === 'stop' ? stopRun(repo, runId) : purgeRunById(repo, runId));
 			if (!result.ok) {
 				setError(result.error);
 				if (kind === 'stop') setStop('idle');
+				if (kind === 'purge') onPurging?.(false);
 			}
 			setBusy(null);
 		});
