@@ -24,7 +24,10 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 - **Shared label** both get `local`, for jobs that can run on either machine.
 - **Limit** the Mac runner works only while the user is logged in. The
   Windows runner starts at boot.
-- **Limit** a runner takes one job at a time.
+- **Several runners** a runner takes one job at a time. `RUNNER_COUNT` sets
+  how many runners the machine gets: 4 on Windows and 1 on a Mac by default.
+- **Limit** extra runners speed up only work split into jobs. Jobs at the
+  same time share ports, the Android emulator and the Gradle cache.
 
 ## CI status page
 
@@ -32,9 +35,9 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 sets it up, and it starts with Windows.
 
 - **Headline** green when idle, blue while a run builds, amber when runs wait
-  in the queue, red when the runner is down.
-- **This PC** the runner's boot task, the listener, a job running now, and
-  when the last job started.
+  in the queue, red when a runner of this PC is down.
+- **This PC** a row per runner: running, idle or stopped, its boot task, and
+  when its last job started.
 - **Runners** each org runner online or offline, busy or idle, with its labels.
 - **Runs** the latest 5 runs of each org repo, queued runs on top, each linked
   to GitHub. A repo GitHub refuses drops out, and the rest still show.

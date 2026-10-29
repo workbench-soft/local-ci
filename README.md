@@ -47,7 +47,15 @@ runner. The runner scripts also work alone:
 - **GitHub access** jobs on Windows see mise and `~/.gitconfig`. The `gh`
   login in the Windows credential store stays out of reach, so use the job's
   `GITHUB_TOKEN`.
-- **Folder** `~/actions-runner/workbench-soft`. `RUNNER_ORG` picks another org.
+- **Several runners** a runner takes one job at a time. Windows gets 4
+  runners and a Mac 1, so Windows builds 4 jobs at once. `RUNNER_COUNT` picks
+  another number. Jobs speed up only when the workflow splits its work into
+  jobs or a `matrix`.
+- **Folders** the first runner sits in `~/actions-runner/workbench-soft`, the
+  next in `workbench-soft-2` and up. `RUNNER_ORG` picks another org.
+- **Fewer runners** a lower `RUNNER_COUNT` leaves the extra ones registered.
+  Remove one with `.\config.cmd remove` in its folder, then delete its boot
+  task.
 - **In a workflow** `runs-on: [self-hosted, local]` takes whichever machine is
   on. A job that needs macOS asks for `[self-hosted, macOS]`.
 
