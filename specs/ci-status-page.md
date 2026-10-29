@@ -16,6 +16,11 @@ browser at each logon.
 4. The person filters, searches and sorts the runs table.
 5. The person presses Stop on an unfinished run to cancel it, or Purge to
    force cancel it and delete it from GitHub with its logs and artifacts.
+6. A run that published a release shows it in the Release column. The person
+   opens the release, or presses Install to put its APK on the phone plugged
+   in over USB.
+7. A failed run names its failed job and step under the result, with a link
+   to that job's log. A failed install shows adb's error under the button.
 
 ## How it works: modules, files, data
 
@@ -53,6 +58,15 @@ browser at each logon.
   which also stops steps with `if: always()`. It then waits up to 60 seconds
   for the run to finish and calls `DELETE /repos/{repo}/actions/runs/{id}`.
   Each action drops the 20 second cache, so the next render shows the change.
+- **Releases** the app repos are private, so each release goes to the public
+  `workbench-soft/workbench-soft.github.io` repo with the tag
+  `<repo>-v<version>`. `GET /repos/{public}/releases` gives them. A run owns
+  the release of its repo created between its start and its last update.
+- **Install** a server action in `status/install-apk.ts` downloads the `.apk`
+  asset of the release to a temp folder and runs `adb install -r`. adb comes
+  from `ADB_PATH`, `PATH`, `ANDROID_HOME` or `%LOCALAPPDATA%\Android\Sdk`.
+- **Failed step** for a failed run the page reads its jobs and names the
+  first failed job and step.
 
 ## Limits
 
@@ -65,6 +79,10 @@ browser at each logon.
   Now card stops its whole run.
 - **Token scope** Stop and Purge need write access to Actions. The `repo`
   scope of a gh login gives it.
+- **One phone** Install needs one device in `adb devices`. With none or
+  several, the button shows adb's error.
+- **Last 3** the public repo keeps 3 releases per app, so older runs lose
+  their release link.
 
 ## Changes
 
@@ -193,5 +211,28 @@ browser at each logon.
   1. This spec.
   2. `START.cmd` and `windows/start.ps1`.
   3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 A release column with an Install button, and the failed step
+
+- **Why** the person wants to open the release a run made and put it on an
+  Android phone over adb in one click, from a column of its own. Errors, of
+  the install and of a failed run, should be easy to see.
+- **Changes**
+  - **`status/releases.ts`** reads the releases of the public repo and pairs
+    each with the run that made it.
+  - **`status/install-apk.ts`** a server action: download the APK, run
+    `adb install -r`, return adb's output on failure.
+  - **`status/org-status.ts`** reads the jobs of failed runs too, with their
+    steps, and the releases.
+  - **`cards/latest-runs-table.tsx`** a Release column with the link and an
+    Install button. A failed run names its failed job and step.
+  - **`cards/install-button.tsx`** the button, its progress and its error.
+- **Steps**
+  1. This spec.
+  2. Releases, the install action and the failed step.
+  3. The column and the button.
+  4. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
