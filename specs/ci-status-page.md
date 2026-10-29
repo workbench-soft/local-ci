@@ -454,3 +454,30 @@ browser at each logon.
   2. The window and the median, with tests.
   3. Docs and changelog.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
+
+### 2026-10-29 How long a run took, and the time of each step
+
+- **Why** the person asked to see in Latest runs how long each build took,
+  and where that time went step by step.
+- **Changes**
+  - **`status/org-status.ts`** each run keeps `run_started_at` from the runs
+    call, at no extra cost.
+  - **`status/durations.ts`** the length of a run: from its start to its
+    last update once it has finished, and up to now while it builds. The
+    time spent in the queue before the start stays out. A run without a
+    start time shows a dash.
+  - **`cards/latest-runs-table.tsx`** a Took column, sortable. A click on
+    the time opens a row under the run with each job and its steps, each
+    with its time and a bar in scale with the longest step of the run.
+  - **`status/run-actions.ts`** a server action reads the jobs of 1 run with
+    the step times. The page asks only when a row opens, so the rate limit
+    stays as it was. An open row of an unfinished run reads again on each
+    refresh. GitHub answers 304 to an unchanged run, which costs no calls.
+- **Limits** a rerun counts from the start of its latest attempt. GitHub
+  keeps step times to the second, so a short step shows 0 s.
+- **Steps**
+  1. This spec.
+  2. The run length and the step times, with tests.
+  3. The column and the breakdown row.
+  4. Docs and changelog.
+- **Docs** `docs/features.md`, `docs/architecture.md`, `CHANGELOG.md`.
