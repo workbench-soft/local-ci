@@ -8,7 +8,7 @@ import { orgName } from './settings.ts';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-export type PurgeAllResult = { purged: number; failed: number; error: string | null };
+export type PurgeAllResult = { purged: number; failed: number; failedIds: number[]; error: string | null };
 
 /** Cancels a run, the way the Cancel workflow button on GitHub does. */
 export async function stopRun(repo: string, runId: number): Promise<ActionResult> {
@@ -34,11 +34,16 @@ export async function purgeRunById(repo: string, runId: number): Promise<ActionR
 
 /** Purges each run of the list, 5 at a time. */
 export async function purgeAllRuns(runs: { repo: string; runId: number }[]): Promise<PurgeAllResult> {
-	if (!Array.isArray(runs) || !runs.every((run) => isRun(run?.repo, run?.runId))) return { purged: 0, failed: 0, error: 'Unknown run.' };
+	if (!Array.isArray(runs) || !runs.every((run) => isRun(run?.repo, run?.runId))) return { purged: 0, failed: 0, failedIds: [], error: 'Unknown run.' };
 	try {
 		const failures = await purgeRuns(runs, (run) => purgeAt(runPath(run.repo, run.runId)));
 		const first = failures[0];
-		return { purged: runs.length - failures.length, failed: failures.length, error: first ? `${first.run.repo}: ${first.error}` : null };
+		return {
+			purged: runs.length - failures.length,
+			failed: failures.length,
+			failedIds: failures.map((failure) => failure.run.runId),
+			error: first ? `${first.run.repo}: ${first.error}` : null,
+		};
 	} finally {
 		forgetOrgStatus();
 		revalidatePath('/');
