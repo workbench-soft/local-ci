@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Latest runs has a PR column with the PR number of each run, linked to the
+  PR and sortable.
+
 - Stop on the status page reads Stopping at once and Stopped when GitHub
   ends the run, disabled the whole time. Stop force cancels now, so the
   runner takes the next release without waiting for `if: always()` steps.
