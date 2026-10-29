@@ -64,9 +64,12 @@ icon: a white loop arrow around a green play sign on blue.
   420 px scrolls inside the card.
 - **Progress** a running job gets a bar with its step, such as
   `step 4 of 9: Build`, and `about 3 min left`. The time comes from the
-  median of the same job in the 3 latest successful runs of its workflow. A
+  same job in the 10 latest finished runs of its workflow. A successful job
+  counts its full time. A cancelled or failed one counts as at least the time
+  it ran, so 3 jobs cancelled at 10 min give 10 min. Each new run pushes the
+  oldest out, so more fast runs lower the time and more slow ones raise it. A
   job past that time turns yellow and says how long over. A workflow with no
-  successful run yet fills the bar by finished steps.
+  finished run yet fills the bar by finished steps.
 - **Runners** one row per runner of the org. Each row says whether the
   runner lives on this PC or another machine, and its state on each side:
   `this PC` from the runner folder and processes, `GitHub` from the API. A row
