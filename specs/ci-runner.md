@@ -44,7 +44,7 @@ machine with several runners builds several jobs at once.
 
 ## Changes
 
-### 2026-10-29 Several runners on one machine
+### 2025-10-29 Several runners on one machine
 
 - **Why** one runner builds one job at a time, and jobs wait in the queue
   while the PC has 16 cores free.
