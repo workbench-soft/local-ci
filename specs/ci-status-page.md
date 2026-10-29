@@ -463,9 +463,10 @@ browser at each logon.
   - **`status/org-status.ts`** each run keeps `run_started_at` from the runs
     call, at no extra cost.
   - **`status/durations.ts`** the length of a run: from its start to its
-    last update once it has finished, and up to now while it builds. The
-    time spent in the queue before the start stays out. A run without a
-    start time shows a dash.
+    last update once it has finished, and up to now while it builds. A run
+    still in the queue says "in queue". GitHub starts a run when it is
+    created, so the wait for a runner counts in. The breakdown row shows
+    the time of each job without that wait.
   - **`cards/latest-runs-table.tsx`** a Took column, sortable. A click on
     the time opens a row under the run with each job and its steps, each
     with its time and a bar in scale with the longest step of the run.
