@@ -20,7 +20,7 @@ export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & {
 	failure: RunFailure | null;
 };
 
-type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'started' | 'took';
+type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'pr' | 'started' | 'took';
 
 const rowLimit = 60;
 
@@ -45,6 +45,8 @@ const compareBy: Record<SortKey, (a: RunRow, b: RunRow) => number> = {
 	repo: (a, b) => a.repo.localeCompare(b.repo),
 	workflow: (a, b) => a.workflow.localeCompare(b.workflow),
 	branch: (a, b) => a.branch.localeCompare(b.branch),
+	// Runs with no PR sort before every PR.
+	pr: (a, b) => (a.pullRequests[0]?.number ?? -1) - (b.pullRequests[0]?.number ?? -1),
 	started: (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt),
 	took: (a, b) => (a.tookMs ?? -1) - (b.tookMs ?? -1),
 };
@@ -54,6 +56,7 @@ const columns: { key: SortKey; text: string }[] = [
 	{ key: 'repo', text: 'Repo' },
 	{ key: 'workflow', text: 'Workflow' },
 	{ key: 'branch', text: 'Branch' },
+	{ key: 'pr', text: 'PR' },
 	{ key: 'started', text: 'Started' },
 	{ key: 'took', text: 'Took' },
 ];
@@ -65,7 +68,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 
 	const words = search.toLowerCase().split(/\s+/).filter(Boolean);
 	const matches = (row: RunRow) => {
-		const text = `${row.repo} ${row.workflow} ${row.title} ${row.branch} ${row.event} ${row.release?.tag ?? ''}`.toLowerCase();
+		const text = `${row.repo} ${row.workflow} ${row.title} ${row.branch} ${row.event} ${row.pullRequests.map((pr) => `#${pr.number}`).join(' ')} ${row.release?.tag ?? ''}`.toLowerCase();
 		return words.every((word) => text.includes(word));
 	};
 	const direction = sort.descending ? -1 : 1;
@@ -100,7 +103,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
 						</button>
 					))}
 				</div>
-				<input type="search" aria-label="Search runs" placeholder="Search repo, workflow, branch" value={search} onChange={(event) => setSearch(event.target.value)} />
+				<input type="search" aria-label="Search runs" placeholder="Search repo, workflow, branch, PR" value={search} onChange={(event) => setSearch(event.target.value)} />
 				<PurgeAllButton runs={shown} />
 			</div>
 			<div className="table-scroll">
@@ -174,14 +177,14 @@ function RunRowItem({ run, now }: { run: RunRow; now: number }) {
 				<a href={run.branchUrl} target="_blank" rel="noreferrer">
 					{run.branch}
 				</a>
-				<div className="muted small">
-					{run.event}
-					{run.pullRequests.map((pr) => (
-						<a key={pr.number} className="pr-link" href={pr.url} target="_blank" rel="noreferrer">
-							PR #{pr.number}
-						</a>
-					))}
-				</div>
+				<div className="muted small">{run.event}</div>
+			</td>
+			<td className="nowrap">
+				{run.pullRequests.map((pr) => (
+					<a key={pr.number} className="pr-link" href={pr.url} target="_blank" rel="noreferrer">
+						#{pr.number}
+					</a>
+				))}
 			</td>
 			<td className="nowrap">{formatAge(run.createdAt, now)}</td>
 			<td>
