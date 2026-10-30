@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- **Faster action cache** `runner\cache-actions.ps1` reads the Worker logs
+  from each runner's `_diag` folder. It walked all of `~/actions-runner`
+  before, which took 203 s of each `runner\install.ps1` run.
+- **Faster downloads** `runner\install.ps1` and `runner\cache-actions.ps1`
+  turn off the Windows PowerShell progress bar, which made a download about
+  10 times slower.
+- **Count messages** the Runners card names `runner\install.ps1` with its
+  backslash after Apply. It read `runnerinstall.ps1` before.
+- **CI** `actions/checkout` is pinned to its v7 commit, since the checks run
+  on the PC that keeps an admin token.
+
 - **Heavy lane** the first 2 Windows runners carry the `heavy` label, and
   `runner\install.ps1` fixes the label on GitHub for runners registered
   earlier. Jobs that run Gradle, Cargo or Tauri ask for it, so at most 2 of
