@@ -1,77 +1,77 @@
 /* The tabs under the heading and the Latest releases card. */
 .tabs {
-	display: flex;
-	gap: 4px;
-	margin: -8px 0 16px;
-	border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 4px;
+  margin: -8px 0 16px;
+  border-bottom: 1px solid var(--line);
 }
 
 .tabs a {
-	padding: 6px 12px;
-	border-bottom: 2px solid transparent;
-	color: var(--muted);
+  padding: 6px 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
 }
 
 .tabs a[aria-current='page'] {
-	border-bottom-color: var(--busy);
-	color: var(--text);
-	font-weight: 600;
+  border-bottom-color: var(--busy);
+  color: var(--text);
+  font-weight: 600;
 }
 
 .tick {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
 }
 
 input[type='checkbox'] {
-	width: 16px;
-	height: 16px;
-	margin: 0;
+  width: 16px;
+  height: 16px;
+  margin: 0;
 }
 
 .releases {
-	list-style: none;
-	margin: 0;
-	padding: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .releases li {
-	padding: 10px 0;
-	border-top: 1px solid var(--line);
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
 }
 
 .release-head {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
 }
 
 .release-head .result {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .notes {
-	margin: 6px 0 0 28px;
-	font-size: 13px;
+  margin: 6px 0 0 28px;
+  font-size: 13px;
 }
 
 .notes summary {
-	cursor: pointer;
-	color: var(--muted);
+  cursor: pointer;
+  color: var(--muted);
 }
 
 .notes h2,
 .notes h3 {
-	margin: 10px 0 4px;
-	font-size: 14px;
+  margin: 10px 0 4px;
+  font-size: 14px;
 }
 
 .notes ul {
-	margin: 4px 0;
-	padding-left: 20px;
+  margin: 4px 0;
+  padding-left: 20px;
 }

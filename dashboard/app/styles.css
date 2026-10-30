@@ -1,729 +1,733 @@
 /* The four tones color the status dots. busy doubles as the link color, bad as the error text.
    Each tone reaches 4.5:1 on the card and on the page, since it also colors small text. */
 :root {
-	--bg: #f6f7f9;
-	--card: #ffffff;
-	--text: #1f2230;
-	--muted: #65697d;
-	--line: #e4e6ec;
-	--ok: #007a4d;
-	--busy: #415ed3;
-	--chip-on: #415ed3;
-	--warn: #8a6400;
-	--bad: #ca2d00;
-	color-scheme: light dark;
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --text: #1f2230;
+  --muted: #65697d;
+  --line: #e4e6ec;
+  --ok: #007a4d;
+  --busy: #415ed3;
+  --chip-on: #415ed3;
+  --warn: #8a6400;
+  --bad: #ca2d00;
+  color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #13151b;
-		--card: #1c1f27;
-		--text: #e5e7ee;
-		--muted: #9297a8;
-		--line: #2e313d;
-		--ok: #00c686;
-		--busy: #6e8ef6;
-		/* White text on the lighter busy blue reads at 3.1:1 only. */
-		--chip-on: #4a68e0;
-		--warn: #d9ae27;
-		--bad: #ef6749;
-	}
+  :root {
+    --bg: #13151b;
+    --card: #1c1f27;
+    --text: #e5e7ee;
+    --muted: #9297a8;
+    --line: #2e313d;
+    --ok: #00c686;
+    --busy: #6e8ef6;
+    /* White text on the lighter busy blue reads at 3.1:1 only. */
+    --chip-on: #4a68e0;
+    --warn: #d9ae27;
+    --bad: #ef6749;
+  }
 }
 
 * {
-	box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-	margin: 0;
-	background: var(--bg);
-	color: var(--text);
-	font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    15px/1.45 system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
 }
 
 main {
-	max-width: 1100px;
-	margin: 0 auto;
-	padding: 24px 16px 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
 }
 
 header {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 8px 24px;
-	margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  margin-bottom: 20px;
 }
 
 h1 {
-	margin: 0;
-	font-size: 26px;
+  margin: 0;
+  font-size: 26px;
 }
 
 h2 {
-	margin: 0 0 12px;
-	font-size: 16px;
+  margin: 0 0 12px;
+  font-size: 16px;
 }
 
 .grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-	gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
 }
 
 .card {
-	background: var(--card);
-	border: 1px solid var(--line);
-	border-radius: 10px;
-	padding: 16px;
-	min-width: 0;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  min-width: 0;
 }
 
 .wide {
-	grid-column: 1 / -1;
-	overflow-x: auto;
+  grid-column: 1 / -1;
+  overflow-x: auto;
 }
 
 dl {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	gap: 6px 16px;
-	margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin: 0;
 }
 
 dt {
-	color: var(--muted);
+  color: var(--muted);
 }
 
 dd {
-	margin: 0;
+  margin: 0;
 }
 
 .dot {
-	display: inline-block;
-	width: 10px;
-	height: 10px;
-	border-radius: 50%;
-	margin-right: 8px;
-	vertical-align: 1px;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: 1px;
 }
 
 h1 .dot {
-	width: 16px;
-	height: 16px;
-	margin-right: 12px;
-	vertical-align: 2px;
+  width: 16px;
+  height: 16px;
+  margin-right: 12px;
+  vertical-align: 2px;
 }
 
 .dot.ok {
-	background: var(--ok);
+  background: var(--ok);
 }
 
 .dot.busy {
-	background: var(--busy);
-	animation: pulse 1.2s ease-in-out infinite;
+  background: var(--busy);
+  animation: pulse 1.2s ease-in-out infinite;
 }
 
 .dot.warn {
-	background: var(--warn);
+  background: var(--warn);
 }
 
 .dot.bad {
-	background: var(--bad);
+  background: var(--bad);
 }
 
 /* A busy dot pulses, so a running build shows without reading the text. */
 @keyframes pulse {
-	50% {
-		opacity: 0.35;
-	}
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .progress {
-	margin: 4px 0;
+  margin: 4px 0;
 }
 
 .progress-bar {
-	height: 4px;
-	border-radius: 999px;
-	background: var(--line);
-	overflow: hidden;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
 }
 
 .progress-bar > span {
-	display: block;
-	height: 100%;
-	background: var(--busy);
-	transition: width 0.4s;
+  display: block;
+  height: 100%;
+  background: var(--busy);
+  transition: width 0.4s;
 }
 
 /* A job past its usual time keeps a full bar, so the color says it runs long. */
 .progress-bar.over > span {
-	background: var(--warn);
+  background: var(--warn);
 }
 
 .runners {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-	gap: 12px 24px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px 24px;
 }
 
 /* The count field sits above the runner rows, with the count this PC suits beside it. */
 .runner-count {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 6px 10px;
-	margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-bottom: 12px;
 }
 
 .runner-count input {
-	font: inherit;
-	font-size: 14px;
-	width: 4.5em;
-	padding: 3px 6px;
-	border: 1px solid var(--line);
-	border-radius: 6px;
-	background: var(--bg);
-	color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  width: 4.5em;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .runner-row > div {
-	margin-left: 18px;
+  margin-left: 18px;
 }
 
 .sides {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
 }
 
 /* A row whose two sides disagree stands out, and its hint says what to check. */
 .runner-row.has-hint {
-	border-left: 3px solid var(--warn);
-	padding-left: 8px;
+  border-left: 3px solid var(--warn);
+  padding-left: 8px;
 }
 
 .hint {
-	color: var(--warn);
+  color: var(--warn);
 }
 
 .labels {
-	margin: 4px 0 0 18px;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 4px;
+  margin: 4px 0 0 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .label {
-	font-size: 12px;
-	border: 1px solid var(--line);
-	border-radius: 999px;
-	padding: 0 8px;
-	color: var(--muted);
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 8px;
+  color: var(--muted);
 }
 
 table {
-	width: 100%;
-	border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
 }
 
 th,
 td {
-	text-align: left;
-	padding: 8px 10px 8px 0;
-	border-top: 1px solid var(--line);
-	vertical-align: top;
+  text-align: left;
+  padding: 8px 10px 8px 0;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
 }
 
 th {
-	border-top: 0;
-	color: var(--muted);
-	font-weight: 500;
-	font-size: 13px;
+  border-top: 0;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 13px;
 }
 
 a {
-	color: var(--busy);
-	text-decoration: none;
+  color: var(--busy);
+  text-decoration: none;
 }
 
 a:hover {
-	text-decoration: underline;
+  text-decoration: underline;
 }
 
 .muted {
-	color: var(--muted);
+  color: var(--muted);
 }
 
 .small {
-	font-size: 13px;
+  font-size: 13px;
 }
 
 .nowrap {
-	white-space: nowrap;
+  white-space: nowrap;
 }
 
 .error {
-	color: var(--bad);
-	margin: 0;
+  color: var(--bad);
+  margin: 0;
 }
 
 .icon {
-	width: 16px;
-	height: 16px;
-	flex: none;
-	margin-right: 6px;
-	vertical-align: -3px;
+  width: 16px;
+  height: 16px;
+  flex: none;
+  margin-right: 6px;
+  vertical-align: -3px;
 }
 
 .icon.running {
-	animation: spin 1s linear infinite;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-	to {
-		transform: rotate(360deg);
-	}
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.icon.running,
-	.dot.busy {
-		animation: none;
-	}
+  .icon.running,
+  .dot.busy {
+    animation: none;
+  }
 }
 
 .result.ok {
-	color: var(--ok);
+  color: var(--ok);
 }
 
 .result.busy,
 .icon.local,
 .place.local {
-	color: var(--busy);
+  color: var(--busy);
 }
 
 .result.warn,
 .icon.waiting,
 .place.waiting {
-	color: var(--warn);
+  color: var(--warn);
 }
 
 .result.bad {
-	color: var(--bad);
+  color: var(--bad);
 }
 
 .place {
-	font-size: 12px;
-	margin-top: 2px;
+  font-size: 12px;
+  margin-top: 2px;
 }
 
 .place.elsewhere,
 .icon.elsewhere {
-	color: var(--muted);
+  color: var(--muted);
 }
 
 /* The jobs of this PC matter most, so their column and rows carry the busy color. */
 .live {
-	display: grid;
-	grid-template-columns: 1.4fr 1fr 1fr;
-	gap: 16px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 16px;
 }
 
 @media (max-width: 760px) {
-	.live {
-		grid-template-columns: 1fr;
-	}
+  .live {
+    grid-template-columns: 1fr;
+  }
 }
 
 .live-column {
-	border: 1px solid var(--line);
-	border-radius: 8px;
-	padding: 12px;
-	min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 0;
 }
 
 .live-column.local {
-	border-color: var(--busy);
-	border-width: 2px;
+  border-color: var(--busy);
+  border-width: 2px;
 }
 
 h3 {
-	display: flex;
-	align-items: center;
-	margin: 0 0 8px;
-	font-size: 14px;
+  display: flex;
+  align-items: center;
+  margin: 0 0 8px;
+  font-size: 14px;
 }
 
 .live-column.local h3 {
-	color: var(--busy);
+  color: var(--busy);
 }
 
 .live-column.waiting h3 {
-	color: var(--warn);
+  color: var(--warn);
 }
 
 .count {
-	margin-left: 6px;
-	min-width: 20px;
-	padding: 0 6px;
-	border-radius: 999px;
-	background: var(--line);
-	color: var(--text);
-	font-size: 12px;
-	text-align: center;
+  margin-left: 6px;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--line);
+  color: var(--text);
+  font-size: 12px;
+  text-align: center;
 }
 
 .jobs {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: grid;
-	gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
 }
 
 .jobs li {
-	display: flex;
-	align-items: flex-start;
-	min-width: 0;
-	overflow-wrap: anywhere;
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .jobs .dot {
-	flex: none;
-	margin-top: 5px;
+  flex: none;
+  margin-top: 5px;
 }
 
 .jobs .icon {
-	margin-top: 3px;
+  margin-top: 3px;
 }
 
 /* A long list scrolls inside its card, so the cards below stay in view. */
 .jobs,
 .runners {
-	max-height: 420px;
-	overflow-y: auto;
-	overscroll-behavior: contain;
+  max-height: 420px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .table-scroll {
-	max-height: 70vh;
-	overflow: auto;
-	overscroll-behavior: contain;
+  max-height: 70vh;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .table-scroll th {
-	position: sticky;
-	top: 0;
-	z-index: 1;
-	background: var(--card);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--card);
 }
 
 .toolbar {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 8px 16px;
-	margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 12px;
 }
 
 .chips {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .chip {
-	display: inline-flex;
-	align-items: center;
-	font: inherit;
-	font-size: 13px;
-	padding: 3px 10px;
-	border: 1px solid var(--line);
-	border-radius: 999px;
-	background: var(--card);
-	color: var(--text);
-	cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  font-size: 13px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
 }
 
 .chip[aria-pressed='true'] {
-	background: var(--chip-on);
-	border-color: var(--chip-on);
-	color: #fff;
+  background: var(--chip-on);
+  border-color: var(--chip-on);
+  color: #fff;
 }
 
 .chip[aria-pressed='true'] .count {
-	background: rgb(255 255 255 / 0.25);
-	color: #fff;
+  background: rgb(255 255 255 / 0.25);
+  color: #fff;
 }
 
 input[type='search'] {
-	font: inherit;
-	font-size: 14px;
-	padding: 5px 10px;
-	min-width: 220px;
-	flex: 1 1 220px;
-	max-width: 320px;
-	border: 1px solid var(--line);
-	border-radius: 6px;
-	background: var(--bg);
-	color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  padding: 5px 10px;
+  min-width: 220px;
+  flex: 1 1 220px;
+  max-width: 320px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .sort {
-	font: inherit;
-	color: inherit;
-	background: none;
-	border: 0;
-	padding: 0;
-	cursor: pointer;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
 .sort:hover {
-	color: var(--text);
+  color: var(--text);
 }
 
 .arrow {
-	display: inline-block;
-	width: 1em;
-	margin-left: 4px;
-	font-size: 10px;
+  display: inline-block;
+  width: 1em;
+  margin-left: 4px;
+  font-size: 10px;
 }
 
 .local-row td {
-	background: color-mix(in srgb, var(--busy) 9%, transparent);
+  background: color-mix(in srgb, var(--busy) 9%, transparent);
 }
 
 .purging-row td {
-	opacity: 0.45;
-	cursor: progress;
+  opacity: 0.45;
+  cursor: progress;
 }
 
 .grow {
-	flex: 1;
-	min-width: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .run-controls {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 4px 6px;
-	margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 4px;
 }
 
 td .run-controls {
-	margin-top: 0;
-	justify-content: flex-end;
+  margin-top: 0;
+  justify-content: flex-end;
 }
 
 .action {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	font: inherit;
-	font-size: 12px;
-	/* WCAG 2.5.8 asks for targets at least 24 px tall. */
-	min-height: 26px;
-	padding: 2px 8px;
-	border: 1px solid var(--line);
-	border-radius: 6px;
-	background: var(--card);
-	color: var(--text);
-	cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 12px;
+  /* WCAG 2.5.8 asks for targets at least 24 px tall. */
+  min-height: 26px;
+  padding: 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
 }
 
 .action .icon {
-	width: 12px;
-	height: 12px;
-	margin: 0;
+  width: 12px;
+  height: 12px;
+  margin: 0;
 }
 
 .action.danger {
-	color: var(--bad);
+  color: var(--bad);
 }
 
 .action:hover:not(:disabled) {
-	border-color: currentColor;
+  border-color: currentColor;
 }
 
 .action:disabled {
-	opacity: 0.6;
-	cursor: progress;
+  opacity: 0.6;
+  cursor: progress;
 }
 
 .action-error {
-	color: var(--bad);
+  color: var(--bad);
 }
 
 .sr-only {
-	position: absolute;
-	width: 1px;
-	height: 1px;
-	overflow: hidden;
-	clip: rect(0 0 0 0);
-	white-space: nowrap;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .failed-step {
-	display: block;
-	max-width: 260px;
-	margin-top: 2px;
-	color: var(--bad);
-	white-space: normal;
+  display: block;
+  max-width: 260px;
+  margin-top: 2px;
+  color: var(--bad);
+  white-space: normal;
 }
 
 .release-link {
-	display: inline-flex;
-	align-items: center;
-	gap: 4px;
-	white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .release-link .icon {
-	width: 14px;
-	height: 14px;
-	margin: 0;
+  width: 14px;
+  height: 14px;
+  margin: 0;
 }
 
 .install {
-	display: flex;
-	flex-direction: column;
-	align-items: flex-start;
-	gap: 4px;
-	margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 4px;
 }
 
 .install-ok {
-	color: var(--ok);
+  color: var(--ok);
 }
 
 .install-error {
-	max-width: 340px;
-	max-height: 160px;
-	overflow: auto;
-	margin: 0;
-	padding: 6px 8px;
-	border: 1px solid var(--bad);
-	border-radius: 6px;
-	background: color-mix(in srgb, var(--bad) 10%, transparent);
-	color: var(--bad);
-	font-size: 12px;
-	white-space: pre-wrap;
-	word-break: break-word;
+  max-width: 340px;
+  max-height: 160px;
+  overflow: auto;
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--bad);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+  color: var(--bad);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .pr-link + .pr-link {
-	margin-left: 6px;
+  margin-left: 6px;
 }
 
 /* The card of what builds right now, red while a runner of this PC sits idle over a queue. */
 .running-now {
-	border: 2px solid var(--busy);
+  border: 2px solid var(--busy);
 }
 
 .running-now.stuck {
-	border-color: var(--bad);
+  border-color: var(--bad);
 }
 
 .running-now h2 {
-	font-size: 20px;
+  font-size: 20px;
 }
 
 .runner-job {
-	margin-left: 18px;
+  margin-left: 18px;
 }
 
 .took {
-	font: inherit;
-	color: var(--busy);
-	background: none;
-	border: 0;
-	padding: 0;
-	cursor: pointer;
-	white-space: nowrap;
+  font: inherit;
+  color: var(--busy);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .timings-row td {
-	border-top: 0;
-	padding-top: 0;
+  border-top: 0;
+  padding-top: 0;
 }
 
 .timings {
-	display: grid;
-	gap: 12px;
-	padding: 8px 12px;
-	border-left: 3px solid var(--line);
+  display: grid;
+  gap: 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--line);
 }
 
 .timing-head {
-	display: flex;
-	justify-content: space-between;
-	gap: 12px;
-	font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 500;
 }
 
 .timing-steps {
-	list-style: none;
-	margin: 4px 0 0;
-	padding: 0;
-	display: grid;
-	gap: 2px;
-	font-size: 13px;
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
 }
 
 /* Name, bar and time line up across the steps of all jobs. */
 .timing-steps li,
 .timing-head {
-	display: grid;
-	grid-template-columns: minmax(0, 2fr) minmax(60px, 3fr) 90px;
-	align-items: center;
-	gap: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(60px, 3fr) 90px;
+  align-items: center;
+  gap: 12px;
 }
 
 .timing-head > a {
-	grid-column: span 2;
+  grid-column: span 2;
 }
 
 .timing-name {
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .timing-bar {
-	height: 6px;
-	border-radius: 999px;
-	background: var(--line);
-	overflow: hidden;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
 }
 
 .timing-bar > span {
-	display: block;
-	height: 100%;
-	min-width: 2px;
-	background: var(--muted);
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  background: var(--muted);
 }
 
 .timing-bar > .busy {
-	background: var(--busy);
+  background: var(--busy);
 }
 
 .timing-bar > .bad {
-	background: var(--bad);
+  background: var(--bad);
 }
 
 .timing-bar > .warn {
-	background: var(--warn);
+  background: var(--warn);
 }
 
 .timing-time {
-	text-align: right;
-	white-space: nowrap;
+  text-align: right;
+  white-space: nowrap;
 }

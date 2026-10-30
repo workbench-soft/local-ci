@@ -7,35 +7,35 @@ import { type ApiRelease, type Release, releasesRepo, toRelease } from './releas
 import { orgName } from './settings.ts';
 
 export type OrgRunner = {
-	id: number;
-	name: string;
-	os: string;
-	status: 'online' | 'offline';
-	busy: boolean;
-	labels: string[];
+  id: number;
+  name: string;
+  os: string;
+  status: 'online' | 'offline';
+  busy: boolean;
+  labels: string[];
 };
 
 export type WorkflowRun = {
-	id: number;
-	repo: string;
-	workflow: string;
-	workflowId: number;
-	title: string;
-	branch: string;
-	event: string;
-	status: string;
-	conclusion: string | null;
-	createdAt: string;
-	/** When the latest attempt of the run started. */
-	startedAt: string | null;
-	updatedAt: string;
-	url: string;
-	/** The branch on GitHub. */
-	branchUrl: string;
-	/** The pull requests of the branch in the same repo. GitHub leaves out PRs from forks. */
-	pullRequests: { number: number; url: string }[];
-	/** Read only for runs that haven't finished or that failed. */
-	jobs: RunJob[];
+  id: number;
+  repo: string;
+  workflow: string;
+  workflowId: number;
+  title: string;
+  branch: string;
+  event: string;
+  status: string;
+  conclusion: string | null;
+  createdAt: string;
+  /** When the latest attempt of the run started. */
+  startedAt: string | null;
+  updatedAt: string;
+  url: string;
+  /** The branch on GitHub. */
+  branchUrl: string;
+  /** The pull requests of the branch in the same repo. GitHub leaves out PRs from forks. */
+  pullRequests: { number: number; url: string }[];
+  /** Read only for runs that haven't finished or that failed. */
+  jobs: RunJob[];
 };
 
 /** The first failed job of a run and its failed step. */
@@ -43,25 +43,25 @@ export type RunFailure = { job: string; step: string | null; url: string };
 
 /** A job of a run, with the runner that took it. A queued job has no runner yet. */
 export type RunJob = {
-	id: number;
-	name: string;
-	status: string;
-	conclusion: string | null;
-	runnerName: string | null;
-	labels: string[];
-	startedAt: string | null;
-	completedAt: string | null;
-	url: string;
-	/** The first step that failed, for a failed job. */
-	failedStep: string | null;
-	steps: StepCount;
-	/** How long this job takes, from the 10 latest finished runs of its workflow. Set only on running jobs. */
-	typicalMs: number | null;
+  id: number;
+  name: string;
+  status: string;
+  conclusion: string | null;
+  runnerName: string | null;
+  labels: string[];
+  startedAt: string | null;
+  completedAt: string | null;
+  url: string;
+  /** The first step that failed, for a failed job. */
+  failedStep: string | null;
+  steps: StepCount;
+  /** How long this job takes, from the 10 latest finished runs of its workflow. Set only on running jobs. */
+  typicalMs: number | null;
 };
 
 export type OrgStatus =
-	| { ok: true; runners: OrgRunner[] | null; runnersError: string | null; runs: WorkflowRun[]; releases: Release[] }
-	| { ok: false; error: string };
+  | { ok: true; runners: OrgRunner[] | null; runnersError: string | null; runs: WorkflowRun[]; releases: Release[] }
+  | { ok: false; error: string };
 
 const execFileAsync = promisify(execFile);
 const cacheTtlMs = 20_000;
@@ -74,22 +74,22 @@ const queuedJobsTtlMs = 60_000;
 const staleMaxMs = 120_000;
 
 type Store = {
-	cached: { at: number; status: Promise<OrgStatus> } | null;
-	refreshing: Promise<OrgStatus> | null;
-	etagged: Map<string, { etag: string; body: string }>;
-	queuedJobs: Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>;
-	finishedJobs: Map<number, Promise<RunJob[]>>;
+  cached: { at: number; status: Promise<OrgStatus> } | null;
+  refreshing: Promise<OrgStatus> | null;
+  etagged: Map<string, { etag: string; body: string }>;
+  queuedJobs: Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>;
+  finishedJobs: Map<number, Promise<RunJob[]>>;
 };
 
 // Next bundles this module once for the page and once for the sweep. One store on globalThis
 // lets both share the loads, and a cancel by the sweep drops the status the page shows.
 // Tests delete it to start empty.
 const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.for('local-ci.org-status')] ??= {
-	cached: null,
-	refreshing: null,
-	etagged: new Map(),
-	queuedJobs: new Map(),
-	finishedJobs: new Map(),
+  cached: null,
+  refreshing: null,
+  etagged: new Map(),
+  queuedJobs: new Map(),
+  finishedJobs: new Map(),
 });
 let ghToken: string | null = null;
 
@@ -98,96 +98,119 @@ let ghToken: string | null = null;
  * After that the kept status still answers at once while a new load runs in the background.
  */
 export function fetchOrgStatus(): Promise<OrgStatus> {
-	const kept = store.cached;
-	const age = kept ? Date.now() - kept.at : Number.POSITIVE_INFINITY;
-	if (kept && age < cacheTtlMs) return kept.status;
-	if (kept && age < staleMaxMs) {
-		refreshOrgStatus();
-		return kept.status;
-	}
-	// The promise goes in the cache before it settles, so requests that arrive meanwhile wait for the same load.
-	// A background refresh still running would land older data over it, so it is dropped.
-	const status = loadOrgStatus();
-	store.cached = { at: Date.now(), status };
-	store.refreshing = null;
-	return status;
+  const kept = store.cached;
+  const age = kept ? Date.now() - kept.at : Number.POSITIVE_INFINITY;
+  if (kept && age < cacheTtlMs) return kept.status;
+  if (kept && age < staleMaxMs) {
+    refreshOrgStatus();
+    return kept.status;
+  }
+  // The promise goes in the cache before it settles, so requests that arrive meanwhile wait for the same load.
+  // A background refresh still running would land older data over it, so it is dropped.
+  const status = loadOrgStatus();
+  store.cached = { at: Date.now(), status };
+  store.refreshing = null;
+  return status;
 }
 
 function refreshOrgStatus(): void {
-	if (store.refreshing) return;
-	const status = loadOrgStatus();
-	store.refreshing = status;
-	void status.then(() => {
-		// A forget meanwhile dropped this load, since a run changed after it began.
-		if (store.refreshing !== status) return;
-		store.cached = { at: Date.now(), status };
-		store.refreshing = null;
-	});
+  if (store.refreshing) return;
+  const status = loadOrgStatus();
+  store.refreshing = status;
+  void status.then(() => {
+    // A forget meanwhile dropped this load, since a run changed after it began.
+    if (store.refreshing !== status) return;
+    store.cached = { at: Date.now(), status };
+    store.refreshing = null;
+  });
 }
 
 /** Drops the cached status, so the next render reads GitHub after a run changed. */
 export function forgetOrgStatus(): void {
-	store.cached = null;
-	store.refreshing = null;
+  store.cached = null;
+  store.refreshing = null;
 }
 
 async function loadOrgStatus(): Promise<OrgStatus> {
-	try {
-		const [runners, runs, releases] = await Promise.allSettled([listRunners(), listLatestRuns(), listReleases()]);
-		if (runs.status === 'rejected') throw runs.reason;
-		// Releases only add a column, so the page shows without them.
-		const found = releases.status === 'fulfilled' ? releases.value : [];
-		// Runners need admin:org. Without it the runs still show.
-		if (runners.status === 'rejected') {
-			return { ok: true, runners: null, runnersError: String(runners.reason?.message ?? runners.reason), runs: runs.value, releases: found };
-		}
-		return { ok: true, runners: runners.value, runnersError: null, runs: runs.value, releases: found };
-	} catch (error) {
-		return { ok: false, error: error instanceof Error ? error.message : String(error) };
-	}
+  try {
+    const [runners, runs, releases] = await Promise.allSettled([listRunners(), listLatestRuns(), listReleases()]);
+    if (runs.status === 'rejected') throw runs.reason;
+    // Releases only add a column, so the page shows without them.
+    const found = releases.status === 'fulfilled' ? releases.value : [];
+    // Runners need admin:org. Without it the runs still show.
+    if (runners.status === 'rejected') {
+      return {
+        ok: true,
+        runners: null,
+        runnersError: String(runners.reason?.message ?? runners.reason),
+        runs: runs.value,
+        releases: found,
+      };
+    }
+    return { ok: true, runners: runners.value, runnersError: null, runs: runs.value, releases: found };
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 type ApiRunner = Omit<OrgRunner, 'labels'> & { labels: { name: string }[] };
 
 type ApiRun = {
-	workflow_id: number;
-	id: number;
-	name: string;
-	display_title: string;
-	head_branch: string;
-	event: string;
-	status: string;
-	conclusion: string | null;
-	created_at: string;
-	run_started_at?: string;
-	updated_at: string;
-	html_url: string;
-	pull_requests?: { number: number }[];
+  workflow_id: number;
+  id: number;
+  name: string;
+  display_title: string;
+  head_branch: string;
+  event: string;
+  status: string;
+  conclusion: string | null;
+  created_at: string;
+  run_started_at?: string;
+  updated_at: string;
+  html_url: string;
+  pull_requests?: { number: number }[];
 };
 
 type ApiJob = {
-	id: number;
-	name: string;
-	status: string;
-	conclusion: string | null;
-	runner_name: string | null;
-	labels: string[];
-	started_at: string | null;
-	completed_at: string | null;
-	html_url: string;
-	steps?: { name: string; status: string; conclusion: string | null; started_at?: string | null; completed_at?: string | null }[];
+  id: number;
+  name: string;
+  status: string;
+  conclusion: string | null;
+  runner_name: string | null;
+  labels: string[];
+  started_at: string | null;
+  completed_at: string | null;
+  html_url: string;
+  steps?: {
+    name: string;
+    status: string;
+    conclusion: string | null;
+    started_at?: string | null;
+    completed_at?: string | null;
+  }[];
 };
 
 async function listRunners(): Promise<OrgRunner[]> {
-	const { runners } = await getJson<{ runners: ApiRunner[] }>(`/orgs/${orgName}/actions/runners?per_page=100`);
-	return runners.map(({ id, name, os, status, busy, labels }) => ({ id, name, os, status, busy, labels: labels.map((label) => label.name) }));
+  const { runners } = await getJson<{ runners: ApiRunner[] }>(`/orgs/${orgName}/actions/runners?per_page=100`);
+  return runners.map(({ id, name, os, status, busy, labels }) => ({
+    id,
+    name,
+    os,
+    status,
+    busy,
+    labels: labels.map((label) => label.name),
+  }));
 }
 
 async function listLatestRuns(): Promise<WorkflowRun[]> {
-	const repos = await getJson<{ full_name: string; archived: boolean }[]>(`/orgs/${orgName}/repos?per_page=100&sort=pushed`);
-	const perRepo = await Promise.allSettled(repos.filter((repo) => !repo.archived).map((repo) => listRepoRuns(repo.full_name)));
-	// One repo that GitHub refuses, say with Actions turned off, drops out alone.
-	return perRepo.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
+  const repos = await getJson<{ full_name: string; archived: boolean }[]>(
+    `/orgs/${orgName}/repos?per_page=100&sort=pushed`,
+  );
+  const perRepo = await Promise.allSettled(
+    repos.filter((repo) => !repo.archived).map((repo) => listRepoRuns(repo.full_name)),
+  );
+  // One repo that GitHub refuses, say with Actions turned off, drops out alone.
+  return perRepo.flatMap((result) => (result.status === 'fulfilled' ? result.value : []));
 }
 
 /**
@@ -195,147 +218,160 @@ async function listLatestRuns(): Promise<WorkflowRun[]> {
  * A busy repo queues newer runs on top of the one that builds, so the latest 5 alone hide it.
  */
 export function pickRuns<T extends Pick<ApiRun, 'status'>>(runs: T[]): T[] {
-	return runs.filter((run, index) => index < runsPerRepo || activeStatuses.has(run.status));
+  return runs.filter((run, index) => index < runsPerRepo || activeStatuses.has(run.status));
 }
 
 async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
-	const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(`/repos/${fullName}/actions/runs?per_page=${runsRead}`);
-	const repo = fullName.split('/')[1];
-	const runs = await Promise.all(
-		pickRuns(workflow_runs).map(async (run) => ({
-			id: run.id,
-			repo,
-			workflow: run.name,
-			workflowId: run.workflow_id,
-			title: run.display_title,
-			branch: run.head_branch,
-			event: run.event,
-			status: run.status,
-			conclusion: run.conclusion,
-			createdAt: run.created_at,
-			startedAt: run.run_started_at ?? null,
-			updatedAt: run.updated_at,
-			url: run.html_url,
-			branchUrl: `https://github.com/${fullName}/tree/${run.head_branch.split('/').map(encodeURIComponent).join('/')}`,
-			pullRequests: (run.pull_requests ?? []).map(({ number }) => ({ number, url: `https://github.com/${fullName}/pull/${number}` })),
-			jobs: activeStatuses.has(run.status)
-				? await activeRunJobs(fullName, run)
-				: failedConclusions.has(run.conclusion ?? '')
-					? await listRunJobs(fullName, run.id)
-					: [],
-		})),
-	);
-	await addTypicalTimes(fullName, runs);
-	return runs;
+  const { workflow_runs } = await getJson<{ workflow_runs: ApiRun[] }>(
+    `/repos/${fullName}/actions/runs?per_page=${runsRead}`,
+  );
+  const repo = fullName.split('/')[1];
+  const runs = await Promise.all(
+    pickRuns(workflow_runs).map(async (run) => ({
+      id: run.id,
+      repo,
+      workflow: run.name,
+      workflowId: run.workflow_id,
+      title: run.display_title,
+      branch: run.head_branch,
+      event: run.event,
+      status: run.status,
+      conclusion: run.conclusion,
+      createdAt: run.created_at,
+      startedAt: run.run_started_at ?? null,
+      updatedAt: run.updated_at,
+      url: run.html_url,
+      branchUrl: `https://github.com/${fullName}/tree/${run.head_branch.split('/').map(encodeURIComponent).join('/')}`,
+      pullRequests: (run.pull_requests ?? []).map(({ number }) => ({
+        number,
+        url: `https://github.com/${fullName}/pull/${number}`,
+      })),
+      jobs: activeStatuses.has(run.status)
+        ? await activeRunJobs(fullName, run)
+        : failedConclusions.has(run.conclusion ?? '')
+          ? await listRunJobs(fullName, run.id)
+          : [],
+    })),
+  );
+  await addTypicalTimes(fullName, runs);
+  return runs;
 }
 
 /** The 10 latest finished runs of a workflow give the usual length of each of its running jobs. */
 async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<void> {
-	const running = runs.flatMap((run) => run.jobs.filter((job) => job.status === 'in_progress').map((job) => ({ run, job })));
-	if (!running.length) return;
-	const workflowIds = new Set(running.map(({ run }) => run.workflowId));
-	const pastByWorkflow = new Map<number, RunJob[]>();
-	await Promise.all(
-		[...workflowIds].map(async (workflowId) => {
-			const ids = await latestFinishedRuns(fullName, workflowId);
-			const jobs = await Promise.all(ids.map((id) => finishedRunJobs(fullName, id)));
-			pastByWorkflow.set(workflowId, jobs.flat());
-		}),
-	);
-	for (const { run, job } of running) job.typicalMs = typicalDuration(job.name, pastByWorkflow.get(run.workflowId) ?? []);
+  const running = runs.flatMap((run) =>
+    run.jobs.filter((job) => job.status === 'in_progress').map((job) => ({ run, job })),
+  );
+  if (!running.length) return;
+  const workflowIds = new Set(running.map(({ run }) => run.workflowId));
+  const pastByWorkflow = new Map<number, RunJob[]>();
+  await Promise.all(
+    [...workflowIds].map(async (workflowId) => {
+      const ids = await latestFinishedRuns(fullName, workflowId);
+      const jobs = await Promise.all(ids.map((id) => finishedRunJobs(fullName, id)));
+      pastByWorkflow.set(workflowId, jobs.flat());
+    }),
+  );
+  for (const { run, job } of running)
+    job.typicalMs = typicalDuration(job.name, pastByWorkflow.get(run.workflowId) ?? []);
 }
 
 // The latest runs of a busy repo are often all queued, so the finished ones come from a call of their own.
 async function latestFinishedRuns(fullName: string, workflowId: number): Promise<number[]> {
-	try {
-		const { workflow_runs } = await getJson<{ workflow_runs: { id: number }[] }>(
-			`/repos/${fullName}/actions/workflows/${workflowId}/runs?status=completed&per_page=10`,
-		);
-		return workflow_runs.map((run) => run.id);
-	} catch {
-		return [];
-	}
+  try {
+    const { workflow_runs } = await getJson<{ workflow_runs: { id: number }[] }>(
+      `/repos/${fullName}/actions/workflows/${workflowId}/runs?status=completed&per_page=10`,
+    );
+    return workflow_runs.map((run) => run.id);
+  } catch {
+    return [];
+  }
 }
 
 // A queue of 20 runs would cost 20 calls a load. GitHub bumps updated_at when a job of the run starts.
 const queuedJobs = store.queuedJobs;
 
 async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
-	if (run.status !== 'queued') {
-		queuedJobs.delete(run.id);
-		return listRunJobs(fullName, run.id);
-	}
-	const kept = queuedJobs.get(run.id);
-	// A queued run can hold a job that builds already, and its steps move on each load.
-	if (kept && kept.updatedAt === run.updated_at && Date.now() - kept.at < queuedJobsTtlMs) {
-		const jobs = await kept.jobs;
-		// A failed call gave no jobs, so it gets another try.
-		if (jobs.length && !jobs.some((job) => job.status === 'in_progress')) return jobs;
-	}
-	const jobs = listRunJobs(fullName, run.id);
-	queuedJobs.set(run.id, { at: Date.now(), updatedAt: run.updated_at, jobs });
-	for (const [id, entry] of queuedJobs) if (Date.now() - entry.at >= queuedJobsTtlMs) queuedJobs.delete(id);
-	return jobs;
+  if (run.status !== 'queued') {
+    queuedJobs.delete(run.id);
+    return listRunJobs(fullName, run.id);
+  }
+  const kept = queuedJobs.get(run.id);
+  // A queued run can hold a job that builds already, and its steps move on each load.
+  if (kept && kept.updatedAt === run.updated_at && Date.now() - kept.at < queuedJobsTtlMs) {
+    const jobs = await kept.jobs;
+    // A failed call gave no jobs, so it gets another try.
+    if (jobs.length && !jobs.some((job) => job.status === 'in_progress')) return jobs;
+  }
+  const jobs = listRunJobs(fullName, run.id);
+  queuedJobs.set(run.id, { at: Date.now(), updatedAt: run.updated_at, jobs });
+  for (const [id, entry] of queuedJobs) if (Date.now() - entry.at >= queuedJobsTtlMs) queuedJobs.delete(id);
+  return jobs;
 }
 
 // A finished run never changes, so its jobs are read once. The oldest entry goes past 200 runs.
 const finishedJobs = store.finishedJobs;
 
 function finishedRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
-	let jobs = finishedJobs.get(runId);
-	if (!jobs) {
-		jobs = listRunJobs(fullName, runId);
-		finishedJobs.set(runId, jobs);
-		// A failed call gives no jobs, so the next load tries again.
-		void jobs.then((list) => list.length || finishedJobs.delete(runId));
-		if (finishedJobs.size > 200) finishedJobs.delete(finishedJobs.keys().next().value as number);
-	}
-	return jobs;
+  let jobs = finishedJobs.get(runId);
+  if (!jobs) {
+    jobs = listRunJobs(fullName, runId);
+    finishedJobs.set(runId, jobs);
+    // A failed call gives no jobs, so the next load tries again.
+    void jobs.then((list) => list.length || finishedJobs.delete(runId));
+    if (finishedJobs.size > 200) finishedJobs.delete(finishedJobs.keys().next().value as number);
+  }
+  return jobs;
 }
 
 const failedConclusions = new Set(['failure', 'timed_out', 'startup_failure']);
 
 /** The first failed job of a failed run, so the table can say where it broke. */
 export function failureOf(run: Pick<WorkflowRun, 'conclusion' | 'jobs'>): RunFailure | null {
-	if (!failedConclusions.has(run.conclusion ?? '')) return null;
-	const job = run.jobs.find((item) => failedConclusions.has(item.conclusion ?? ''));
-	return job ? { job: job.name, step: job.failedStep, url: job.url } : null;
+  if (!failedConclusions.has(run.conclusion ?? '')) return null;
+  const job = run.jobs.find((item) => failedConclusions.has(item.conclusion ?? ''));
+  return job ? { job: job.name, step: job.failedStep, url: job.url } : null;
 }
 
 // The public repo keeps 3 releases per app, so one page holds them all.
 async function listReleases(): Promise<Release[]> {
-	// The full media type adds body_html, the notes as GitHub renders and cleans them.
-	const releases = await getJson<ApiRelease[]>(`/repos/${releasesRepo}/releases?per_page=100`, 'application/vnd.github.full+json');
-	return Array.isArray(releases) ? releases.map(toRelease) : [];
+  // The full media type adds body_html, the notes as GitHub renders and cleans them.
+  const releases = await getJson<ApiRelease[]>(
+    `/repos/${releasesRepo}/releases?per_page=100`,
+    'application/vnd.github.full+json',
+  );
+  return Array.isArray(releases) ? releases.map(toRelease) : [];
 }
 
 // Only the jobs tell which runner builds a run, and which step failed. A failed call leaves the run without them.
 async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
-	try {
-		const { jobs } = await getJson<{ jobs: ApiJob[] }>(`/repos/${fullName}/actions/runs/${runId}/jobs?per_page=100`);
-		return jobs.map((job) => ({
-			id: job.id,
-			name: job.name,
-			status: job.status,
-			conclusion: job.conclusion,
-			runnerName: job.runner_name || null,
-			labels: job.labels,
-			startedAt: job.started_at,
-			completedAt: job.completed_at,
-			url: job.html_url,
-			failedStep: job.steps?.find((step) => failedConclusions.has(step.conclusion ?? ''))?.name ?? null,
-			steps: countSteps(job.steps),
-			typicalMs: null,
-		}));
-	} catch {
-		return [];
-	}
+  try {
+    const { jobs } = await getJson<{ jobs: ApiJob[] }>(`/repos/${fullName}/actions/runs/${runId}/jobs?per_page=100`);
+    return jobs.map((job) => ({
+      id: job.id,
+      name: job.name,
+      status: job.status,
+      conclusion: job.conclusion,
+      runnerName: job.runner_name || null,
+      labels: job.labels,
+      startedAt: job.started_at,
+      completedAt: job.completed_at,
+      url: job.html_url,
+      failedStep: job.steps?.find((step) => failedConclusions.has(step.conclusion ?? ''))?.name ?? null,
+      steps: countSteps(job.steps),
+      typicalMs: null,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 /** The jobs of 1 run with the time of each step, for the breakdown row. It shares the ETag of the jobs call above. */
 export async function readJobTimings(repo: string, runId: number): Promise<JobTiming[]> {
-	const { jobs } = await getJson<{ jobs: ApiJob[] }>(`/repos/${orgName}/${repo}/actions/runs/${runId}/jobs?per_page=100`);
-	return toJobTimings(jobs, Date.now());
+  const { jobs } = await getJson<{ jobs: ApiJob[] }>(
+    `/repos/${orgName}/${repo}/actions/runs/${runId}/jobs?per_page=100`,
+  );
+  return toJobTimings(jobs, Date.now());
 }
 
 // A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.
@@ -343,17 +379,20 @@ const etagged = store.etagged;
 const etaggedMax = 500;
 
 async function getJson<T>(path: string, accept?: string): Promise<T> {
-	const kept = etagged.get(path);
-	const response = await callGitHub(path, 'GET', { ...(accept && { Accept: accept }), ...(kept && { 'If-None-Match': kept.etag }) });
-	if (response.status === 304 && kept) return JSON.parse(kept.body) as T;
-	const body = await response.text();
-	const etag = response.headers.get('etag');
-	if (etag) {
-		etagged.delete(path);
-		etagged.set(path, { etag, body });
-		if (etagged.size > etaggedMax) etagged.delete(etagged.keys().next().value as string);
-	}
-	return JSON.parse(body) as T;
+  const kept = etagged.get(path);
+  const response = await callGitHub(path, 'GET', {
+    ...(accept && { Accept: accept }),
+    ...(kept && { 'If-None-Match': kept.etag }),
+  });
+  if (response.status === 304 && kept) return JSON.parse(kept.body) as T;
+  const body = await response.text();
+  const etag = response.headers.get('etag');
+  if (etag) {
+    etagged.delete(path);
+    etagged.set(path, { etag, body });
+    if (etagged.size > etaggedMax) etagged.delete(etagged.keys().next().value as string);
+  }
+  return JSON.parse(body) as T;
 }
 
 // Node waits 5 min for a stalled answer, and the sweep and the page would wait with it.
@@ -361,43 +400,53 @@ const githubTimeoutMs = 20_000;
 
 /** The HTTP status of an error from callGitHub, or null for any other error. */
 export function githubStatus(error: unknown): number | null {
-	const status = (error as { githubStatus?: unknown } | null)?.githubStatus;
-	return typeof status === 'number' ? status : null;
+  const status = (error as { githubStatus?: unknown } | null)?.githubStatus;
+  return typeof status === 'number' ? status : null;
 }
 
 /** One GitHub API call with the page's token. A status outside 2xx and 304 throws with the path in the message. */
-export async function callGitHub(path: string, method: 'GET' | 'POST' | 'DELETE' = 'GET', extra: Record<string, string> = {}): Promise<Response> {
-	const response = await fetch(`https://api.github.com${path}`, {
-		method,
-		headers: {
-			Authorization: `Bearer ${await resolveToken()}`,
-			Accept: 'application/vnd.github+json',
-			'X-GitHub-Api-Version': '2022-11-28',
-			...extra,
-		},
-		cache: 'no-store',
-		signal: AbortSignal.timeout(githubTimeoutMs),
-	});
-	if (!response.ok && response.status !== 304) {
-		// A plain property, so the check works across the bundle copies of this module.
-		throw Object.assign(new Error(`GitHub answered ${response.status} to ${method} ${path}.${githubHint(response)}`), { githubStatus: response.status });
-	}
-	return response;
+export async function callGitHub(
+  path: string,
+  method: 'GET' | 'POST' | 'DELETE' = 'GET',
+  extra: Record<string, string> = {},
+): Promise<Response> {
+  const response = await fetch(`https://api.github.com${path}`, {
+    method,
+    headers: {
+      Authorization: `Bearer ${await resolveToken()}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...extra,
+    },
+    cache: 'no-store',
+    signal: AbortSignal.timeout(githubTimeoutMs),
+  });
+  if (!response.ok && response.status !== 304) {
+    // A plain property, so the check works across the bundle copies of this module.
+    throw Object.assign(new Error(`GitHub answered ${response.status} to ${method} ${path}.${githubHint(response)}`), {
+      githubStatus: response.status,
+    });
+  }
+  return response;
 }
 
 // What a person can do about the two answers that stop the whole page.
 function githubHint(response: Response): string {
-	if (response.status === 401) return ' The token was refused. Run gh auth login, then dashboard\\install.ps1.';
-	const reset = Number(response.headers.get('x-ratelimit-reset'));
-	if ((response.status === 403 || response.status === 429) && response.headers.get('x-ratelimit-remaining') === '0' && reset) {
-		return ` The rate limit is used up until ${new Date(reset * 1000).toLocaleTimeString()}.`;
-	}
-	return '';
+  if (response.status === 401) return ' The token was refused. Run gh auth login, then dashboard\\install.ps1.';
+  const reset = Number(response.headers.get('x-ratelimit-reset'));
+  if (
+    (response.status === 403 || response.status === 429) &&
+    response.headers.get('x-ratelimit-remaining') === '0' &&
+    reset
+  ) {
+    return ` The rate limit is used up until ${new Date(reset * 1000).toLocaleTimeString()}.`;
+  }
+  return '';
 }
 
 // The boot task can't reach the gh login, so install.ps1 leaves GITHUB_TOKEN in .env.local.
 async function resolveToken(): Promise<string> {
-	if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-	if (!ghToken) ghToken = (await execFileAsync('gh', ['auth', 'token'])).stdout.trim();
-	return ghToken;
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+  if (!ghToken) ghToken = (await execFileAsync('gh', ['auth', 'token'])).stdout.trim();
+  return ghToken;
 }
