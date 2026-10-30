@@ -1,7 +1,8 @@
 name: Release
 
 # Each push to main whose Checks run passes gets a release. The version is the date: 2026.10.30.1, then 2026.10.30.2.
-# The release carries notes only, since the repo builds no file to ship.
+# The release carries notes only, since the repo builds no file to ship. The install job then starts
+# the update task on the Windows PC, which installs the release there.
 on:
   workflow_run:
     workflows: [Checks]
@@ -53,3 +54,14 @@ jobs:
           git tag "$TAG" "$SHA"
           git push origin "$TAG"
           gh release create "$TAG" --verify-tag --notes-file "$RUNNER_TEMP/notes.md" --title "$TAG"
+
+  install:
+    needs: release
+    # The update task lives on the Windows PC, and a runner there can start it.
+    runs-on: [self-hosted, Windows]
+    steps:
+      - name: Start the update task, which installs this release
+        shell: powershell
+        run: |
+          try { Start-ScheduledTask -TaskName 'local-ci update' -ErrorAction Stop; Write-Host 'Started local-ci update' }
+          catch { Write-Host "The PC runs the update task every 5 minutes, so this release installs then: $_" }

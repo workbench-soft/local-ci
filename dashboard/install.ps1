@@ -1,11 +1,16 @@
 # Builds the CI status page and starts it at boot on http://127.0.0.1:4280.
 # Running it again stops the page, rebuilds it and starts it again. START.cmd
-# runs it when dashboard/ changed. Run it from the checkout the task should
-# serve, not from a worktree.
+# runs it when dashboard/ changed, and so does the "local-ci update" task this
+# script registers. Run it from the checkout the task should serve, not from a
+# worktree.
+param(
+	# The update task passes it: no browser, and the update task stays as it is.
+	[switch]$Unattended
+)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\windows\boot-task.ps1')
 
-if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath) }
+if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath @(if ($Unattended) { '-Unattended' })) }
 
 $appDir = $PSScriptRoot
 $port = if ($env:DASHBOARD_PORT) { $env:DASHBOARD_PORT } else { '4280' }
@@ -61,6 +66,11 @@ Set-Content -LiteralPath $startScript -Encoding ascii -Value "@echo off`r`ncd /d
 
 Write-Step 'Starting the page at boot'
 Register-BootTask $taskName $startScript $appDir
+
+if ($Unattended) { exit 0 }
+
+Write-Step 'Installing each new release by itself'
+& (Join-Path $PSScriptRoot '..\windows\update.ps1') -Register
 
 # The boot task runs without a desktop, so a Startup shortcut opens the page at each logon.
 Write-Step 'Opening the page at logon'
