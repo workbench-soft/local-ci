@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Default branch** the repo now uses `main` in place of `master`. CI runs on pushes to `main`.
+
 - **Faster action cache** `runner\cache-actions.ps1` reads the Worker logs
   from each runner's `_diag` folder. It walked all of `~/actions-runner`
   before, which took 203 s of each `runner\install.ps1` run.

@@ -24,7 +24,7 @@
 
 - [ ] Open `http://localhost:4280` in light and dark mode and check the shifted palette and the cards.
 - [ ] On a Mac, run `./install.sh` and `./runner/install.sh` once. They passed shellcheck and shfmt but didn't run.
-- [ ] Reset the history to one commit (rewrite-repo step 12), then push `master`. The rewrite commits sit on the local `master` only.
+- [ ] Reset the history to one commit (rewrite-repo step 12), then push `main`. The rewrite commits sit on the local `main` only.
 
 ## dashboard-local-runs
 
@@ -41,7 +41,7 @@
 
 ## now-runners
 
-- [ ] Pull `master` in `C:\Programming\WorkbenchSoft\local-ci` and run `.\dashboard\install.ps1`, so `http://localhost:4280` serves the runner rows in the Now card (PR #17).
+- [ ] Pull `main` in `C:\Programming\WorkbenchSoft\local-ci` and run `.\dashboard\install.ps1`, so `http://localhost:4280` serves the runner rows in the Now card (PR #17).
 
 ## python-setup
 
@@ -50,7 +50,7 @@
 
 ## release-install
 
-- [ ] Pull `master` in `C:\Programming\WorkbenchSoft\local-ci` and run `.\dashboard\install.ps1`, so `http://localhost:4280` gets the Release column, Install, the failed step and the PR links (PR #21).
+- [ ] Pull `main` in `C:\Programming\WorkbenchSoft\local-ci` and run `.\dashboard\install.ps1`, so `http://localhost:4280` gets the Release column, Install, the failed step and the PR links (PR #21).
 - [ ] Press Install once on a real release. `workbench-soft.github.io` had 0 releases on 2025-10-29, since the latest Release runs failed, so only the error path ran in testing.
 
 ## purge-all
