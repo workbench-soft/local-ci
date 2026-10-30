@@ -145,6 +145,13 @@ once, from the main checkout:
   to `main`. PR runs are off, so run the checks before a merge.
 - **Logs** `dashboard\dashboard.log`.
 
+## Releases
+
+Each push to `main` that passes Checks gets a release on the
+[Releases page](https://github.com/workbench-soft/local-ci/releases), such as
+`v2026.10.30.1`. Its notes list the commits since the release before.
+`START.cmd` and the installers still run the latest `main`.
+
 ## Windows
 
 [winget](https://learn.microsoft.com/windows/package-manager/winget/) stands in

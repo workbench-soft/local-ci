@@ -174,3 +174,9 @@ icon: a white loop arrow around a green play sign on blue.
 - **Limits** a job counts as local when its runner name matches a runner
   folder of this PC, so the this PC checks need Windows. After a new gh login,
   run the install script again.
+
+## Releases
+
+- **What it gives** a tagged release such as `v2026.10.30.1` for each push to `main` that passes `Checks`. Its notes list the commits since the release before.
+- **Where** the [Releases page](https://github.com/workbench-soft/local-ci/releases).
+- **Limits** notes only, with no files to download.
