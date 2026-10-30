@@ -629,3 +629,32 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 - **Limits** Stop skips `if: always()` steps now, like Purge.
+
+### 2026-10-31 A Releases tab: the latest release of each app, its changes, and install of several at once
+
+- **Why** the person wanted to put releases of many apps on the phone over
+  adb in one go, ticking them in a list. They also need to see which release
+  is the latest, which app still builds a newer one, and what changed.
+- **Changes**
+  - **`app/page.tsx`** two tabs under the heading: Status, as before, and
+    Releases at `/?tab=releases`. The Releases tab names how many apps build.
+  - **`status/latest-releases.ts`** groups the public releases by app, keeps
+    the newest of each, and finds the repo behind it. A run on `main` that
+    hasn't finished marks the app as building. A failed run on `main` after
+    the release marks the last build as failed.
+  - **`status/releases.ts`** a release keeps its notes as the HTML GitHub
+    renders. `lumiere-player` owns the `lumiere` releases.
+  - **`status/org-status.ts`** the releases call asks for `body_html`.
+  - **`cards/releases-card.tsx`** a row per app: a tick box when the release
+    has an APK, the release link, its age, the build state, and the notes
+    behind a Changes toggle. Install selected puts the ticked APKs on the
+    phone one by one through `installRelease`, and each row shows its result.
+- **Steps**
+  1. This spec.
+  2. Release notes and the per app grouping, with tests.
+  3. The tab and the card.
+  4. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
+- **Limits** a release with several APKs installs the first one. The public
+  repo keeps 3 releases per app, so the tab shows only the newest.
