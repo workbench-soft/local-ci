@@ -171,3 +171,20 @@ machine with several runners builds several jobs at once.
   4. Docs and changelog.
 - **Docs** `README.md`, `docs/architecture.md`, `docs/user-flows.md`,
   `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-30 Defender exclusions in one script
+
+- **Why** each Defender exclusion should come from a script in this repo,
+  so a new PC gets the same list. A Cargo build under `%LOCALAPPDATA%` was
+  scanned, and Defender blocked a langflip test exe there.
+- **Changes**
+  - **Script** `windows/defender-exclusions.ps1` holds the list and adds it.
+    It asks for admin rights when it runs without them, and a rerun is safe.
+  - **List** the runner folders, `C:\ci`, `~/.gradle`, the pnpm, npm and mise
+    caches, `~/.cargo`, `~/.rustup`, `%LOCALAPPDATA%\media-organizer` for its
+    release build, and `DEV_DIR` for local builds.
+  - **Runner install** `runner/install.ps1` calls the script.
+- **Limits** Windows only. Defender skips the org's own code in these
+  folders. Another antivirus switches Defender off, and the script then
+  prints the refusal.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.

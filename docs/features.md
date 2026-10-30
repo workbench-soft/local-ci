@@ -37,9 +37,10 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   them.
 - **Shared pnpm store** every job installs from the machine's pnpm store,
   so a package downloads once for all runners and runs.
-- **Defender exclusions** on Windows Defender skips the runner folders and
-  the package caches. `RUNNER_DEFENDER_EXCLUSIONS=off` skips the step.
-- **Limit** Defender then skips the code that jobs check out.
+- **Defender exclusions** on Windows Defender skips the runner folders, the
+  repos in `DEV_DIR` and the package caches. `windows\defender-exclusions.ps1`
+  holds the list and runs alone. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
+- **Limit** Defender then skips the code that jobs and local builds write.
 - **Long paths** git and Windows accept paths over 260 characters, so a
   checkout can delete a deep `node_modules` or build cache.
 

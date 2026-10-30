@@ -110,27 +110,6 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
 
-# Defender scans each file a job writes, and pnpm install writes tens of
-# thousands. The runners build only the org's own repos.
-function Add-DefenderExclusions {
-	if ($env:RUNNER_DEFENDER_EXCLUSIONS -eq 'off') { Write-Host 'RUNNER_DEFENDER_EXCLUSIONS=off, skipping'; return }
-	$paths = @(
-		(Join-Path $HOME 'actions-runner'),
-		$workRoot,
-		(Join-Path $HOME '.gradle'),
-		(Join-Path $env:LOCALAPPDATA 'pnpm'),
-		(Join-Path $env:LOCALAPPDATA 'npm-cache'),
-		(Join-Path $env:LOCALAPPDATA 'mise')
-	)
-	# Another antivirus switches Defender off, and Add-MpPreference then fails.
-	try {
-		Add-MpPreference -ExclusionPath $paths
-		$paths | ForEach-Object { Write-Host "Excluded  $_" }
-	} catch {
-		Write-Host "Defender refused the exclusions: $($_.Exception.Message)"
-	}
-}
-
 # A restart or a removal would kill the job this runner builds now.
 function Stop-RunnerWhenIdle($runner) {
 	$ownWorker = { Get-Process Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } }
@@ -211,7 +190,7 @@ if ($extra.Count) {
 }
 
 Write-Step 'Adding the runner folders and the package caches to the Defender exclusions'
-Add-DefenderExclusions
+& (Join-Path $PSScriptRoot '..\windows\defender-exclusions.ps1')
 
 # The SDK parts the org's Android apps build with. Add one here and run the script again.
 $androidPackages = 'ndk;27.1.12297006', 'platforms;android-36', 'platforms;android-37.0', 'build-tools;35.0.0', 'build-tools;36.0.0', 'build-tools;37.0.0'
