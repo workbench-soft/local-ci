@@ -1,0 +1,55 @@
+name: Release
+
+# Each push to main whose Checks run passes gets a release. The version is the date: 2026.10.30.1, then 2026.10.30.2.
+# The release carries notes only, since the repo builds no file to ship.
+on:
+  workflow_run:
+    workflows: [Checks]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  # A workflow_run starts on the latest main, which can be newer than the commit Checks tested.
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+# Windows runs steps in PowerShell unless told otherwise.
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success')
+    # One release runs at a time, so each sees the tag of the one before. A newer one cancels the stale one.
+    concurrency:
+      group: release
+      cancel-in-progress: true
+    # The PC runner costs 0 minutes on a private repo.
+    runs-on: [self-hosted, local]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.SHA }}
+          # The release notes and the next version need every earlier tag and commit.
+          fetch-depth: 0
+
+      - name: Pick the next version
+        id: version
+        run: echo "tag=v$(.github/scripts/next-version.sh)" >> "$GITHUB_OUTPUT"
+
+      # A tag pushed with the workflow token doesn't start other workflows.
+      - name: Tag the commit and publish the release
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          .github/scripts/release-notes.sh "$TAG" > "$RUNNER_TEMP/notes.md"
+          git tag "$TAG" "$SHA"
+          git push origin "$TAG"
+          gh release create "$TAG" --verify-tag --notes-file "$RUNNER_TEMP/notes.md" --title "$TAG"
