@@ -37,6 +37,11 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   them.
 - **Shared pnpm store** every job installs from the machine's pnpm store,
   so a package downloads once for all runners and runs.
+- **Android SDK** on Windows the runners build with the SDK in
+  `C:\Android\Sdk`. `runner\install.ps1` copies it there from
+  `%LOCALAPPDATA%\Android\Sdk` on the first run and installs the parts the
+  apps need. A packaged app such as Claude Desktop writes `%LOCALAPPDATA%`
+  into its own folder, so an SDK there is incomplete for the runners.
 - **Defender exclusions** on Windows Defender skips the runner folders, the
   repos in `DEV_DIR` and the package caches. `windows\defender-exclusions.ps1`
   holds the list and runs alone. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
