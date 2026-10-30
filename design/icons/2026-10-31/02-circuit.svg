@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Circuit: a check mark traced in gold on a green board, with round pads</title>
+  <rect width="256" height="256" rx="40" fill="#0f5132"/>
+  <path d="M20 132H64M196 84V36M108 176V236" stroke="#1f7a4d" stroke-width="12"/>
+  <path d="M64 132L108 176L196 84" fill="none" stroke="#e8b84a" stroke-width="22" stroke-linejoin="round"/>
+  <g fill="#e8b84a"><circle cx="64" cy="132" r="18"/><circle cx="196" cy="84" r="18"/><circle cx="108" cy="176" r="18"/></g>
+  <g fill="#0f5132"><circle cx="64" cy="132" r="7"/><circle cx="196" cy="84" r="7"/><circle cx="108" cy="176" r="7"/></g>
+</svg>

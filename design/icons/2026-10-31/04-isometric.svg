@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Isometric: a server block with green status lights, three shades of slate</title>
+  <path d="M128 24L200 64L128 104L56 64Z" fill="#8fa3bf"/>
+  <path d="M56 64L128 104V232L56 192Z" fill="#4a5a75"/>
+  <path d="M128 104L200 64V192L128 232Z" fill="#33405a"/>
+  <g fill="#3dff88">
+    <path d="M144 112L184 90V104L144 126Z"/><path d="M144 148L184 126V140L144 162Z"/><path d="M144 184L184 162V176L144 198Z"/>
+  </g>
+  <g fill="#2a3448"><path d="M72 108L112 130V140L72 118Z"/><path d="M72 144L112 166V176L72 154Z"/></g>
+</svg>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Low poly: a check mark cut into green triangles on a dark tile</title>
+  <rect width="256" height="256" rx="48" fill="#11161d"/>
+  <path d="M40 132L82 90L112 120Z" fill="#7df0a8"/>
+  <path d="M40 132L112 120L112 204Z" fill="#2fbf6c"/>
+  <path d="M112 120L182 50L224 92Z" fill="#a8ffc8"/>
+  <path d="M112 120L224 92L112 204Z" fill="#1f9a55"/>
+</svg>

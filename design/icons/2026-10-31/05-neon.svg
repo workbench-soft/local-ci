@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Neon: a loop arrow round a check, the CI cycle glowing green</title>
+  <defs><filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="8"/></filter></defs>
+  <rect width="256" height="256" rx="56" fill="#07110c"/>
+  <g id="n" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#2bff88" filter="url(#g)" stroke-width="16"><path d="M182 63.6A84 84 0 1 1 74 63.6"/><path d="M92 130L118 156L166 104"/></g>
+    <g stroke="#c8ffe0" stroke-width="12"><path d="M182 63.6A84 84 0 1 1 74 63.6"/><path d="M92 130L118 156L166 104"/></g>
+  </g>
+  <path d="M100 44L86 86L56 52Z" fill="#c8ffe0"/>
+</svg>

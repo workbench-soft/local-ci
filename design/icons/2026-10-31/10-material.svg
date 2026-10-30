@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Material: a green house with a white check and a folded corner, CI at home</title>
+  <defs><filter id="s" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="10" stdDeviation="8" flood-opacity="0.3"/></filter></defs>
+  <rect width="256" height="256" rx="48" fill="#e7f6ee"/>
+  <path d="M128 30L232 120H206V224H50V120H24Z" fill="#1f9d5c" filter="url(#s)"/>
+  <path d="M128 30L232 120H206Z" fill="#167a47"/>
+  <path d="M84 150L116 182L172 122" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

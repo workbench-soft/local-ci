@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Neon: a thick loop and check for small sizes</title>
+  <rect width="256" height="256" rx="56" fill="#07110c"/>
+  <g fill="none" stroke="#2bff88" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"><path d="M182 63.6A84 84 0 1 1 74 63.6"/><path d="M90 130L118 158L168 102"/></g>
+</svg>

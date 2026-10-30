@@ -679,3 +679,14 @@ browser at each logon.
   `docs/architecture.md`, `CHANGELOG.md`.
 - **Limits** a release with several APKs installs the first one. The public
   repo keeps 3 releases per app, so the tab shows only the newest.
+
+### 2026-10-31 A new icon from the icons skill
+
+- **Why** every internal tool with a UI gets an icon drawn through the
+  `icon-styles` skill, picked from 10 styles.
+- **Pick** `02-circuit`: a gold check mark traced on a green board, with
+  round pads. Its small variant, the check alone, serves 32 px and below.
+- **Files** `dashboard/icon.ico` for the Startup shortcut,
+  `dashboard/app/icon.svg` for the tab, all 10 drafts in
+  `design/icons/2026-10-31`.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.

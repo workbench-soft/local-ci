@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Blueprint: a PC tower drawn in white with a check on its front, on blueprint blue</title>
+  <rect width="256" height="256" rx="40" fill="#0d3b78"/>
+  <path d="M0 64H256M0 128H256M0 192H256M64 0V256M128 0V256M192 0V256" stroke="#ffffff" stroke-opacity="0.22" stroke-width="2" stroke-dasharray="6 6"/>
+  <rect x="70" y="26" width="116" height="204" rx="14" fill="#0d3b78" stroke="#ffffff" stroke-width="12"/>
+  <path d="M94 62H162M94 88H162" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+  <path d="M96 156L120 180L162 132" fill="none" stroke="#7dffb0" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M206 26V230M200 26H212M200 230H212" stroke="#ffffff" stroke-width="4" opacity="0.7"/>
+</svg>
