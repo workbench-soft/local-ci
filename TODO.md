@@ -69,6 +69,11 @@
 - [ ] Watch the first sweep cancels in `dashboard\dashboard.log` after the install: each line now gives a time and a reason. A new PR's first run should keep building.
 - [ ] Press Install on a real release: it should show on the Release run only. `workbench-soft.github.io` had 0 releases when tested.
 - [ ] On the Mac, run the status page once: the Runners card names `runner/install.sh`. Only Windows ran here.
+- [ ] Commit or stash the TODO.md edits in `C:\Programming\WorkbenchSoft\local-ci` (sections `Org releases` and `purge-all-every-run`), then `git pull` and run `.\runner\install.ps1` as admin, so the faster action cache and downloads reach the runners (branch `audit-2026-10-30`). `git pull --ff-only` stops while TODO.md has local edits.
+- [ ] After that run, check that `~/actions-runner/install.log` shows "Filling the action cache" end within a couple of minutes. The scan alone took 203 s before.
+- [ ] The next time you change the count on the Runners card, check that the note under Apply reads `runner\install.ps1`. The audit didn't press Apply, since it starts the admin task on the live runners.
+- Left: prune `_diag` logs in each runner folder: 952 Worker logs, 278 MB on 2026-10-30, with no cap (deleting logs is a person's call, and the runner's own retention wasn't checked).
+- Left: TypeScript 7 and @types/node 26 (major bumps, node stays at 22).
 - Left: run the runners under their own Windows account, so jobs can't read the admin token in `dashboard\.env.local` (effort L, needs a new account and paths for mise, Gradle and the Android SDK).
 - Left: a fine-grained token for the page in place of the `gh` login (needs a new PAT made by a person).
 - Left: restart the old page task when an `install.ps1` build fails (needs an admin run to test).

@@ -5,6 +5,8 @@
 # a workflow pins a new action version.
 # The actions come from the uses: lines of the workflows under DEV_DIR and from the runner logs.
 $ErrorActionPreference = 'Stop'
+# Windows PowerShell redraws a progress bar per chunk, which made a 2 MB zip take 6.6 s in place of 0.65 s.
+$ProgressPreference = 'SilentlyContinue'
 
 $devDir = if ($env:DEV_DIR) { $env:DEV_DIR } else { 'C:\Programming\WorkbenchSoft' }
 $cache = if ($env:RUNNER_ACTION_CACHE) { $env:RUNNER_ACTION_CACHE } else { Join-Path $HOME 'actions-runner\_actions-cache' }
@@ -23,7 +25,8 @@ Get-ChildItem -Directory -LiteralPath $devDir -ErrorAction SilentlyContinue | Fo
 	$wanted["$($m.Groups[1].Value)@$($m.Groups[3].Value)"] = $true
 }
 # The runners log each action they looked for, already resolved to its commit.
-Get-ChildItem -Path (Join-Path $HOME 'actions-runner') -Recurse -Filter 'Worker_*.log' -ErrorAction SilentlyContinue |
+# Only _diag of each runner holds them. A walk of the whole folder also crosses _tool and took 200 s.
+Get-ChildItem -Path (Join-Path $HOME 'actions-runner\*\_diag\Worker_*.log') -ErrorAction SilentlyContinue |
 	Select-String -Pattern "Check if action archive '([\w.-]+/[\w.-]+)@([0-9a-f]{40})'" | ForEach-Object {
 		$m = $_.Matches[0]
 		$wanted["$($m.Groups[1].Value)@$($m.Groups[2].Value)"] = $true

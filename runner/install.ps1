@@ -9,6 +9,8 @@ param(
 	[switch]$PauseOnError
 )
 $ErrorActionPreference = 'Stop'
+# Windows PowerShell redraws a progress bar per chunk, which made downloads 10 times slower.
+$ProgressPreference = 'SilentlyContinue'
 trap {
 	Write-Host "`n$($_.InvocationInfo.PositionMessage)`n$_" -ForegroundColor Red
 	if ($PauseOnError) { Read-Host 'Press Enter to close' | Out-Null }

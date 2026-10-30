@@ -13,6 +13,8 @@ concurrency:
   group: checks-${{ github.ref }}
   cancel-in-progress: true
 
+# Jobs run on the PC that keeps an admin token in dashboard\.env.local, so each action is pinned to a commit.
+# Dependabot moves the pin and its version comment.
 permissions:
   contents: read
 
@@ -29,7 +31,7 @@ jobs:
       run:
         working-directory: dashboard
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - run: mise x -- pnpm install --frozen-lockfile
       - run: mise x -- pnpm typecheck
       - run: mise x -- pnpm test
@@ -40,7 +42,7 @@ jobs:
   scripts:
     runs-on: [self-hosted, Windows]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - run: mise x shellcheck@latest shfmt@latest -- bash -c 'shellcheck install.sh runner/install.sh && shfmt -d install.sh runner/install.sh'
       # A syntax error in a .ps1 file shows only when a person runs it.
       - shell: powershell

@@ -141,8 +141,8 @@ once, from the main checkout:
   port 4281 and cancels no run. `mise x -- pnpm typecheck` and
   `mise x -- pnpm test` are the checks.
 - **CI** `.github/workflows/checks.yml` runs those checks, a build, shellcheck,
-  shfmt and a parse of each `.ps1` file on the Windows runners, for each PR
-  and each push to `master`.
+  shfmt and a parse of each `.ps1` file on the Windows runners, for each push
+  to `master`. PR runs are off, so run the checks before a merge.
 - **Logs** `dashboard\dashboard.log`.
 
 ## Windows

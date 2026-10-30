@@ -26,7 +26,7 @@ export async function applyRunnerCount(count: number): Promise<CountResult> {
 		const text = String((error as { stderr?: string }).stderr || error);
 		// Windows reports a missing task in its own language, so the check reads the code.
 		if (/0x80070002/.test(text)) {
-			return { ok: false, error: `The count is saved. Run runner\install.ps1 once as admin to apply it. That run also adds the task "${countTaskName}" this button starts.` };
+			return { ok: false, error: `The count is saved. Run runner\\install.ps1 once as admin to apply it. That run also adds the task "${countTaskName}" this button starts.` };
 		}
 		return { ok: false, error: text.trim() };
 	}

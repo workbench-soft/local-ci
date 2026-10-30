@@ -20,7 +20,7 @@ export function RunnerCountForm({ installed, info: { saved, cpus, memoryGb, reco
 			const result = await applyRunnerCount(count);
 			setNote(
 				result.ok
-					? { text: `runner\install.ps1 runs in a window on the desktop. A runner on a job leaves once the job ends.`, failed: false }
+					? { text: `runner\\install.ps1 runs in a window on the desktop. A runner on a job leaves once the job ends.`, failed: false }
 					: { text: result.error, failed: true },
 			);
 		});
