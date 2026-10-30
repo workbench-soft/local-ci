@@ -23,6 +23,7 @@ export type ApiRelease = {
 	name: string | null;
 	html_url: string;
 	created_at: string;
+	published_at?: string | null;
 	assets: { name: string; browser_download_url: string }[];
 };
 
@@ -32,7 +33,8 @@ export function toRelease(release: ApiRelease): Release {
 		tag: release.tag_name,
 		name: release.name || release.tag_name,
 		url: release.html_url,
-		createdAt: release.created_at,
+		// created_at is the date of the tagged commit. Every tag in the public repo points at its one commit, so only published_at tells when the release came out.
+		createdAt: release.published_at || release.created_at,
 		apk: apk ? { name: apk.name, url: apk.browser_download_url } : null,
 	};
 }
