@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Dashboard tooling** TypeScript 7.0.2 and `@types/node` 26.6.5 for the status page. Typecheck, tests and the build pass.
+
 - **Default branch** the repo now uses `main` in place of `master`. CI runs on pushes to `main`.
 
 - **Faster action cache** `runner\cache-actions.ps1` reads the Worker logs
