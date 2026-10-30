@@ -62,9 +62,10 @@ runner. The runner scripts also work alone:
   script moves old runners onto it.
 - **pnpm store** every job uses the machine's pnpm store through
   `pnpm_config_store_dir`, so `pnpm install` downloads a package once.
-- **Defender** on Windows the script excludes `~/actions-runner`,
-  `~/.gradle` and the pnpm, npm and mise caches from scans, so
-  `pnpm install` runs faster. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
+- **Defender** `windows\defender-exclusions.ps1` holds every Defender
+  exclusion: the runner folders, `C:\ci`, `DEV_DIR`, and the Gradle, Cargo,
+  pnpm, npm and mise caches. The runner script calls it, and it also runs
+  alone. Add a path there. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
 - **Long paths** the script sets `git config --global core.longpaths true`
   and, in an admin run, `LongPathsEnabled` in the registry. `node_modules`
   and the `.open-next` cache hold paths over 260 characters.
