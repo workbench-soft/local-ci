@@ -12,6 +12,9 @@ export type Release = {
 // The app repos are private, so their release workflows publish to this public repo with the tag <repo>-v<version>.
 export const releasesRepo = process.env.RELEASES_REPO || `${orgName}/${orgName}.github.io`;
 
+// The memories repo was memories-mobile and took in media-organizer. Its apps keep the old release names, so installed copies keep updating.
+const releasePrefixes: Record<string, string[]> = { memories: ['memories-mobile', 'media-organizer'] };
+
 // An upload can land a little after GitHub last updates the run.
 const slackMs = 60_000;
 
@@ -39,7 +42,8 @@ type RunWindow = { id: number; repo: string; createdAt: string; updatedAt: strin
 /** True when GitHub created the release of the run's repo while the run ran. */
 function ranDuring(run: RunWindow, release: Release): boolean {
 	const at = Date.parse(release.createdAt);
-	return release.tag.startsWith(`${run.repo}-v`) && at >= Date.parse(run.createdAt) && at <= Date.parse(run.updatedAt) + slackMs;
+	const prefixes = releasePrefixes[run.repo] ?? [run.repo];
+	return prefixes.some((prefix) => release.tag.startsWith(`${prefix}-v`)) && at >= Date.parse(run.createdAt) && at <= Date.parse(run.updatedAt) + slackMs;
 }
 
 /**

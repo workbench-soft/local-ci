@@ -18,8 +18,14 @@ test('a release of another repo or outside the run stays off it', () => {
 });
 
 test('a repo name that starts another one keeps its own releases', () => {
-	const releases = [release('memories-mobile-v1.0.0', '2025-10-29T12:05:00Z')];
-	assert.equal(releaseOfRun({ ...run, repo: 'memories' }, releases), null);
+	const releases = [release('tickalot-pro-v1.0.0', '2025-10-29T12:05:00Z')];
+	assert.equal(releaseOfRun(run, releases), null);
+});
+
+test('the memories repo owns the releases of the apps it took in', () => {
+	const memories = { ...run, repo: 'memories' };
+	assert.equal(releaseOfRun(memories, [release('memories-mobile-v1.0.0', '2025-10-29T12:05:00Z')])?.tag, 'memories-mobile-v1.0.0');
+	assert.equal(releaseOfRun(memories, [release('media-organizer-v0.1.0', '2025-10-29T12:05:00Z')])?.tag, 'media-organizer-v0.1.0');
 });
 
 test('a release goes to the one overlapping run that ended nearest to it', () => {

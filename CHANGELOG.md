@@ -7,6 +7,7 @@
   run. Claude Desktop redirects `%LOCALAPPDATA%` writes into its own
   folder, so SDK parts installed from a Claude session were invisible to the
   runners, and every Expo release build failed on `minifyReleaseWithR8`.
+- **Releases** the dashboard links runs of the `memories` repo to the `memories-mobile-v*` and `media-organizer-v*` releases. The repo was renamed, and its apps kept their release names.
 
 - The admin window of `runner\install.ps1` stays open on an error, with the
   line that failed, and each run writes `~/actions-runner/install.log`. It
