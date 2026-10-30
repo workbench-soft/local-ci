@@ -23,7 +23,8 @@ Get-ChildItem -Directory -LiteralPath $devDir -ErrorAction SilentlyContinue | Fo
 	$wanted["$($m.Groups[1].Value)@$($m.Groups[3].Value)"] = $true
 }
 # The runners log each action they looked for, already resolved to its commit.
-Get-ChildItem -Path (Join-Path $HOME 'actions-runner') -Recurse -Filter 'Worker_*.log' -ErrorAction SilentlyContinue |
+# Only _diag of each runner holds them. A walk of the whole folder also crosses _tool and took 200 s.
+Get-ChildItem -Path (Join-Path $HOME 'actions-runner\*\_diag\Worker_*.log') -ErrorAction SilentlyContinue |
 	Select-String -Pattern "Check if action archive '([\w.-]+/[\w.-]+)@([0-9a-f]{40})'" | ForEach-Object {
 		$m = $_.Matches[0]
 		$wanted["$($m.Groups[1].Value)@$($m.Groups[2].Value)"] = $true
