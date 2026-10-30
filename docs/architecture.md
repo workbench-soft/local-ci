@@ -156,7 +156,15 @@ The server renders the page for each request.
   to the public `workbench-soft/workbench-soft.github.io` with the tag
   `<repo>-v<version>`. `status/releases.ts` gives each release to the run of
   its repo that ran while GitHub created it and ended nearest to it.
-  `RELEASES_REPO` picks another repo.
+  `RELEASES_REPO` picks another repo. The call asks for
+  `application/vnd.github.full+json`, so each release comes with its notes
+  as cleaned HTML in `body_html`.
+- **Releases tab** `/?tab=releases`. `status/latest-releases.ts` takes the
+  app name from each tag, keeps the newest release per app and maps the app
+  to its repo. Unfinished push, dispatch or `workflow_run` runs on `main`
+  mark the app as building. A failed one after the release marks it failed.
+  `cards/releases-card.tsx` calls the install action once per ticked app,
+  in turn.
 - **Install** `status/install-apk.ts` is a server action. It checks
   `adb devices` for one phone, downloads the release's `.apk` to
   `%TEMP%local-ci-apk` and runs `adb install -r -d`. adb's output goes

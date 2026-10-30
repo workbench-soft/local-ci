@@ -168,6 +168,15 @@ icon: a white loop arrow around a green play sign on blue.
   published, on the one run of its repo that ended nearest to it. Install puts its APK on the phone plugged in over USB through
   adb. adb's error shows in a red box under the button. Needs exactly one
   phone in `adb devices`, and the public repo keeps 3 releases per app.
+- **Releases tab** the Releases tab beside Status lists the newest release of
+  each app, newest first, with its age. Changes opens the release notes. A
+  label says Latest, names the newer build that runs on `main` and where, or
+  says that run failed after the release. The tab title counts the apps that
+  build. Tick apps, or All with an APK, and press Install: the APKs go on the
+  phone one by one, and each row shows Installed or adb's error.
+- **Limits** a release with several APKs installs the first. A run on `main`
+  counts as a build when a push, a dispatch or a finished workflow started
+  it, so Dependabot runs stay out.
 - **Failed step** a failed run names its failed job and step under the
   result, linked to that job's log.
 - **PR and branch** the branch of a run is a link. The PR column links each

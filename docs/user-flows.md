@@ -131,6 +131,9 @@ flowchart TD
    Click the time in Took to see how long each job and step took.
 8. Plug the phone in over USB with USB debugging on. Press Install in the
    Release column. The button says the device, or shows adb's error in red.
+   For several apps, open the Releases tab. Read what changed under
+   Changes, tick the apps and press Install. Each row says Installed or
+   shows adb's error.
 9. Click the branch or the PR link to open it on GitHub.
 10. To change the number of runners, type it in Runners on this PC, or press
     Use with the suggested count. Press Apply, and watch
@@ -153,6 +156,8 @@ flowchart TD
   H -- Purge all, confirmed --> P[gray the rows, purge them 5 at a time, reload, repeat until none match]
   H -- Install --> K[adb devices, download the APK, adb install]
   K --> L[installed on the device, or adb's error in red]
+  F --> RT[Releases tab: newest release of each app, its notes, its build on main]
+  RT -- tick apps, Install --> K2[one install after another] --> K
   H -- Apply runner count --> R[write runner-count, start the count task]
   R --> T[runner/install.ps1 as admin adds or removes runners]
   I & J & P & T --> G
