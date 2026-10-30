@@ -629,3 +629,20 @@ browser at each logon.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
   `docs/architecture.md`, `CHANGELOG.md`.
 - **Limits** Stop skips `if: always()` steps now, like Purge.
+
+### 2026-10-31 The page shows inside the Workbench launcher
+
+- **Why** the person wants the CI page in a tab of the Workbench launcher, the
+  window that holds every tool of the workspace.
+- **Changes**
+  - **`dashboard/next.config.ts`** `frame-ancestors` lets the launcher on
+    `http://127.0.0.1:47821` frame the page. Other sites still can't. The
+    `X-Frame-Options: DENY` header goes, since it can't name an allowed site
+    and would block the launcher in older browsers.
+  - **Dev** `pnpm dev` also lets any `127.0.0.1` port frame the page, so a
+    launcher started with `--dev` on a free port can show it.
+- **Steps**
+  1. This spec.
+  2. The headers.
+  3. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
