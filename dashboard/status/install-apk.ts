@@ -64,7 +64,7 @@ function adbError(error: unknown): string {
 
 // The boot task runs without a login shell, so PATH may lack adb.
 function findAdb(): string | null {
-	const sdkRoots = [process.env.ANDROID_HOME, process.env.ANDROID_SDK_ROOT, process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, 'Android', 'Sdk')];
+	const sdkRoots = [process.env.ANDROID_HOME, process.env.ANDROID_SDK_ROOT, process.env.SystemDrive && join(process.env.SystemDrive, 'Android', 'Sdk'), process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, 'Android', 'Sdk')];
 	const candidates = [
 		process.env.ADB_PATH,
 		...(process.env.PATH ?? '').split(delimiter).map((dir) => dir && join(dir, adbName)),

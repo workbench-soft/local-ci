@@ -39,6 +39,11 @@ function Write-Step([string]$text) { Write-Host "`n==> $text" }
 # Jobs check repos out here, a short root so deep node_modules paths stay under 260 characters.
 $workRoot = if ($env:RUNNER_WORK_ROOT) { $env:RUNNER_WORK_ROOT } else { Join-Path $env:SystemDrive 'ci' }
 
+# The SDK sits outside AppData. Claude Desktop is a packaged app, so a tool it
+# runs writes %LOCALAPPDATA% into its own LocalCache folder. An SDK part
+# installed from there is invisible to the runners, which start from a boot task.
+$androidHome = if ($env:ANDROID_HOME -and $env:ANDROID_HOME -notlike "$env:LOCALAPPDATA\*") { $env:ANDROID_HOME } else { Join-Path $env:SystemDrive 'Android\Sdk' }
+
 function Get-Runner([int]$number) {
 	$suffix = if ($number -eq 1) { '' } else { "-$number" }
 	$taskSuffix = if ($number -eq 1) { '' } else { " $number" }
@@ -105,12 +110,11 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	$path = $toolDirs + ([Environment]::GetEnvironmentVariable('Path', 'Machine') -split ';') + ([Environment]::GetEnvironmentVariable('Path', 'User') -split ';')
 	Set-Content -LiteralPath (Join-Path $runnerDir '.path') -Encoding ascii -Value (($path | Where-Object { $_ } | Select-Object -Unique) -join ';')
 
-	$android = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
 	# The setup-* actions then download a tool once for every runner, not once per runner.
 	$jobVars = [ordered]@{ LANG = 'en_US.UTF-8'; RUNNER_TOOL_CACHE = $toolCache; AGENT_TOOLSDIRECTORY = $toolCache }
 	# action-setup puts PNPM_HOME, and with it the pnpm store, in _temp, which the runner wipes after each job.
 	$jobVars.pnpm_config_store_dir = Join-Path $env:LOCALAPPDATA 'pnpm\store'
-	if (Test-Path -LiteralPath $android) { $jobVars.ANDROID_HOME = $android; $jobVars.ANDROID_SDK_ROOT = $android }
+	if (Test-Path -LiteralPath $androidHome) { $jobVars.ANDROID_HOME = $androidHome; $jobVars.ANDROID_SDK_ROOT = $androidHome }
 	# Two jobs downloading the same SDK part at once leave it half written, so jobs only read the SDK.
 	$jobVars.'ORG_GRADLE_PROJECT_android.builder.sdkDownload' = 'false'
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
@@ -201,9 +205,21 @@ Write-Step 'Adding the runner folders and the package caches to the Defender exc
 # The SDK parts the org's Android apps build with. Add one here and run the script again.
 $androidPackages = 'ndk;27.1.12297006', 'platforms;android-36', 'platforms;android-37.0', 'build-tools;35.0.0', 'build-tools;36.0.0', 'build-tools;37.0.0'
 
+# Android Studio puts the SDK under %LOCALAPPDATA%. The first run copies it to
+# the SDK folder, and the copy is the one the runners and sdkmanager use after that.
+function Copy-AndroidSdk {
+	$old = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
+	$sdkmanager = 'cmdline-tools\latest\bin\sdkmanager.bat'
+	if ((Test-Path -LiteralPath (Join-Path $androidHome $sdkmanager)) -or -not (Test-Path -LiteralPath (Join-Path $old $sdkmanager))) { return }
+	Write-Host "Copying $old to $androidHome"
+	# .temp holds the half-written downloads of an interrupted sdkmanager run.
+	robocopy $old $androidHome /E /XD .temp /R:1 /W:1 /MT:8 /NFL /NDL /NP | Out-Host
+	# robocopy returns 0 to 7 on success.
+	if ($LASTEXITCODE -gt 7) { throw "robocopy failed with exit code $LASTEXITCODE" }
+}
+
 function Install-AndroidSdk {
-	$android = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
-	$sdkmanager = Join-Path $android 'cmdline-tools\latest\bin\sdkmanager.bat'
+	$sdkmanager = Join-Path $androidHome 'cmdline-tools\latest\bin\sdkmanager.bat'
 	if (-not (Test-Path -LiteralPath $sdkmanager)) { Write-Host "No sdkmanager at $sdkmanager, skipping the Android SDK"; return }
 	if (-not $env:JAVA_HOME) { $env:JAVA_HOME = mise where java }
 	@('y') * 20 | & $sdkmanager --install @androidPackages | Out-Null
@@ -219,7 +235,8 @@ try {
 	Write-Host "Windows long paths need an admin run: $($_.Exception.Message)"
 }
 
-Write-Step 'Installing the Android SDK parts the apps build with'
+Write-Step "Installing the Android SDK parts the apps build with, in $androidHome"
+Copy-AndroidSdk
 Install-AndroidSdk
 
 $toolDirs = Get-ToolDirs

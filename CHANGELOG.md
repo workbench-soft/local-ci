@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Android SDK** the runners read the SDK from `C:\Android\Sdk`, and
+  `runner\install.ps1` copies it there from `%LOCALAPPDATA%` on the first
+  run. Claude Desktop redirects `%LOCALAPPDATA%` writes into its own
+  folder, so SDK parts installed from a Claude session were invisible to the
+  runners, and every Expo release build failed on `minifyReleaseWithR8`.
+
 - The admin window of `runner\install.ps1` stays open on an error, with the
   line that failed, and each run writes `~/actions-runner/install.log`. It
   closed at once before, so the error was lost.
