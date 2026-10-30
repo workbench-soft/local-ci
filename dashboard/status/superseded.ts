@@ -17,38 +17,50 @@ const replaceableEvents = new Set(['push', ...prEvents]);
  * from openPrBranches stays.
  */
 export function supersededRuns<T extends RunKey>(runs: T[], openPrBranches: OpenPrBranches): T[] {
-	// GitHub hands out run ids in order, so the highest id is the newest push.
-	const newest = new Map<string, number>();
-	for (const run of runs) newest.set(groupOf(run), Math.max(newest.get(groupOf(run)) ?? 0, run.id));
-	return runs.filter(
-		(run) =>
-			activeStatuses.has(run.status) &&
-			((replaceableEvents.has(run.event) && run.id < (newest.get(groupOf(run)) ?? 0)) || (prEvents.has(run.event) && openPrBranches.has(run.repo) && !openPrBranches.get(run.repo)?.has(run.branch))),
-	);
+  // GitHub hands out run ids in order, so the highest id is the newest push.
+  const newest = new Map<string, number>();
+  for (const run of runs) newest.set(groupOf(run), Math.max(newest.get(groupOf(run)) ?? 0, run.id));
+  return runs.filter(
+    (run) =>
+      activeStatuses.has(run.status) &&
+      ((replaceableEvents.has(run.event) && run.id < (newest.get(groupOf(run)) ?? 0)) ||
+        (prEvents.has(run.event) && openPrBranches.has(run.repo) && !openPrBranches.get(run.repo)?.has(run.branch))),
+  );
 }
 
 /**
  * The repos whose open PR list needs a fresh read: never read, older than maxAgeMs, or read before
  * one of its PR runs started. A PR opened after the last read would otherwise look closed.
  */
-export function prListsToRead(runs: (RunKey & Pick<WorkflowRun, 'createdAt'>)[], readAt: Map<string, number>, now: number, maxAgeMs: number): string[] {
-	return reposWithPrRuns(runs).filter((repo) => {
-		const at = readAt.get(repo);
-		if (at === undefined || now - at >= maxAgeMs) return true;
-		// created_at drops the milliseconds and comes from GitHub's clock, and the PR list can lag the new PR.
-		return runs.some(
-			(run) => run.repo === repo && activeStatuses.has(run.status) && prEvents.has(run.event) && Date.parse(run.createdAt) >= at - prListLagMs,
-		);
-	});
+export function prListsToRead(
+  runs: (RunKey & Pick<WorkflowRun, 'createdAt'>)[],
+  readAt: Map<string, number>,
+  now: number,
+  maxAgeMs: number,
+): string[] {
+  return reposWithPrRuns(runs).filter((repo) => {
+    const at = readAt.get(repo);
+    if (at === undefined || now - at >= maxAgeMs) return true;
+    // created_at drops the milliseconds and comes from GitHub's clock, and the PR list can lag the new PR.
+    return runs.some(
+      (run) =>
+        run.repo === repo &&
+        activeStatuses.has(run.status) &&
+        prEvents.has(run.event) &&
+        Date.parse(run.createdAt) >= at - prListLagMs,
+    );
+  });
 }
 
 const prListLagMs = 30_000;
 
 /** Repos with an unfinished PR run, the only ones whose open PRs need reading. */
 export function reposWithPrRuns(runs: RunKey[]): string[] {
-	return [...new Set(runs.filter((run) => activeStatuses.has(run.status) && prEvents.has(run.event)).map((run) => run.repo))];
+  return [
+    ...new Set(runs.filter((run) => activeStatuses.has(run.status) && prEvents.has(run.event)).map((run) => run.repo)),
+  ];
 }
 
 function groupOf(run: RunKey): string {
-	return JSON.stringify([run.repo, run.workflowId, run.branch, run.event]);
+  return JSON.stringify([run.repo, run.workflowId, run.branch, run.event]);
 }

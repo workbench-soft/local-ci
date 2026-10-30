@@ -1,0 +1,16 @@
+[tools]
+shellcheck = "0.11.0"
+shfmt = "3.14.1"
+
+[tasks.lint]
+description = "Lint and format check the dashboard and the install scripts"
+run = [
+  "pnpm --dir dashboard lint",
+  "pnpm --dir dashboard format:check",
+  "shellcheck install.sh runner/install.sh",
+  "shfmt -i 0 -d install.sh runner/install.sh",
+]
+
+[tasks.format]
+description = "Format the dashboard with oxfmt"
+run = "pnpm --dir dashboard format"
