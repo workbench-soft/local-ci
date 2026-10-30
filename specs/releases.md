@@ -35,4 +35,4 @@ release before, so a reader sees what changed without reading the log.
 - **Changes** the Release workflow and its two scripts come from the
   `repo-ci` templates. `.gitattributes` keeps LF endings on `*.sh`.
 - **Steps** this spec, then the workflow and scripts, then the docs.
-- **Docs** `README.md` and `CHANGELOG.md`.
+- **Docs** `README.md`, `CHANGELOG.md` and `docs/features.md`.

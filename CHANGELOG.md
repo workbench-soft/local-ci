@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Releases** each push to `main` that passes Checks gets a GitHub release such as `v2026.10.30.1`. Its notes list the commits since the release before.
 - **Dashboard tooling** TypeScript 7.0.2 and `@types/node` 26.6.5 for the status page. Typecheck, tests and the build pass.
 
 - **Default branch** the repo now uses `main` in place of `master`. CI runs on pushes to `main`.
