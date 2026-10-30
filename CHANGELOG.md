@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Updates by themselves** the Windows PC installs each new release. Release starts the `local-ci update` task, which moves the checkout to the new tag and rebuilds the status page or the runners when their files changed. Run `dashboard\install.ps1` once to add the task.
 - **Dashboard** the Release column shows each run's release again. It matched releases by the date of the tagged commit, which is the same for all of them.
 - **Releases** a release built on the PC carries the Sydney date again. Before 11:00 in Sydney it got the day before.
 - **Releases** each push to `main` that passes Checks gets a GitHub release such as `v2026.10.30.1`. Its notes list the commits since the release before.

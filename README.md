@@ -152,6 +152,20 @@ Each push to `main` that passes Checks gets a release on the
 `v2026.10.30.1`. Its notes list the commits since the release before.
 `START.cmd` and the installers still run the latest `main`.
 
+## Updates by themselves
+
+The Windows PC installs each new release on its own. Release starts the
+`local-ci update` task, and the task also runs every 5 minutes and at logon.
+
+- **What it runs** `windows\update.ps1` moves the checkout to the newest
+  release tag. Then it runs `dashboard\install.ps1` or `runner\install.ps1`
+  when their files changed.
+- **Turn it on** `dashboard\install.ps1` adds the task. Or run
+  `windows\update.ps1 -Register` once.
+- **Log** `~/.local-ci/update.log`.
+- **Skipped** a checkout on another branch, a pull that would overwrite a
+  local edit, and the dev tools of the root `install.ps1`.
+
 ## Windows
 
 [winget](https://learn.microsoft.com/windows/package-manager/winget/) stands in
