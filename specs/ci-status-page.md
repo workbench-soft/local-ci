@@ -18,7 +18,9 @@ browser at each logon.
    force cancel it and delete it from GitHub with its logs and artifacts.
 6. A run that published a release shows it in the Release column. The person
    opens the release, or presses Install to put its APK on the phone plugged
-   in over USB.
+   in over USB. The Releases tab lists the newest release of each app with
+   its notes and its build on `main`. The person ticks several apps and
+   presses Install to put them all on the phone.
 7. A failed run names its failed job and step under the result, with a link
    to that job's log. A failed install shows adb's error under the button.
 8. The branch of a run opens on GitHub, and so does its PR.
@@ -646,3 +648,34 @@ browser at each logon.
   2. The headers.
   3. Docs and changelog.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-31 A Releases tab: the latest release of each app, its changes, and install of several at once
+
+- **Why** the person wanted to put releases of many apps on the phone over
+  adb in one go, ticking them in a list. They also need to see which release
+  is the latest, which app still builds a newer one, and what changed.
+- **Changes**
+  - **`app/page.tsx`** two tabs under the heading: Status, as before, and
+    Releases at `/?tab=releases`. The Releases tab names how many apps build.
+  - **`status/latest-releases.ts`** groups the public releases by app, keeps
+    the newest of each, and finds the repo behind it. A run on `main` that
+    hasn't finished marks the app as building. A failed run on `main` after
+    the release marks the last build as failed. Only push, dispatch and
+    `workflow_run` runs count, since Dependabot runs on `main` release no app.
+  - **`status/releases.ts`** a release keeps its notes as the HTML GitHub
+    renders, with each link opening a new tab. `lumiere-player` owns the
+    `lumiere` releases.
+  - **`status/org-status.ts`** the releases call asks for `body_html`.
+  - **`cards/releases-card.tsx`** a row per app: a tick box when the release
+    has an APK, the release link, its age, the build state, and the notes
+    behind a Changes toggle. Install selected puts the ticked APKs on the
+    phone one by one through `installRelease`, and each row shows its result.
+- **Steps**
+  1. This spec.
+  2. Release notes and the per app grouping, with tests.
+  3. The tab and the card.
+  4. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
+- **Limits** a release with several APKs installs the first one. The public
+  repo keeps 3 releases per app, so the tab shows only the newest.
