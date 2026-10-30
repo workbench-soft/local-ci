@@ -3,18 +3,24 @@
 # build that many jobs at once. Running it again keeps the registrations,
 # removes the runners above the count and rewrites the start files and the boot
 # tasks. runner/install.sh is the Mac version.
+# Each admin run writes its output to ~/actions-runner/install.log.
 param(
-	# The count task passes it, so its window stays open on an error.
+	# The admin window and the count task pass it, so the window stays open on an error.
 	[switch]$PauseOnError
 )
 $ErrorActionPreference = 'Stop'
 trap {
-	if ($PauseOnError) { Write-Host "`n$_" -ForegroundColor Red; Read-Host 'Press Enter to close' | Out-Null }
+	Write-Host "`n$($_.InvocationInfo.PositionMessage)`n$_" -ForegroundColor Red
+	if ($PauseOnError) { Read-Host 'Press Enter to close' | Out-Null }
 	break
 }
 . (Join-Path $PSScriptRoot '..\windows\boot-task.ps1')
 
-if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath) }
+if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath @('-PauseOnError')) }
+
+$logFile = Join-Path $HOME 'actions-runner\install.log'
+New-Item -ItemType Directory -Force -Path (Split-Path $logFile) | Out-Null
+Start-Transcript -LiteralPath $logFile | Out-Null
 
 $org = if ($env:RUNNER_ORG) { $env:RUNNER_ORG } else { 'workbench-soft' }
 # The status page writes the count it wants to this file, and the script saves the count it used there.
@@ -66,7 +72,7 @@ function Install-Runner($runner, [string]$zip, [string]$token) {
 	Write-Step "Registering $($runner.Name) in $($runner.Dir)"
 	New-Item -ItemType Directory -Force -Path $runner.Dir | Out-Null
 	Expand-Archive -Force -Path $zip -DestinationPath $runner.Dir
-	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $labels --work $runner.Work
+	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $labels --work $runner.Work | Out-Host
 	if ($LASTEXITCODE -ne 0) { throw "config.cmd failed for $($runner.Name)" }
 }
 
@@ -148,7 +154,7 @@ function Remove-Runner($runner, [string]$token) {
 	Stop-RunnerWhenIdle $runner
 	Unregister-ScheduledTask -TaskName $runner.Task -Confirm:$false -ErrorAction SilentlyContinue
 	if (Test-Path -LiteralPath (Join-Path $runner.Dir '.runner')) {
-		& (Join-Path $runner.Dir 'config.cmd') remove --token $token
+		& (Join-Path $runner.Dir 'config.cmd') remove --token $token | Out-Host
 		if ($LASTEXITCODE -ne 0) { throw "config.cmd remove failed for $($runner.Name)" }
 	}
 	# node_modules in _work holds paths over 260 characters.
@@ -227,3 +233,5 @@ foreach ($runner in $runners) {
 
 Write-Step "Registering the task the status page starts to change the count"
 Register-CountTask
+
+Stop-Transcript | Out-Null

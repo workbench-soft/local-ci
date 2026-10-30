@@ -41,6 +41,9 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   repos in `DEV_DIR` and the package caches. `windows\defender-exclusions.ps1`
   holds the list and runs alone. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
 - **Limit** Defender then skips the code that jobs and local builds write.
+- **Install log** on Windows the admin window of `runner\install.ps1`
+  stays open on an error, and each run writes `~/actions-runner/install.log`.
+  The window that Apply on the status page opens does the same.
 - **Long paths** git and Windows accept paths over 260 characters, so a
   checkout can delete a deep `node_modules` or build cache.
 
