@@ -87,7 +87,7 @@
 
 ## Org releases
 
-- [ ] Put the public half of the new Memories desktop signing key into `apps/desktop/src-tauri/tauri.conf.json` of workbench-soft/memories. The key pair is in `~/.config/media-organizer`, so copy it to the password manager too (rotated 2026-10-30).
+- [ ] Copy the Memories desktop signing key and password from `~/.config/memories` to the password manager. Reinstall the Memories desktop app once with the install command (key rotated 2026-10-30, memories#42).
 - [ ] Delete the old Open Charge Map key of ServoHop. It sits in another Open Charge Map account than the one used on 2026-10-30.
 - [ ] Store the Queensland fuel token in servohop when its email arrives: `gh secret set QLD_FUEL_TOKEN -R workbench-soft/servohop`.
 
