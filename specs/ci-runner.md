@@ -234,9 +234,15 @@ machine with several runners builds several jobs at once.
     needs no re-run of `config.cmd`. Without `gh` access it says so and
     goes on.
   - **Action cache** `.env` gets `ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE`,
-    a `_actions-cache` folder in the runner's own folder. The runner reads
-    `.env` at start, so the setting reaches the worker. The script creates
-    the folder: the runner uses the cache only when the folder exists.
+    the shared folder `~/actions-runner/_actions-cache`. The runner reads
+    `.env` at start, so the setting reaches the worker. The runner only
+    reads the folder, `<owner>_<repo>/<sha>.zip`, and skips it when it is
+    missing. `runner/cache-actions.ps1` fills it: it collects the `uses:`
+    lines of the workflows under `DEV_DIR` and the actions the runner logs
+    name, resolves each tag to its commit with `gh api`, and downloads the
+    zip from `api.github.com/repos/<repo>/zipball/<sha>`, which GitHub did
+    not throttle (650 KB/s against 10 KB/s from codeload.github.com).
+    `install.ps1` runs it before it starts the runners.
   - **Workflows** each repo's Gradle, Cargo and Tauri jobs switch to
     `runs-on: [self-hosted, heavy]`. Lint, test and bundle jobs stay on
     `local`.

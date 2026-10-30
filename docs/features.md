@@ -36,8 +36,10 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   label. Jobs that build with Gradle, Cargo or Tauri ask for it, so at most
   2 of them run at once and each gets the CPU it needs. `RUNNER_HEAVY_COUNT`
   changes the number.
-- **Action cache** a runner keeps the zip of each action it ran, so the
-  "Set up job" step downloads an action once per runner.
+- **Action cache** the runners share a folder of action zips, filled by
+  `runner/cache-actions.ps1` through the GitHub API, so the "Set up job"
+  step copies an action in place of downloading it. codeload.github.com gave
+  8 runners 10 KB/s and the downloads timed out.
 - **Shared tool cache** the runners of a machine keep `setup-*` downloads in
   `~/actions-runner/_tool`. Node of one version downloads once for all of
   them.
