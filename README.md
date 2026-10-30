@@ -140,6 +140,8 @@ once, from the main checkout:
   `gh auth token` into `dashboard\.env.local`.
 - **Rerun** after a `git pull` or a new gh login. The script rebuilds the page
   and restarts it.
+- **In the launcher** the CI tab of the Workbench launcher frames the page.
+  Other sites can't frame it, so none can steer a click onto Stop.
 - **Develop and test** in `dashboard`, `mise x -- pnpm dev` serves the page on
   port 4281 and cancels no run. `mise x -- pnpm typecheck` and
   `mise x -- pnpm test` are the checks.
