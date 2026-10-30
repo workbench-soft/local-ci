@@ -57,3 +57,16 @@ installs on the next run.
   the docs.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `docs/user-flows.md`, `CHANGELOG.md`.
+
+### 2026-10-31 one install at a time, through START.cmd too
+
+- **Why** `START.cmd` pulled the latest `main` and rebuilt the page on its own.
+  A double click during an update ran two builds in one folder, and it could
+  start a runner that `runner\install.ps1` was setting up.
+- **Changes** `windows/boot-task.ps1` gets a lock file both scripts hold while
+  they install. `windows/start.ps1` calls `windows\update.ps1 -FromStart` in
+  place of its own pull and build, then starts the tasks. It adds the update
+  task when it is missing, so a double click turns the update on.
+- **Steps** this entry, then the lock and the scripts, then the docs.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `docs/user-flows.md`, `CHANGELOG.md`.
