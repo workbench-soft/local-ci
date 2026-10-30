@@ -211,6 +211,9 @@ machine with several runners builds several jobs at once.
   - **Runner env** each `.env` sets `ANDROID_HOME` and `ANDROID_SDK_ROOT`
     to the SDK folder.
   - **Status page** Install looks for adb in `C:\Android\Sdk` as well.
+  - **mise** `jdx/mise-action` exports `mise env` into each job, over the
+    runner `.env`. When `~/.config/mise/config.toml` sets `ANDROID_HOME`,
+    the script points it at the SDK folder with `mise set --file`.
 - **Limits** Android Studio keeps its own SDK setting. Point it at
   `C:\Android\Sdk` by hand, or the two copies drift apart.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.

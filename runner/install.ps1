@@ -218,6 +218,18 @@ function Copy-AndroidSdk {
 	if ($LASTEXITCODE -gt 7) { throw "robocopy failed with exit code $LASTEXITCODE" }
 }
 
+# jdx/mise-action exports `mise env` into every job, over the runner's .env.
+# A global ANDROID_HOME under AppData there sends Gradle back to the old folder.
+function Set-MiseAndroidHome {
+	$config = Join-Path $HOME '.config\mise\config.toml'
+	if (-not (Test-Path -LiteralPath $config)) { return }
+	if ((Get-Content -Raw -LiteralPath $config) -notmatch '(?m)^ANDROID_HOME\s*=') { return }
+	$value = $androidHome -replace '\\', '/'
+	if ((mise env --json | ConvertFrom-Json).ANDROID_HOME -eq $value) { return }
+	Write-Host "Pointing ANDROID_HOME in $config at $value"
+	mise set --file $config "ANDROID_HOME=$value" | Out-Host
+}
+
 function Install-AndroidSdk {
 	$sdkmanager = Join-Path $androidHome 'cmdline-tools\latest\bin\sdkmanager.bat'
 	if (-not (Test-Path -LiteralPath $sdkmanager)) { Write-Host "No sdkmanager at $sdkmanager, skipping the Android SDK"; return }
@@ -237,6 +249,7 @@ try {
 
 Write-Step "Installing the Android SDK parts the apps build with, in $androidHome"
 Copy-AndroidSdk
+Set-MiseAndroidHome
 Install-AndroidSdk
 
 $toolDirs = Get-ToolDirs
