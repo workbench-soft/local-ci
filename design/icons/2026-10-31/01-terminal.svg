@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Terminal: a green check and a block cursor, the build passed on this PC</title>
+  <rect width="256" height="256" rx="40" fill="#050806"/>
+  <rect x="12" y="12" width="232" height="232" rx="30" fill="none" stroke="#1d3a26" stroke-width="8"/>
+  <path d="M48 120L96 168L184 72" fill="none" stroke="#39ff6a" stroke-width="30" stroke-linecap="square"/>
+  <rect x="150" y="186" width="58" height="26" fill="#39ff6a"/>
+</svg>

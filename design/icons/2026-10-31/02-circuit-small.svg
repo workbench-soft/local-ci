@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Circuit: the gold check alone for small sizes</title>
+  <rect width="256" height="256" rx="40" fill="#0f5132"/>
+  <path d="M64 132L108 176L196 84" fill="none" stroke="#e8b84a" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

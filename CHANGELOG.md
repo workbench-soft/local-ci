@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Icon** the status page tab and the Startup shortcut show a gold check traced on a green circuit board. The 10 drafts sit in `design/icons/2026-10-31`.
+
 - **Claude memory** the review rule names the skill as `%USERPROFILE%\.agents\skills\review\SKILL.md`, a path Windows reads.
 - **Start button** the `START.cmd` window shows each installer line as it comes, so a long wait for a runner job shows. A second `runner\install.ps1` run now says one is still going, in place of "Transcription cannot be started".
 

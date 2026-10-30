@@ -82,7 +82,7 @@ click, then opens `http://localhost:4280`.
 `http://localhost:4280` shows the local CI at a glance. `dashboard\install.ps1`
 sets it up. The page starts with Windows and opens in the browser after the
 install build and at each logon. The tab and the Startup shortcut show its
-icon: a white loop arrow around a green play sign on blue.
+icon: a gold check mark traced on a green circuit board.
 
 - **Headline** counts jobs on this PC first, then jobs on other runners, then
   jobs waiting on GitHub. Red when a runner of this PC is down, or sits idle
