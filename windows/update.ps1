@@ -74,13 +74,16 @@ function Read-Mark([string]$path) {
 }
 
 # A child process keeps an installer's exit and trap from ending this script.
+# Each line reaches the log and the START.cmd window as it comes, so a long wait shows.
 function Invoke-Installer([string]$script, [string[]]$scriptArgs = @()) {
 	Write-Log "Running $script"
-	$output = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root $script) @scriptArgs 2>&1
+	if ($FromStart) { Write-Host 'An admin window may open with the progress. Keep both windows open until it ends.' }
+	& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root $script) @scriptArgs 2>&1 | ForEach-Object {
+		$line = "$_"
+		Add-Content -LiteralPath $logFile -Encoding utf8 -Value $line
+		if ($FromStart) { Write-Host $line }
+	}
 	$code = $LASTEXITCODE
-	$text = $output | Out-String
-	Add-Content -LiteralPath $logFile -Encoding utf8 -Value $text
-	if ($FromStart) { Write-Host $text }
 	Write-Log "$script exited with $code"
 	return $code -eq 0
 }

@@ -22,7 +22,8 @@ if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath @('-PauseOnError')
 
 $logFile = Join-Path $HOME 'actions-runner\install.log'
 New-Item -ItemType Directory -Force -Path (Split-Path $logFile) | Out-Null
-Start-Transcript -LiteralPath $logFile | Out-Null
+# A run that is still going holds the log open, often while it waits for a runner's job.
+try { Start-Transcript -LiteralPath $logFile | Out-Null } catch { throw "Another runner\install.ps1 is running and holds $logFile. Let it finish in its own window, or close that window, then run this again." }
 
 $org = if ($env:RUNNER_ORG) { $env:RUNNER_ORG } else { 'workbench-soft' }
 # The status page writes the count it wants to this file, and the script saves the count it used there.
