@@ -235,7 +235,8 @@ machine with several runners builds several jobs at once.
     goes on.
   - **Action cache** `.env` gets `ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE`,
     a `_actions-cache` folder in the runner's own folder. The runner reads
-    `.env` at start, so the setting reaches the worker.
+    `.env` at start, so the setting reaches the worker. The script creates
+    the folder: the runner uses the cache only when the folder exists.
   - **Workflows** each repo's Gradle, Cargo and Tauri jobs switch to
     `runs-on: [self-hosted, heavy]`. Lint, test and bundle jobs stay on
     `local`.

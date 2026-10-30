@@ -124,7 +124,10 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	$jobVars.'ORG_GRADLE_PROJECT_android.builder.sdkDownload' = 'false'
 	# The runner reads .env too. With this folder it keeps each action's zip, so "Set up job" stops
 	# downloading checkout, mise-action and the rest on every job. That took 1 to 3 minutes when GitHub throttled it.
-	$jobVars.ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE = Join-Path $runnerDir '_actions-cache'
+	# The runner uses the folder only when it exists.
+	$actionCache = Join-Path $runnerDir '_actions-cache'
+	New-Item -ItemType Directory -Force -Path $actionCache | Out-Null
+	$jobVars.ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE = $actionCache
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
 
