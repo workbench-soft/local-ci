@@ -35,6 +35,18 @@ test('a release goes to the one overlapping run that ended nearest to it', () =>
 	assert.deepEqual([...byRun.keys()], [2]);
 });
 
+test('a release dates from its publish, since created_at is the date of the tagged commit', () => {
+	const parsed = toRelease({
+		tag_name: 'tickalot-v2',
+		name: null,
+		html_url: 'https://github.com/r',
+		created_at: '2025-10-29T06:00:00Z',
+		published_at: '2025-10-29T12:09:00Z',
+		assets: [],
+	});
+	assert.equal(parsed.createdAt, '2025-10-29T12:09:00Z');
+});
+
 test('the APK asset comes out of the release assets', () => {
 	const parsed = toRelease({
 		tag_name: 'tickalot-v1',
