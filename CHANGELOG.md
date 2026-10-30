@@ -6,9 +6,11 @@
   `runner\install.ps1` fixes the label on GitHub for runners registered
   earlier. Jobs that run Gradle, Cargo or Tauri ask for it, so at most 2 of
   them share the PC. With 8 at once a keeppad release took 50 minutes.
-- **Action cache** each runner keeps the downloaded action zips in its own
-  folder, so "Set up job" no longer fetches them on every job. The script
-  creates the folder, since the runner skips a folder that is missing.
+- **Action cache** the runners copy action zips from the shared folder
+  `~/actions-runner/_actions-cache`, so "Set up job" no longer downloads
+  them on every job. The runner only reads the folder:
+  `runner\cache-actions.ps1` fills it through the GitHub API, and
+  `runner\install.ps1` runs it.
 - **Android SDK** the runners read the SDK from `C:\Android\Sdk`, and
   `runner\install.ps1` copies it there from `%LOCALAPPDATA%` on the first
   run. Claude Desktop redirects `%LOCALAPPDATA%` writes into its own

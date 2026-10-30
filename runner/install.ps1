@@ -122,11 +122,10 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	if (Test-Path -LiteralPath $androidHome) { $jobVars.ANDROID_HOME = $androidHome; $jobVars.ANDROID_SDK_ROOT = $androidHome }
 	# Two jobs downloading the same SDK part at once leave it half written, so jobs only read the SDK.
 	$jobVars.'ORG_GRADLE_PROJECT_android.builder.sdkDownload' = 'false'
-	# The runner reads .env too. With this folder it keeps each action's zip, so "Set up job" stops
-	# downloading checkout, mise-action and the rest on every job. That took 1 to 3 minutes when GitHub throttled it.
-	# The runner uses the folder only when it exists.
-	$actionCache = Join-Path $runnerDir '_actions-cache'
-	New-Item -ItemType Directory -Force -Path $actionCache | Out-Null
+	# The runner reads .env too. It copies each action's zip from this folder in place of a download, so
+	# "Set up job" stops fetching checkout, mise-action and the rest on every job. That took 1 to 3 minutes
+	# when GitHub throttled it. The runner only reads the folder: runner\cache-actions.ps1 fills it, and
+	# every runner shares it.
 	$jobVars.ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE = $actionCache
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
@@ -289,6 +288,11 @@ Install-AndroidSdk
 $toolDirs = Get-ToolDirs
 $toolCache = Join-Path $HOME 'actions-runner\_tool'
 New-Item -ItemType Directory -Force -Path $toolCache | Out-Null
+$actionCache = if ($env:RUNNER_ACTION_CACHE) { $env:RUNNER_ACTION_CACHE } else { Join-Path $HOME 'actions-runner\_actions-cache' }
+New-Item -ItemType Directory -Force -Path $actionCache | Out-Null
+Write-Step "Filling the action cache in $actionCache"
+# A download that fails leaves the runners to fetch that action themselves.
+try { & (Join-Path $PSScriptRoot 'cache-actions.ps1') } catch { Write-Host "The action cache stays as it is: $($_.Exception.Message)" }
 foreach ($runner in $runners) {
 	Write-Step "Writing start.cmd, .path and the job variables for $($runner.Name), and starting it at boot"
 	Write-RunnerEnvironment $runner.Dir $toolDirs $toolCache

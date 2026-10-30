@@ -85,9 +85,13 @@ runner. The runner scripts also work alone:
   such builds share the PC. 8 at once made a 10 minute release take 50.
   `RUNNER_HEAVY_COUNT` picks another number, and a rerun of the script fixes
   the labels on GitHub through `gh`.
-- **Action cache** each runner keeps the zip of every action it ran in
-  `_actions-cache` in its folder, so "Set up job" stops downloading
-  `checkout` and the rest for each job.
+- **Action cache** the runners copy each action's zip from
+  `~/actions-runner/_actions-cache` in place of a download, so "Set up job"
+  stops fetching `checkout` and the rest for each job. The runner only reads
+  the folder. `runner/cache-actions.ps1` fills it from the `uses:` lines of
+  the workflows under `DEV_DIR` and from the runner logs, through the GitHub
+  API with the `gh` login. `runner/install.ps1` runs it. Run it again after
+  a workflow pins a new action version.
 
 ## Start the CI
 
