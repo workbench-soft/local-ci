@@ -188,3 +188,29 @@ machine with several runners builds several jobs at once.
   folders. Another antivirus switches Defender off, and the script then
   prints the refusal.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-30 Android SDK outside AppData
+
+- **Why** Expo release builds failed on every runner with
+  `Cannot query the value of this provider because it has no value available`
+  on `:app:minifyReleaseWithR8`. AGP found no `android.jar` for platform 37.
+  Claude Desktop is a packaged app, so a tool run from a Claude session
+  writes `%LOCALAPPDATA%` into
+  `%LOCALAPPDATA%\Packages\Claude_<id>\LocalCache\Local`. The SDK parts that
+  `runner/install.ps1` installed from a Claude session sat there. The
+  runners start from a boot task, outside the package, and saw the real
+  `%LOCALAPPDATA%\Android\Sdk` without them. A build from a Claude session
+  saw the merged view and passed.
+- **Changes**
+  - **SDK folder** `C:\Android\Sdk`, outside AppData, so a write from a
+    Claude session and a read from a runner meet the same files.
+    `ANDROID_HOME` overrides it, unless it points under `%LOCALAPPDATA%`.
+  - **Copy** `runner/install.ps1` copies `%LOCALAPPDATA%\Android\Sdk` to
+    the SDK folder on the first run, with `robocopy`, and skips `.temp`.
+    `sdkmanager` then installs into the SDK folder.
+  - **Runner env** each `.env` sets `ANDROID_HOME` and `ANDROID_SDK_ROOT`
+    to the SDK folder.
+  - **Status page** Install looks for adb in `C:\Android\Sdk` as well.
+- **Limits** Android Studio keeps its own SDK setting. Point it at
+  `C:\Android\Sdk` by hand, or the two copies drift apart.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
