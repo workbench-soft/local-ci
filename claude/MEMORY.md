@@ -10,5 +10,5 @@ Notes for every project, kept for the long run. Each line stays short.
 ## Reviews
 
 - Any ask to review code, a PR, a diff, a branch or a file, a bare
-  "review <github url>" too, means reading `~/.agents/skills/review/SKILL.md`
-  first and following it. Load it before fetching the link.
+  "review <github url>" too, means reading
+  `%USERPROFILE%\.agents\skills\review\SKILL.md` first and following it. Load it before fetching the link.

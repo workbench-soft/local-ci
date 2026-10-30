@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Claude memory** the review rule names the skill as `%USERPROFILE%\.agents\skills\review\SKILL.md`, a path Windows reads.
 - **Start button** the `START.cmd` window shows each installer line as it comes, so a long wait for a runner job shows. A second `runner\install.ps1` run now says one is still going, in place of "Transcription cannot be started".
 
 - **Start button** `START.cmd` installs through the same `windows\update.ps1` as the update task, up to the newest release. It waits while the task installs and adds the task on the first double click.
