@@ -84,6 +84,10 @@ sets it up. The page starts with Windows and opens in the browser after the
 install build and at each logon. The tab and the Startup shortcut show its
 icon: a white loop arrow around a green play sign on blue.
 
+- **In the launcher** the CI tab of the Workbench launcher shows the same
+  page. Only the launcher on `http://127.0.0.1:47821` may frame it, and other
+  sites get a blank frame.
+
 - **Headline** counts jobs on this PC first, then jobs on other runners, then
   jobs waiting on GitHub. Red when a runner of this PC is down, or sits idle
   while a job it fits waits on GitHub over a minute.
