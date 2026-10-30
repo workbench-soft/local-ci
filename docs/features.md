@@ -32,6 +32,12 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   run, and a lower count removes the extra runners.
 - **Limit** extra runners speed up only work split into jobs. Jobs at the
   same time share ports, the Android emulator and the Gradle cache.
+- **Heavy lane** on Windows the first 2 runners also carry the `heavy`
+  label. Jobs that build with Gradle, Cargo or Tauri ask for it, so at most
+  2 of them run at once and each gets the CPU it needs. `RUNNER_HEAVY_COUNT`
+  changes the number.
+- **Action cache** a runner keeps the zip of each action it ran, so the
+  "Set up job" step downloads an action once per runner.
 - **Shared tool cache** the runners of a machine keep `setup-*` downloads in
   `~/actions-runner/_tool`. Node of one version downloads once for all of
   them.

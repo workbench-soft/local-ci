@@ -54,7 +54,8 @@ sequenceDiagram
   participant R as runner on the machine
   S->>G: latest release and SHA256
   S->>G: registration token (or the person pastes one)
-  S->>R: config with labels for each of RUNNER_COUNT runners
+  S->>R: config with labels for each of RUNNER_COUNT runners, heavy on the first RUNNER_HEAVY_COUNT
+  S->>G: fix the heavy label of a runner registered earlier
   S->>R: launchd or a boot task per runner
   R->>G: long poll for jobs
   G-->>R: a job whose runs-on matches the labels

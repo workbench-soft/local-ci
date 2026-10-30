@@ -217,3 +217,29 @@ machine with several runners builds several jobs at once.
 - **Limits** Android Studio keeps its own SDK setting. Point it at
   `C:\Android\Sdk` by hand, or the two copies drift apart.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-10-30 Heavy lane and the action cache
+
+- **Why** the PC runs 8 runners. Each Gradle, Cargo or Tauri build takes
+  every core, so 8 such builds at once crawled: the keeppad release took 50
+  minutes, the servohop one 23, where a build alone takes 10. "Set up job"
+  also took 1 to 3 minutes per job, downloading `actions/checkout` and the
+  other actions again, with retries when GitHub throttled the download.
+- **Changes**
+  - **Labels** `Get-Runner` gives the first `RUNNER_HEAVY_COUNT` runners
+    (2 by default, at most the count) the extra label `heavy`.
+    `Install-Runner` registers with the runner's own labels.
+  - **Sync** `Sync-RunnerLabels` lists the org's runners through `gh api`
+    and adds or removes `heavy` on GitHub, so an existing registration
+    needs no re-run of `config.cmd`. Without `gh` access it says so and
+    goes on.
+  - **Action cache** `.env` gets `ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE`,
+    a `_actions-cache` folder in the runner's own folder. The runner reads
+    `.env` at start, so the setting reaches the worker.
+  - **Workflows** each repo's Gradle, Cargo and Tauri jobs switch to
+    `runs-on: [self-hosted, heavy]`. Lint, test and bundle jobs stay on
+    `local`.
+- **Limits** a heavy runner also takes light jobs, since it keeps `local`.
+  The Mac runner has no heavy label, so a heavy job waits for the PC.
+- **Docs** `README.md`, `docs/architecture.md`, `docs/features.md`,
+  `CHANGELOG.md`.

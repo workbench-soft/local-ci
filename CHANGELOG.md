@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **Heavy lane** the first 2 Windows runners carry the `heavy` label, and
+  `runner\install.ps1` fixes the label on GitHub for runners registered
+  earlier. Jobs that run Gradle, Cargo or Tauri ask for it, so at most 2 of
+  them share the PC. With 8 at once a keeppad release took 50 minutes.
+- **Action cache** each runner keeps the downloaded action zips in its own
+  folder, so "Set up job" no longer fetches them on every job.
 - **Android SDK** the runners read the SDK from `C:\Android\Sdk`, and
   `runner\install.ps1` copies it there from `%LOCALAPPDATA%` on the first
   run. Claude Desktop redirects `%LOCALAPPDATA%` writes into its own
