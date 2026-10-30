@@ -80,6 +80,14 @@ runner. The runner scripts also work alone:
   lower `RUNNER_COUNT` leaves the extra ones registered.
 - **In a workflow** `runs-on: [self-hosted, local]` takes whichever machine is
   on. A job that needs macOS asks for `[self-hosted, macOS]`.
+- **Heavy lane** the first 2 Windows runners also carry `heavy`. A job that
+  runs Gradle, Cargo or Tauri asks for `[self-hosted, heavy]`, so at most 2
+  such builds share the PC. 8 at once made a 10 minute release take 50.
+  `RUNNER_HEAVY_COUNT` picks another number, and a rerun of the script fixes
+  the labels on GitHub through `gh`.
+- **Action cache** each runner keeps the zip of every action it ran in
+  `_actions-cache` in its folder, so "Set up job" stops downloading
+  `checkout` and the rest for each job.
 
 ## Start the CI
 

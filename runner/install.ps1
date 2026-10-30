@@ -31,6 +31,9 @@ if ($count -lt 1) { throw 'RUNNER_COUNT must be 1 or more' }
 $countTask = "GitHub Actions runner count ($org)"
 # local marks the machine you develop on, Mac or Windows. Workflows ask for it.
 $labels = 'Windows,X64,local'
+# heavy marks the runners that take a Gradle, Cargo or Tauri build. 8 such builds at once
+# starved the PC: a release took 50 minutes where it takes 10 alone. Light jobs run on every runner.
+$heavyCount = if ($env:RUNNER_HEAVY_COUNT) { [int]$env:RUNNER_HEAVY_COUNT } else { [Math]::Min(2, $count) }
 $env:GH_PAGER = 'cat'
 
 function Write-Step([string]$text) { Write-Host "`n==> $text" }
@@ -53,6 +56,8 @@ function Get-Runner([int]$number) {
 		# Windows can't start a .bat past 260 characters, and Expo's CMake writes one deep in node_modules.
 		Work = Join-Path $workRoot $number
 		Task = "GitHub Actions runner ($org$taskSuffix)"
+		# The first runners carry heavy, so the label survives a lower count.
+		Labels = if ($number -le $heavyCount) { "$labels,heavy" } else { $labels }
 	}
 }
 
@@ -77,7 +82,7 @@ function Install-Runner($runner, [string]$zip, [string]$token) {
 	Write-Step "Registering $($runner.Name) in $($runner.Dir)"
 	New-Item -ItemType Directory -Force -Path $runner.Dir | Out-Null
 	Expand-Archive -Force -Path $zip -DestinationPath $runner.Dir
-	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $labels --work $runner.Work | Out-Host
+	& (Join-Path $runner.Dir 'config.cmd') --unattended --url "https://github.com/$org" --token $token --name $runner.Name --labels $runner.Labels --work $runner.Work | Out-Host
 	if ($LASTEXITCODE -ne 0) { throw "config.cmd failed for $($runner.Name)" }
 }
 
@@ -117,6 +122,9 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	if (Test-Path -LiteralPath $androidHome) { $jobVars.ANDROID_HOME = $androidHome; $jobVars.ANDROID_SDK_ROOT = $androidHome }
 	# Two jobs downloading the same SDK part at once leave it half written, so jobs only read the SDK.
 	$jobVars.'ORG_GRADLE_PROJECT_android.builder.sdkDownload' = 'false'
+	# The runner reads .env too. With this folder it keeps each action's zip, so "Set up job" stops
+	# downloading checkout, mise-action and the rest on every job. That took 1 to 3 minutes when GitHub throttled it.
+	$jobVars.ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE = Join-Path $runnerDir '_actions-cache'
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
 
@@ -144,6 +152,26 @@ function Start-Runner($runner) {
 	Set-RunnerWork $runner
 	# Jobs reach GitHub through their GITHUB_TOKEN, since the task can't read the gh login.
 	Register-BootTask $runner.Task (Join-Path $runner.Dir 'start.cmd') $runner.Dir
+}
+
+# A runner registered before the heavy label, or moved across the heavy count, gets its labels fixed on GitHub.
+# config.cmd sets labels only at registration, and the API changes them without a restart.
+function Sync-RunnerLabels($runners) {
+	$registered = try { gh api "orgs/$org/actions/runners" --paginate --jq '.runners[] | {id, name, labels: [.labels[].name]}' 2>$null | ConvertFrom-Json } catch { $null }
+	if (-not $registered) { Write-Host 'gh could not list the runners, so the heavy label stays as it is'; return }
+	foreach ($runner in $runners) {
+		$remote = $registered | Where-Object name -eq $runner.Name | Select-Object -First 1
+		if (-not $remote) { continue }
+		$wantsHeavy = $runner.Labels -match '(^|,)heavy(,|$)'
+		$hasHeavy = $remote.labels -contains 'heavy'
+		if ($wantsHeavy -and -not $hasHeavy) {
+			Write-Host "Adding heavy to $($runner.Name)"
+			gh api -X POST "orgs/$org/actions/runners/$($remote.id)/labels" -f 'labels[]=heavy' | Out-Null
+		} elseif ($hasHeavy -and -not $wantsHeavy) {
+			Write-Host "Removing heavy from $($runner.Name)"
+			gh api -X DELETE "orgs/$org/actions/runners/$($remote.id)/labels/heavy" | Out-Null
+		}
+	}
 }
 
 # The runners above the count, from the folders runner n leaves in actions-runner.
@@ -191,6 +219,9 @@ if ($missing.Count) {
 	foreach ($runner in $missing) { Install-Runner $runner $zip $token }
 	Remove-Item $zip
 }
+
+Write-Step "Giving the first $heavyCount runners the heavy label"
+Sync-RunnerLabels $runners
 
 $extra = @(Get-ExtraRunners)
 if ($extra.Count) {
