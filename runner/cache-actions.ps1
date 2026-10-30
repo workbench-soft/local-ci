@@ -5,6 +5,8 @@
 # a workflow pins a new action version.
 # The actions come from the uses: lines of the workflows under DEV_DIR and from the runner logs.
 $ErrorActionPreference = 'Stop'
+# Windows PowerShell redraws a progress bar per chunk, which made a 2 MB zip take 6.6 s in place of 0.65 s.
+$ProgressPreference = 'SilentlyContinue'
 
 $devDir = if ($env:DEV_DIR) { $env:DEV_DIR } else { 'C:\Programming\WorkbenchSoft' }
 $cache = if ($env:RUNNER_ACTION_CACHE) { $env:RUNNER_ACTION_CACHE } else { Join-Path $HOME 'actions-runner\_actions-cache' }
