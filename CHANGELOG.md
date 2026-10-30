@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- The admin window of `runner\install.ps1` stays open on an error, with the
+  line that failed, and each run writes `~/actions-runner/install.log`. It
+  closed at once before, so the error was lost.
+
 - **Defender** `windows/defender-exclusions.ps1` holds every Defender exclusion and runs alone. It adds `~/.cargo`, `~/.rustup`, the repos folder and the media-organizer build folder to the list.
 - **CI** runs on pushes to main only. PR runs are off, and the workflow says how to turn them back on.
 - A `fix-stuck-ci` agent skill lists the runners and the waiting runs across the org. It sits in `.agents/skills`, linked for Claude Code and Copilot.

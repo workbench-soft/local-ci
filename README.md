@@ -42,6 +42,9 @@ runner. The runner scripts also work alone:
   runner release notes.
 - **After a reboot** the Windows runner starts at boot as you, before anyone
   logs in. Setting that up takes admin rights, so the script asks Windows once.
+- **Errors and log** the admin window of `runner\install.ps1` stays open on
+  an error until you press Enter. Each admin run writes its output to
+  `~/actions-runner/install.log`.
 - **Git Bash** the task starts `start.cmd`, which puts Git Bash first on PATH.
   Without it `shell: bash` would get the WSL bash from WindowsApps.
 - **GitHub access** jobs on Windows see mise and `~/.gitconfig`. The `gh`

@@ -8,9 +8,9 @@ function Test-IsAdmin {
 }
 
 # Runs the script again in an elevated window, waits for it and returns its exit code.
-function Start-AsAdmin([string]$scriptPath) {
+function Start-AsAdmin([string]$scriptPath, [string[]]$scriptArgs = @()) {
 	Write-Host 'Asking Windows for admin rights in a new window'
-	$elevated = Start-Process powershell -Verb RunAs -Wait -PassThru -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$scriptPath`""
+	$elevated = Start-Process powershell -Verb RunAs -Wait -PassThru -ArgumentList (@('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$scriptPath`"") + $scriptArgs)
 	return $elevated.ExitCode
 }
 
