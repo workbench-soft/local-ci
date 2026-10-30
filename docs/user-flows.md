@@ -58,6 +58,29 @@ flowchart TD
   F --> G[start each: launchd or boot task]
 ```
 
+## Get a new version installed
+
+1. A PR merges into `main`.
+2. Checks passes, and Release tags the commit.
+3. Release starts the `local-ci update` task on the Windows PC.
+4. The task moves the checkout to the new tag.
+5. The task rebuilds the status page or reinstalls the runners when their
+   files changed. `~/.local-ci/update.log` lists what ran.
+
+```mermaid
+flowchart TD
+  A[PR merges into main] --> B[Checks passes]
+  B --> C[Release tags the commit]
+  C --> D[install job starts local-ci update]
+  T[every 5 minutes, at logon] --> E
+  D --> E[windows/update.ps1 moves the checkout to the tag]
+  E --> F{dashboard/ changed?}
+  F -- yes --> G[dashboard/install.ps1 -Unattended]
+  F -- no --> H
+  G --> H{runner files changed?}
+  H -- yes --> I[runner/install.ps1]
+```
+
 ## Start the CI with a double click
 
 1. Open the `local-ci` folder in Explorer.

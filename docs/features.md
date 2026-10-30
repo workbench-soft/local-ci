@@ -180,3 +180,9 @@ icon: a white loop arrow around a green play sign on blue.
 - **What it gives** a tagged release such as `v2026.10.30.1` for each push to `main` that passes `Checks`. Its notes list the commits since the release before.
 - **Where** the [Releases page](https://github.com/workbench-soft/local-ci/releases).
 - **Limits** notes only, with no files to download.
+
+## Updates by themselves
+
+- **What it gives** the Windows PC installs each release within minutes of the merge. The status page and the runners get the new code with no `git pull` by hand.
+- **Where** the `local-ci update` task in Task Scheduler. `~/.local-ci/update.log` lists each install.
+- **Limits** it runs only while the person is logged in, and only on the default branch. A local edit that the pull would overwrite stops it. The Mac and the dev tools of the root `install.ps1` still update by hand.

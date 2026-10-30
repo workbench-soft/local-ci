@@ -20,6 +20,11 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   tasks that aren't running, then opens the page.
 - **Status page** `dashboard/` is a Next.js app. `dashboard/install.ps1`
   builds it and starts it at boot.
+- **Updates** `windows/update.ps1` moves the checkout to the newest release
+  tag. It runs `dashboard/install.ps1` when `dashboard/` moved past
+  `dashboard/.built-commit`, and `runner/install.ps1` when the runner files
+  moved past `~/.local-ci/runner-commit`. The `local-ci update` task runs it
+  every 5 minutes and at logon, and the Release workflow starts it.
 - **Data files** `mcp-config.json` and `claude/MEMORY.md`, copied into the
   home folder when missing.
 
@@ -33,6 +38,7 @@ flowchart LR
   sh --> rsh[runner/install.sh]
   ps --> rps[runner/install.ps1]
   rps & dps[dashboard/install.ps1] --> boot[windows/boot-task.ps1]
+  upd[windows/update.ps1] --> dps & rps
   rsh & rps --> gha[GitHub: workbench-soft runners]
 ```
 
