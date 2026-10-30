@@ -1,9 +1,9 @@
 name: Checks
 
-# Runs the status page checks and lints the installers on pushes to master.
+# Runs the status page checks and lints the installers on pushes to main.
 on:
   push:
-    branches: [master]
+    branches: [main]
   # PR runs are off: agents run the tests and linter locally before they merge.
   # To run this on PRs again, uncomment the pull_request lines below.
   # pull_request:
