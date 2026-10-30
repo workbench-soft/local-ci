@@ -88,9 +88,6 @@
 ## Org releases
 
 - [ ] Put the public half of the new Memories desktop signing key into `apps/desktop/src-tauri/tauri.conf.json` of workbench-soft/memories. The key pair is in `~/.config/media-organizer`, so copy it to the password manager too (rotated 2026-10-30).
-- [ ] Once the next Tickalot release is on the phones, delete the old Firebase key "Tickalot app key" in Google Cloud project tickalot-92977.
-- [ ] Once the next Keeppad release is on the phones, delete the old Keeppad Firebase API key in its Google Cloud project.
-- [ ] Once the next SpotTheCam release is on the phones, delete the old TomTom key "My First API key" on my.tomtom.com.
 - [ ] Delete the old Open Charge Map key of ServoHop. It sits in another Open Charge Map account than the one used on 2026-10-30.
 - [ ] Store the Queensland fuel token in servohop when its email arrives: `gh secret set QLD_FUEL_TOKEN -R workbench-soft/servohop`.
 
