@@ -95,13 +95,16 @@ runner. The runner scripts also work alone:
 
 ## Start the CI
 
-Double click `START.cmd` in the repo root. It pulls the latest code, rebuilds
-the status page when its code changed, starts each runner and the page that
-isn't running, then opens `http://localhost:4280`.
+Double click `START.cmd` in the repo root. It moves the code to the newest
+release and installs what changed, starts each runner and the page that isn't
+running, then opens `http://localhost:4280`.
 
-- **Admin prompt** shows only when Windows refuses to start a task.
-- **First run** without the page task, it runs `dashboard\install.ps1`. Without
-  a runner task, it names `runner\install.ps1`.
+- **Same install as the task** it runs `windows\update.ps1`, and waits while
+  the update task installs.
+- **Admin prompt** shows when an installer runs or Windows refuses to start a
+  task.
+- **First run** it builds the page and adds the update task. Without a runner
+  task, it names `runner\install.ps1`.
 
 ## CI status page
 
@@ -150,7 +153,7 @@ once, from the main checkout:
 Each push to `main` that passes Checks gets a release on the
 [Releases page](https://github.com/workbench-soft/local-ci/releases), such as
 `v2026.10.30.1`. Its notes list the commits since the release before.
-`START.cmd` and the installers still run the latest `main`.
+`START.cmd` and the update task install the newest release.
 
 ## Updates by themselves
 
@@ -160,8 +163,10 @@ The Windows PC installs each new release on its own. Release starts the
 - **What it runs** `windows\update.ps1` moves the checkout to the newest
   release tag. Then it runs `dashboard\install.ps1` or `runner\install.ps1`
   when their files changed.
-- **Turn it on** `dashboard\install.ps1` adds the task. Or run
-  `windows\update.ps1 -Register` once.
+- **Turn it on** double click `START.cmd` once. `dashboard\install.ps1` and
+  `windows\update.ps1 -Register` add the task too.
+- **One at a time** the task and `START.cmd` share a lock file,
+  `~/.local-ci/install.lock`. The task skips its turn while the lock is held.
 - **Log** `~/.local-ci/update.log`.
 - **Skipped** a checkout on another branch, a pull that would overwrite a
   local edit, and the dev tools of the root `install.ps1`.

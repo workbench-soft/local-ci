@@ -85,20 +85,25 @@ flowchart TD
 
 1. Open the `local-ci` folder in Explorer.
 2. Double click `START.cmd`.
-3. A window shows the pulled commit. When the page code changed, an admin
-   prompt opens and the page rebuilds.
-4. The window lists each runner and the page as running or started.
-5. The browser opens `http://localhost:4280`. The window closes on its own,
+3. A window shows the release on disk. When the update task is installing,
+   the window waits for it.
+4. When the page or runner code changed, an admin prompt opens and the
+   installer runs. The first run also adds the update task.
+5. The window lists each runner and the page as running or started.
+6. The browser opens `http://localhost:4280`. The window closes on its own,
    and stays open on an error.
 
 ```mermaid
 flowchart TD
   A[START.cmd] --> B[windows/start.ps1]
-  B --> P[git pull on the default branch]
-  P --> C{"page task exists, built from the latest dashboard/?"}
-  C -- no --> D[dashboard/install.ps1 rebuilds, admin prompt]
+  B --> L{update task installing?}
+  L -- yes --> W[wait for it]
+  W --> P
+  L -- no --> P[windows/update.ps1 moves to the newest release]
+  P --> C{page or runner code changed?}
+  C -- yes --> D[installer runs, admin prompt]
   D --> E
-  C -- yes --> E[start stopped runner and page tasks]
+  C -- no --> E[add the update task if missing, start stopped tasks]
   E --> F{Windows refused?}
   F -- yes --> G[admin prompt, start again]
   F -- no --> H[dashboard/open.ps1 opens the page]

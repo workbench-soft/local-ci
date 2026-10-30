@@ -14,10 +14,13 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   runners above it and registers the count task the status page starts.
 - **Boot task** `windows/boot-task.ps1` holds the admin check and the
   scheduled task that both Windows boot scripts use.
-- **Start button** `START.cmd` runs `windows/start.ps1`. The script pulls
-  the default branch, runs `dashboard/install.ps1` when `dashboard/` moved
-  past the commit in `dashboard/.built-commit`, starts the runner and page
-  tasks that aren't running, then opens the page.
+- **Start button** `START.cmd` runs `windows/start.ps1`. The script takes
+  the install lock, runs `windows/update.ps1 -FromStart`, adds the update task
+  when it is missing, starts the runner and page tasks that aren't running,
+  then opens the page.
+- **Install lock** `Enter-InstallLock` in `windows/boot-task.ps1` holds
+  `~/.local-ci/install.lock` open. The update task skips its turn while
+  `START.cmd` holds it, and `START.cmd` waits while the task holds it.
 - **Status page** `dashboard/` is a Next.js app. `dashboard/install.ps1`
   builds it and starts it at boot.
 - **Updates** `windows/update.ps1` moves the checkout to the newest release

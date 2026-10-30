@@ -1,5 +1,6 @@
 # Helpers for runner\install.ps1 and dashboard\install.ps1, which both start a
-# program at boot through a scheduled task. Dot-source this file.
+# program at boot through a scheduled task, and for the install lock of
+# windows\update.ps1 and windows\start.ps1. Dot-source this file.
 
 # Registering a task that starts at boot without a stored password takes admin rights.
 function Test-IsAdmin {
@@ -27,4 +28,18 @@ function Register-BootTask([string]$name, [string]$program, [string]$folder) {
 	Register-ScheduledTask -TaskName $name -Action $action -Trigger $triggers -Principal $principal -Settings $settings -Force | Out-Null
 	Start-ScheduledTask -TaskName $name
 	Get-ScheduledTask -TaskName $name | Format-Table TaskName, State
+}
+
+# One install runs at a time. windows\update.ps1 and START.cmd hold this file
+# open while they pull and install, and Windows closes it when the process ends.
+# Returns $null when the file is busy and -Wait is off.
+function Enter-InstallLock([switch]$Wait) {
+	$path = Join-Path $HOME '.local-ci\install.lock'
+	New-Item -ItemType Directory -Force -Path (Split-Path $path) | Out-Null
+	$told = $false
+	while ($true) {
+		try { return [IO.File]::Open($path, 'OpenOrCreate', 'ReadWrite', 'None') } catch { if (-not $Wait) { return $null } }
+		if (-not $told) { Write-Host 'Another install is running, so this one waits for it.'; $told = $true }
+		Start-Sleep -Seconds 5
+	}
 }
