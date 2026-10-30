@@ -7,13 +7,16 @@ export type Release = {
 	url: string;
 	createdAt: string;
 	apk: { name: string; url: string } | null;
+	/** The release notes as GitHub renders them. GitHub cleans the HTML, so the page shows it as is. */
+	notesHtml: string;
 };
 
 // The app repos are private, so their release workflows publish to this public repo with the tag <repo>-v<version>.
 export const releasesRepo = process.env.RELEASES_REPO || `${orgName}/${orgName}.github.io`;
 
 // The memories repo was memories-mobile and took in media-organizer. Its apps keep the old release names, so installed copies keep updating.
-const releasePrefixes: Record<string, string[]> = { memories: ['memories-mobile', 'media-organizer'] };
+// The TV player of lumiere-player releases as lumiere.
+export const releasePrefixes: Record<string, string[]> = { memories: ['memories-mobile', 'media-organizer'], 'lumiere-player': ['lumiere'] };
 
 // An upload can land a little after GitHub last updates the run.
 const slackMs = 60_000;
@@ -25,6 +28,7 @@ export type ApiRelease = {
 	created_at: string;
 	published_at?: string | null;
 	assets: { name: string; browser_download_url: string }[];
+	body_html?: string | null;
 };
 
 export function toRelease(release: ApiRelease): Release {
@@ -36,6 +40,8 @@ export function toRelease(release: ApiRelease): Release {
 		// created_at is the date of the tagged commit. Every tag in the public repo points at its one commit, so only published_at tells when the release came out.
 		createdAt: release.published_at || release.created_at,
 		apk: apk ? { name: apk.name, url: apk.browser_download_url } : null,
+		// A link in the notes opens a new tab, so the status page stays open.
+		notesHtml: (release.body_html ?? '').replaceAll('<a ', '<a target="_blank" rel="noreferrer" '),
 	};
 }
 

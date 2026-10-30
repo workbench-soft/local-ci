@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { type Release, releasesByRun, toRelease } from './releases.ts';
 
-const release = (tag: string, createdAt: string): Release => ({ tag, name: tag, url: `https://github.com/${tag}`, createdAt, apk: null });
+const release = (tag: string, createdAt: string): Release => ({ tag, name: tag, url: `https://github.com/${tag}`, createdAt, apk: null, notesHtml: '' });
 
 const run = { id: 1, repo: 'tickalot', createdAt: '2025-10-29T12:00:00Z', updatedAt: '2025-10-29T12:10:00Z' };
 const releaseOfRun = (item: typeof run, releases: Release[]) => releasesByRun([item], releases).get(item.id) ?? null;
