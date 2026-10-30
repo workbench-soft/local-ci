@@ -84,3 +84,17 @@
 - Left: shared tool cache race on a first download (a guess, unseen).
 - Left: runner labels set once, installer lists kept twice, `RUNNER_ORG` missing from the page, no paging past 100 repos (effort M, or no effect at 16 repos).
 - Left: the boot task gives up after 3 restarts, the APK sits in memory, `start.cmd` is rewritten during the idle wait (low value, `## python-setup` covers the wait).
+
+## Org releases
+
+- [ ] Put the public half of the new Memories desktop signing key into `apps/desktop/src-tauri/tauri.conf.json` of workbench-soft/memories. The key pair is in `~/.config/media-organizer`, so copy it to the password manager too (rotated 2026-10-30).
+- [ ] Once the next Tickalot release is on the phones, delete the old Firebase key "Tickalot app key" in Google Cloud project tickalot-92977.
+- [ ] Once the next Keeppad release is on the phones, delete the old Keeppad Firebase API key in its Google Cloud project.
+- [ ] Once the next SpotTheCam release is on the phones, delete the old TomTom key "My First API key" on my.tomtom.com.
+- [ ] Delete the old Open Charge Map key of ServoHop. It sits in another Open Charge Map account than the one used on 2026-10-30.
+- [ ] Store the Queensland fuel token in servohop when its email arrives: `gh secret set QLD_FUEL_TOKEN -R workbench-soft/servohop`.
+
+## purge-all-every-run
+
+- [ ] In `C:\Programming\WorkbenchSoft\local-ci`, run `git pull`, then `.\dashboard\install.ps1`, so `http://localhost:4280` gets the new Purge all (PR #43, merged 2026-10-30).
+- [ ] Press Purge all once and check the rows gray at once and older runs keep going until none match. No live purge ran in testing.
