@@ -28,8 +28,13 @@ installs on the next run.
   in `~/.local-ci/runner-commit`.
 - **The task** `local-ci update` runs as the person with admin rights, every
   5 minutes and at logon. `conhost --headless` keeps its window hidden.
-  `dashboard\install.ps1` registers it, and `windows\update.ps1 -Register`
-  does it alone.
+  `START.cmd` adds it when it is missing, and so does `dashboard\install.ps1`.
+  `windows\update.ps1 -Register` does it alone.
+- **Start button** `START.cmd` runs `windows\update.ps1 -FromStart`, which
+  prints each step and builds the page even when it was never installed.
+- **One at a time** both hold `~/.local-ci/install.lock` open while they
+  install. The task skips its turn when the lock is busy, and `START.cmd`
+  waits for it.
 - **The trigger** a job at the end of `release.yml` starts the task on a
   Windows runner.
 
@@ -43,6 +48,8 @@ installs on the next run.
 - **Releases only** a commit on `main` installs once Checks passes and Release
   tags it.
 - **Dev tools** the root `install.ps1` asks questions, so the task skips it.
+- **Manual installers** a direct run of `dashboard\install.ps1` or
+  `runner\install.ps1` takes no lock.
 - **Mac** gets no task. Run `git pull` and the installers there by hand.
 
 ## Changes

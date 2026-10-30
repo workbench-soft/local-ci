@@ -62,13 +62,15 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 
 ## Start button
 
-`START.cmd` in the repo root runs the latest version of the CI with a double
+`START.cmd` in the repo root runs the newest release of the CI with a double
 click, then opens `http://localhost:4280`.
 
-- **Latest code** it pulls the default branch first. On another branch, or
-  when the pull fails, it goes on with the code on disk.
-- **Rebuild** when the page code changed since the last build, it runs
-  `dashboardinstall.ps1`, which asks for admin and restarts the page.
+- **Newest release** it runs the same `windows\update.ps1` as the update task.
+  On another branch, or when the move fails, it goes on with the code on disk.
+- **Install** when the page or runner code changed, it runs
+  `dashboard\install.ps1` or `runner\install.ps1`, which ask for admin.
+- **Waits** while the update task installs, so two builds don't run at once.
+- **Update task** adds `local-ci update` when it is missing.
 
 - **Starts** each `GitHub Actions runner` task and the `local-ci dashboard`
   task that isn't running.
@@ -184,5 +186,5 @@ icon: a white loop arrow around a green play sign on blue.
 ## Updates by themselves
 
 - **What it gives** the Windows PC installs each release within minutes of the merge. The status page and the runners get the new code with no `git pull` by hand.
-- **Where** the `local-ci update` task in Task Scheduler. `~/.local-ci/update.log` lists each install.
+- **Where** the `local-ci update` task in Task Scheduler, added by the first double click on `START.cmd`. `~/.local-ci/update.log` lists each install.
 - **Limits** it runs only while the person is logged in, and only on the default branch. A local edit that the pull would overwrite stops it. The Mac and the dev tools of the root `install.ps1` still update by hand.
