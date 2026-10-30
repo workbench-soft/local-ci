@@ -304,7 +304,8 @@ export function failureOf(run: Pick<WorkflowRun, 'conclusion' | 'jobs'>): RunFai
 
 // The public repo keeps 3 releases per app, so one page holds them all.
 async function listReleases(): Promise<Release[]> {
-	const releases = await getJson<ApiRelease[]>(`/repos/${releasesRepo}/releases?per_page=100`);
+	// The full media type adds body_html, the notes as GitHub renders and cleans them.
+	const releases = await getJson<ApiRelease[]>(`/repos/${releasesRepo}/releases?per_page=100`, 'application/vnd.github.full+json');
 	return Array.isArray(releases) ? releases.map(toRelease) : [];
 }
 
@@ -341,9 +342,9 @@ export async function readJobTimings(repo: string, runId: number): Promise<JobTi
 const etagged = store.etagged;
 const etaggedMax = 500;
 
-async function getJson<T>(path: string): Promise<T> {
+async function getJson<T>(path: string, accept?: string): Promise<T> {
 	const kept = etagged.get(path);
-	const response = await callGitHub(path, 'GET', kept ? { 'If-None-Match': kept.etag } : {});
+	const response = await callGitHub(path, 'GET', { ...(accept && { Accept: accept }), ...(kept && { 'If-None-Match': kept.etag }) });
 	if (response.status === 304 && kept) return JSON.parse(kept.body) as T;
 	const body = await response.text();
 	const etag = response.headers.get('etag');

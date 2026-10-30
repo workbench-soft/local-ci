@@ -131,6 +131,10 @@ once, from the main checkout:
   Release column. Install puts its APK on the phone plugged in over USB,
   through `adb install -r`. adb comes from `ADB_PATH`, `PATH` or the
   Android SDK.
+- **Releases tab** `http://localhost:4280/?tab=releases` lists the newest
+  release of each app with its notes under Changes. It marks the app whose
+  newer build still runs on `main`, or failed there. Tick several apps and
+  press Install to put their APKs on the phone one after another.
 - **Errors** a failed run names its failed job and step, linked to the log. A
   failed install shows adb's error in a red box under the button.
 - **Links** the branch and the PR of each run open on GitHub.
@@ -140,6 +144,8 @@ once, from the main checkout:
   `gh auth token` into `dashboard\.env.local`.
 - **Rerun** after a `git pull` or a new gh login. The script rebuilds the page
   and restarts it.
+- **In the launcher** the CI tab of the Workbench launcher frames the page.
+  Other sites can't frame it, so none can steer a click onto Stop.
 - **Develop and test** in `dashboard`, `mise x -- pnpm dev` serves the page on
   port 4281 and cancels no run. `mise x -- pnpm typecheck` and
   `mise x -- pnpm test` are the checks.

@@ -3,7 +3,8 @@
 ## Unreleased
 
 - **Icon** the status page tab and the Startup shortcut show a gold check traced on a green circuit board. The 10 drafts sit in `design/icons/2026-10-31`.
-
+- **Releases tab** the status page gets a Releases tab beside Status. It lists the newest release of each app with its notes, says which app still builds a newer one on `main`, and installs the ticked APKs on the phone over adb one after another.
+- **Dashboard** the CI tab of the Workbench launcher shows the status page. `frame-ancestors` lets only the launcher on `http://127.0.0.1:47821` frame it.
 - **Claude memory** the review rule names the skill as `%USERPROFILE%\.agents\skills\review\SKILL.md`, a path Windows reads.
 - **Start button** the `START.cmd` window shows each installer line as it comes, so a long wait for a runner job shows. A second `runner\install.ps1` run now says one is still going, in place of "Transcription cannot be started".
 
