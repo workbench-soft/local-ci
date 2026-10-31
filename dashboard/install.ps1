@@ -41,6 +41,9 @@ function Write-TokenFile {
 }
 
 $mise = (Get-Command mise -CommandType Application -ErrorAction Stop).Source
+# mise x refuses to run under a mise.toml it hasn't trusted, and the page stays down.
+& $mise trust --quiet (Split-Path $appDir -Parent)
+if ($LASTEXITCODE -ne 0) { throw 'mise trust failed' }
 
 Write-Step 'Stopping the running page'
 Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
