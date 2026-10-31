@@ -99,3 +99,7 @@
 ## releases-tab
 
 - [ ] Open `http://localhost:4280/?tab=releases` once the update task installs the release after PR #74 (merged 2026-10-31). If the tab is missing, double click `START.cmd`.
+
+## auto-update
+
+- [ ] `http://localhost:4280` stopped answering on 2026-11-01 around 09:00 Sydney, `/icon.svg` too. The `local-ci dashboard` task shows Running, and `dashboard\dashboard.log` stops at 22:00 UTC. The node process runs elevated after the update task's install, so the agent couldn't restart it. Restart the `local-ci dashboard` task in Task Scheduler.
