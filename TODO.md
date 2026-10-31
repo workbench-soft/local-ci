@@ -91,11 +91,6 @@
 
 - [ ] Runner jobs fail with "The self-hosted runner lost communication with the server" before their first step: 8 broker drops on NIFELHEIM between 09:31 and 12:15 UTC on 2026-10-30. Check whether the VPN on this PC reconnects, then rerun the failed jobs.
 
-## auto-update
-
-- [ ] Double click `START.cmd` in `C:\Programming\WorkbenchSoft\local-ci` once and accept the admin prompts: it rebuilds the page and adds the `local-ci update` task (PR #68 and #69, merged 2026-10-31). The agent wasn't allowed to add the scheduled task.
-- [ ] After the next release, check `~/.local-ci/update.log`: the page should rebuild and the runners reinstall without a manual step.
-
 ## purge-all-every-run
 
 - [ ] In `C:\Programming\WorkbenchSoft\local-ci`, run `git pull`, then `.\dashboard\install.ps1`, so `http://localhost:4280` gets the new Purge all (PR #43, merged 2026-10-30).
