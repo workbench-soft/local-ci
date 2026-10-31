@@ -201,3 +201,140 @@ sequenceDiagram
   N->>W: adb devices, adb install -r -d
   N-->>B: the device, or adb's error
 ```
+
+## Decisions
+
+### CI host: self-hosted runners on the PC and the Mac
+
+- **Picked** each machine registers as GitHub Actions runners for the
+  `workbench-soft` org. Private repos run on `[self-hosted, local]`.
+- **Why** the org repos are private, and jobs on these runners cost 0
+  minutes. The org rule puts every private repo on this runner.
+- **Trade-off** CI stops when the PC is off or loses the network. A job can
+  get lost on a network drop, as `TODO.md` notes.
+- **Rejected**
+  - **GitHub hosted runners** a private repo pays for each minute past the
+    free quota.
+  - **Public repos** the repos moved to the org to become private.
+- **Cost to undo** high. The `runs-on` line of every workflow in every org
+  repo changes.
+
+### Runner start: a scheduled task as the person, not a service
+
+- **Picked** each Windows runner starts from a boot task under the person's
+  account. A Mac runner runs as a launchd service.
+- **Why** a Windows service runs as NETWORK SERVICE. It lacks the person's
+  mise, gh login and `~/.gitconfig`, which the jobs need.
+- **Trade-off** Windows hides the runner's process path from the page. The
+  page tells a live runner by the `_diag` logs it holds open.
+- **Rejected**
+  - **Windows service from `svc.cmd`** the wrong account, as above.
+  - **Start by hand at logon** a reboot leaves the runners down.
+- **Cost to undo** medium. `runner/install.ps1`, `windows/boot-task.ps1`
+  and the This PC probe in `status/this-pc.ts` change.
+
+### Several runners per PC, with a heavy lane
+
+- **Picked** `RUNNER_COUNT` runners on one PC, 4 by default. The first 2
+  carry the extra label `heavy`, and Gradle, Cargo and Tauri jobs ask for it.
+- **Why** a runner takes one job at a time. With one runner, jobs waited in
+  the queue while 16 cores sat free.
+- **Trade-off** a heavy job waits for the PC, since the Mac runner has no
+  `heavy` label. Light jobs also fill the heavy runners.
+- **Rejected**
+  - **One runner** jobs queue behind each other.
+  - **Equal runners** 8 Gradle builds at once crawled. The keeppad release
+    took 50 minutes, where a build alone takes 10.
+- **Cost to undo** medium. The heavy jobs of each app repo name the label.
+
+### Setup scripts: PowerShell on Windows, POSIX sh on the Mac
+
+- **Picked** `install.ps1` and `runner/install.ps1` for Windows.
+  `install.sh` and `runner/install.sh` for the Mac.
+- **Why** an installer runs before Node exists on the machine. The org rule
+  writes installers in POSIX sh. On Windows, winget, scheduled tasks and the
+  Defender exclusions come through PowerShell.
+- **Trade-off** each step exists twice, and the two scripts can drift.
+- **Rejected**
+  - **TypeScript run by Node** the org script default, but Node arrives only
+    through mise, which the installer sets up.
+  - **sh in Git Bash on Windows** scheduled tasks and Defender need
+    PowerShell calls anyway.
+- **Cost to undo** medium. Every installer gets rewritten.
+
+### Status page: Next.js, rendered on the server
+
+- **Picked** `dashboard/` is a Next.js app on `localhost:4280`. Server
+  actions run PowerShell, adb and the GitHub calls.
+- **Why** the page needs a process on the PC that keeps the GitHub token,
+  reads the runner folders and runs `adb install`. A server render and server
+  actions give that in one app. No source records why Next.js won.
+- **Trade-off** the org stack names Vite for the web, so this app is off the
+  list. Each update rebuilds it, and a Node process runs from boot.
+- **Rejected**
+  - **Vite page with its own API server** two processes to build and start
+    for the same job.
+  - **GitHub's Actions page** it shows one repo at a time, without this PC's
+    runner folders.
+- **Cost to undo** medium. The page and `dashboard/install.ps1` change. The
+  runner scripts stay.
+
+### Updates: move the checkout to the newest release tag
+
+- **Picked** the `local-ci update` task runs `windows/update.ps1` every 5
+  minutes, at logon and after each Release. It fast forwards to the newest
+  tag and reruns only the installers whose files moved.
+- **Why** each merge needed a `git pull` and an `install.ps1` run by hand,
+  and `TODO.md` filled up with those steps.
+- **Trade-off** a change waits for a green Checks and a release before the
+  PC runs it.
+- **Rejected**
+  - **`START.cmd` pulls `main`** a double click during an update ran two
+    builds in one folder. It could start a runner that `runner\install.ps1`
+    was still setting up.
+  - **Pull and install by hand** the steps piled up in `TODO.md`.
+- **Cost to undo** low. `windows/update.ps1` and its task.
+
+### GitHub data: polling with ETags and a shared cache
+
+- **Picked** the server reads the API with `If-None-Match` and keeps each
+  answer in memory for 20 seconds. Several tabs and the sweep share one load.
+- **Why** the page ran out of its 5000 calls an hour on 2026-10-29 and
+  showed no runs until the reset. A 304 costs no part of the limit.
+- **Trade-off** the page lags GitHub by up to 20 seconds.
+- **Rejected**
+  - **A call per request** each tab and each refresh spent the limit.
+  - **Webhooks** GitHub would need a public address that reaches the PC.
+- **Cost to undo** low. `status/org-status.ts`.
+
+### Old runs: the page server cancels them
+
+- **Picked** `status/cancel-superseded.ts` force cancels a run that a newer
+  run of the same repo, workflow, branch and event replaced. It also kills
+  runs of merged or closed PRs.
+- **Why** the queue filled with runs of replaced commits and merged PRs.
+  They took runners to build code already replaced. One loop covers every org repo.
+- **Trade-off** a run dies up to 30 seconds late, and only while the page
+  server runs. A manual rerun of an older commit dies too.
+- **Rejected**
+  - **`concurrency` groups in each workflow** each repo needs the block, and
+    they leave runs of merged PRs alone.
+- **Cost to undo** low. Set `CANCEL_SUPERSEDED=off` in `.env.local`.
+
+### Runner speed fixes on Windows
+
+- **Picked** a shared action cache, a shared Android SDK and short work
+  folders under `C:\ci\<number>`.
+- **Why** each one fixes a failure the runners hit:
+  - **Action cache** "Set up job" took 1 to 3 minutes per job.
+    `api.github.com` zipballs download at 650 KB/s against 10 KB/s from
+    `codeload.github.com`.
+  - **SDK installed once** two Gradle runs that downloaded into one SDK left
+    NDK 27.1 broken. Jobs get `sdkDownload=false`.
+  - **Short paths** Windows can't start a `.bat` past 260 characters, and
+    Expo's CMake writes one deep inside `node_modules`.
+- **Trade-off** a new action or SDK part needs a rerun of
+  `runner\install.ps1`.
+- **Rejected**
+  - **Per job downloads** the slow "Set up job" and the broken SDK above.
+- **Cost to undo** low. `runner/install.ps1` and `runner/cache-actions.ps1`.
