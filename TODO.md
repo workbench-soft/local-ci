@@ -102,4 +102,4 @@
 
 ## auto-update
 
-- [ ] `http://localhost:4280` stopped answering on 2026-11-01 around 09:00 Sydney, `/icon.svg` too. The `local-ci dashboard` task shows Running, and `dashboard\dashboard.log` stops at 22:00 UTC. The node process runs elevated after the update task's install, so the agent couldn't restart it. Restart the `local-ci dashboard` task in Task Scheduler.
+- [ ] `http://localhost:4280` is down since 2026-11-01 09:00 Sydney. The agent restarted the `local-ci dashboard` task as admin twice. The task's `next start` node process started but didn't listen after 19 minutes, and `dashboard\dashboard.log` got no new line. The same command run by hand on port 4281 was ready in 12 s. The PC CPU sat at 100% with hundreds of node and mise processes. Once the load drops, end the task's process tree, start the task again and check the page.
