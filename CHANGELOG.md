@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Architecture decisions** `docs/architecture.md` gets a Decisions section. Each big choice names its reason, its cost and the rivals it beat.
+
 - **Lint and format** the dashboard lints with oxlint and formats with oxfmt, and CI checks both. `mise run lint` runs them with shellcheck and shfmt.
 
 - **Icon** the status page tab and the Startup shortcut show a gold check traced on a green circuit board. The 10 drafts sit in `design/icons/2026-10-31`.
