@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Cloud runners first** CI jobs build on an Oracle Always Free VM and on Blacksmith while their free minutes last, then on this PC. The status page sets the org variables `CI_RUNNER` and `CI_HEAVY_RUNNER` each minute, and a Cloud card shows the routes and the Blacksmith minutes of the month. `runner/oracle.sh` installs the Oracle runner over SSH.
+- **Machine column** each run in Latest runs names the machine its jobs built on: This PC, Oracle, Blacksmith or GitHub. A Cloud filter picks the runs with a cloud job, and the live jobs name the machine too.
+
 - **Runner watchdog** a Windows runner that GitHub shows offline while its task runs gets a restart. The update task checks every 5 minutes, and `START.cmd` checks on each double click. On 2026-11-01 all 8 runners sat offline for 12 hours with their tasks Running.
 - **Update with local edits** the update task stashes an edited `TODO.md` in the checkout during the move to a new release, where the edit stopped every update before.
 

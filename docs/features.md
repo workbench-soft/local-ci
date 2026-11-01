@@ -80,6 +80,35 @@ click, then opens `http://localhost:4280`.
   needs a restart, since ending its listener takes admin.
 - **Limits** Windows only. A new PC runs the install scripts first.
 
+## Cloud runners first
+
+CI jobs build on free cloud runners while their minutes last, then on this PC.
+The PC stays free for work.
+
+- **Light jobs** lint and tests go to the Oracle VM when its runner is
+  online, else to Blacksmith 2 vCPU, else to `[self-hosted, local]`.
+- **Heavy jobs** Gradle, Cargo and Tauri builds go to Blacksmith 4 vCPU,
+  else to `[self-hosted, heavy]`. Android builds skip Oracle, since Google
+  ships no ARM Linux build tools.
+- **Switch** the status page server sets the org variables `CI_RUNNER` and
+  `CI_HEAVY_RUNNER` each minute. A workflow that reads them falls back to the
+  PC labels while they are unset.
+- **Budget** the page counts the Blacksmith minutes of the month, a job's
+  minutes rounded up times its vCPUs over 2, and stops at 2700 of the 3000
+  free ones. `BLACKSMITH_BUDGET` in `dashboard.env.local` moves the stop.
+- **Stuck** a job queued on Blacksmith for 5 minutes sends both lanes to
+  this PC for an hour. Its run gets cancelled and starts again once.
+- **Cloud card** on the status page: the runner of each lane, the Blacksmith
+  minutes used and left with a bar, the Oracle runner state, and when the
+  router last checked.
+- **Oracle setup** `./runner/oracle.sh ubuntu@<vm address>` installs 2
+  runners with the `oracle` label on the VM over SSH. The PC asks GitHub for
+  the registration token.
+- **Limits** the router runs only while the PC is on, and the variables keep
+  their last value. A job that needs Windows, the phone, the emulator or files
+  on this PC keeps its fixed labels. A cloud job starts cold and installs its
+  tools each time.
+
 ## CI status page
 
 `http://localhost:4280` shows the local CI at a glance. `dashboard\install.ps1`
@@ -127,9 +156,14 @@ icon: a white loop arrow round a check on a teal to violet gradient.
 - **Limit** Apply needs a person logged on, and one run of
   `runner\install.ps1` after this change to add the task it starts. Mac
   runners change only through `RUNNER_COUNT`.
+- **Machine** each run names the machines of its jobs: This PC, Oracle,
+  Blacksmith or GitHub, each in its own color. A queued run names the machine
+  it waits for, and the hover says built, builds or waits. The Cloud filter
+  picks runs with a cloud job, and search finds a machine name. The live
+  jobs say `Blacksmith: <runner>` or `waits for This PC: self-hosted, heavy`.
 - **Runs** the latest 5 runs of each org repo and every unfinished one, with
   an icon for the result and for the place. An unfinished run says where it builds: Building on this
-  PC, Queued on GitHub or Building on another runner. A finished run shows
+  PC, Queued on GitHub or Building in the cloud. A finished run shows
   only its result. Each place label and chip explains itself on hover.
   Filter chips pick one of those places, failed or passed. A search box
   matches repo, workflow and branch. A click on a column head sorts by it. The

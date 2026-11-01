@@ -1,5 +1,6 @@
 import { formatAge, type StuckQueue } from '@/status/headline';
 import type { LiveJob, RunnerSlot } from '@/status/placement';
+import { kindNames } from '@/status/runner-kind';
 import { Icon, placeIcons } from './icons';
 import { JobProgress } from './job-progress';
 import { RunControls } from './run-controls';
@@ -8,7 +9,7 @@ import { StatusDot } from './status-dot';
 const columns: { place: LiveJob['place']; empty: string }[] = [
   { place: 'local', empty: 'No runner is installed on this PC.' },
   { place: 'waiting', empty: 'No job waits for a runner.' },
-  { place: 'elsewhere', empty: 'No job builds on another runner.' },
+  { place: 'elsewhere', empty: 'No job builds in the cloud.' },
 ];
 
 /** What builds right now: every runner of this PC, the GitHub queue, and other runners. */
@@ -107,7 +108,10 @@ function RunnerRow({ slot: { runner, job }, now }: { slot: RunnerSlot; now: numb
 }
 
 function JobItem({ job, now }: { job: LiveJob; now: number }) {
-  const where = job.place === 'waiting' ? `wants ${job.labels.join(', ') || 'a runner'}` : job.runnerName;
+  const where =
+    job.place === 'waiting'
+      ? `waits for ${kindNames[job.kind]}: ${job.labels.join(', ') || 'a runner'}`
+      : `${kindNames[job.kind]}: ${job.runnerName}`;
   return (
     <li>
       <Icon name={job.place === 'waiting' ? 'queued' : 'running'} className={job.place} />

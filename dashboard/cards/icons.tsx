@@ -66,8 +66,8 @@ export const placeIcons: Record<Exclude<Place, 'done'>, { icon: IconName; text: 
   },
   elsewhere: {
     icon: 'server',
-    text: 'Building on another runner',
-    hint: 'A GitHub hosted runner or a runner on another machine builds a job of this run right now.',
+    text: 'Building in the cloud',
+    hint: 'Oracle, Blacksmith, a GitHub hosted runner or a runner on another machine builds a job of this run right now.',
   },
 };
 

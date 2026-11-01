@@ -57,7 +57,9 @@ flowchart LR
 | --- | --- |
 | Homebrew, winget | tools and apps |
 | npm through mise | the Copilot CLI and agent-browser |
-| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page |
+| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page, the org variables `CI_RUNNER` and `CI_HEAVY_RUNNER` |
+| Blacksmith | cloud runners for the org, 3000 free 2 vCPU minutes a month |
+| Oracle Cloud | an Always Free ARM VM that runs `oracle` runners |
 | `github.com/actions/runner` releases | the runner download and its SHA256 |
 
 ## How a runner gets a job
@@ -74,6 +76,23 @@ sequenceDiagram
   S->>R: launchd or a boot task per runner
   R->>G: long poll for jobs
   G-->>R: a job whose runs-on matches the labels
+```
+
+## How a job picks its machine
+
+```mermaid
+sequenceDiagram
+  participant R as cloud router, each minute
+  participant G as GitHub
+  participant W as workflow job
+  R->>G: org runners: is an oracle runner online?
+  R->>G: org apps: is Blacksmith installed?
+  R->>G: finished runs of the month and their jobs
+  R->>R: Blacksmith minutes, kept in cloud-usage.json
+  R->>G: set CI_RUNNER and CI_HEAVY_RUNNER when they change
+  W->>G: runs-on reads the variable, with the PC labels as fallback
+  G-->>W: Oracle, Blacksmith or a PC runner takes the job
+  R->>G: a job queued on Blacksmith 5 min: cancel, then rerun on the PC
 ```
 
 ## How the page changes the runner count
@@ -225,6 +244,26 @@ sequenceDiagram
 - **This repo** it is public, so its own Checks and Release run on GitHub runners. A fork PR on the PC runner would run its code on the PC.
 - **Cost to undo** high. The `runs-on` line of every workflow in every org
   repo changes.
+
+### Cloud first: org variables set by the page server
+
+- **Picked** each portable job reads `runs-on` from an org variable, and the
+  status page server sets both variables each minute: Oracle, then Blacksmith
+  while its free minutes last, then this PC.
+- **Why** builds load the PC the person works on. The variables cost no job,
+  no minute and no change per repo when the route moves.
+- **Trade-off** the count of Blacksmith minutes lags until a run finishes,
+  so the stop sits at 2700 of 3000. The router runs only while the PC is on,
+  and the variables then keep their last value.
+- **Rejected**
+  - **A route job in each workflow** each run would wait for an extra job,
+    and a GitHub runner for it costs minutes.
+  - **Blacksmith alone** it bills past 3000 minutes, with no hard stop.
+  - **Vercel CI** paid on Pro only, and it runs Turborepo tasks only.
+  - **Public repos** unlimited GitHub minutes, but the repos moved to the
+    org to become private.
+- **Cost to undo** low. Unset the variables, and every job falls back to
+  the PC labels.
 
 ### Runner start: a scheduled task as the person, not a service
 
