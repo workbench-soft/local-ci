@@ -100,6 +100,6 @@
 
 - [ ] Open `http://localhost:4280/?tab=releases` once the update task installs the release after PR #74 (merged 2026-10-31). If the tab is missing, double click `START.cmd`.
 
-## runner-priority
+## runner-watchdog
 
-- [ ] In `C:\Programming\WorkbenchSoft\local-ci`, run `git pull`, then `.\runner\install.ps1` as admin, so the existing runner tasks run at priority 4 and `Runner.Listener` and `Runner.Worker` start above normal. Then check in Task Manager, Details tab, that both show "Above normal".
+- [ ] `runnerche-actions.ps1` reads all 1474 `Worker_*.log` files (419 MB) of the runners on each install, which held an install at "Filling the action cache" for over an hour on 2026-11-01 at 100% CPU. Read only the newest logs, or prune `_diag`.
