@@ -19,6 +19,7 @@ const tickMs = 60_000;
 const usageMs = 5 * 60_000;
 const appsMs = 10 * 60_000;
 const downMs = 60 * 60_000;
+const syncMs = 30 * 60_000;
 const budget = Number(process.env.BLACKSMITH_BUDGET) || 2700;
 
 // Next bundles this module for the page and for the sweep, so both share one state on globalThis.
@@ -29,6 +30,9 @@ type Store = {
   appsAt: number;
   rerun: Map<number, string>;
   restarted: Set<number>;
+  /** The routes every private repo holds, and when the last full pass ran. */
+  applied: string;
+  appliedAt: number;
 };
 const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.for('local-ci.cloud-router')] ??= {
   state: {
@@ -46,6 +50,8 @@ const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.f
   appsAt: 0,
   rerun: new Map(),
   restarted: new Set(),
+  applied: '',
+  appliedAt: 0,
 });
 
 export const routerState = (): RouterState => store.state;
@@ -102,23 +108,35 @@ async function tick(now: number): Promise<void> {
     blacksmithUsed: state.used ?? 0,
     blacksmithBudget: budget,
   });
-  await setVariables(routes);
+  await setVariables(routes, now);
   state.routes = routes;
   state.at = now;
   await restartStuck(stuck);
 }
 
-async function setVariables(routes: Routes): Promise<void> {
-  const { variables } = await read<{ variables: { name: string; value: string }[] }>(
-    `/orgs/${orgName}/actions/variables?per_page=30`,
-  );
-  const current = Object.fromEntries(variables.map((item) => [item.name, item.value]));
-  for (const [name, value] of variablesToSet(current, routes)) {
-    const body = { name, value, visibility: 'all' };
-    if (name in current) await callGitHub(`/orgs/${orgName}/actions/variables/${name}`, 'PATCH', {}, body);
-    else await callGitHub(`/orgs/${orgName}/actions/variables`, 'POST', {}, body);
-    log(`Set ${name} to ${value}. ${routes.why}`);
+// GitHub Free hides org variables from private repos, so each private repo holds its own copy.
+// The repos get a full pass when the routes change and every 30 minutes, which catches a new repo.
+async function setVariables(routes: Routes, now: number): Promise<void> {
+  const key = JSON.stringify([routes.light, routes.heavy]);
+  if (store.applied === key && now - store.appliedAt < syncMs) return;
+  const repos = await read<{ name: string; archived: boolean }[]>(`/orgs/${orgName}/repos?type=private&per_page=100`);
+  const changed: string[] = [];
+  for (const repo of repos.filter((item) => !item.archived)) {
+    const path = `/repos/${orgName}/${repo.name}/actions/variables`;
+    const { variables } = await read<{ variables: { name: string; value: string }[] }>(`${path}?per_page=30`);
+    const current = Object.fromEntries(variables.map((item) => [item.name, item.value]));
+    for (const [name, value] of variablesToSet(current, routes)) {
+      if (name in current) await callGitHub(`${path}/${name}`, 'PATCH', {}, { name, value });
+      else await callGitHub(path, 'POST', {}, { name, value });
+      changed.push(repo.name);
+    }
   }
+  if (changed.length) {
+    const lanes = `light ${JSON.stringify(routes.light)}, heavy ${JSON.stringify(routes.heavy)}`;
+    log(`Set the runners of ${new Set(changed).size} repo(s): ${lanes}. ${routes.why}`);
+  }
+  store.applied = key;
+  store.appliedAt = now;
 }
 
 /**

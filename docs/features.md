@@ -90,8 +90,10 @@ The PC stays free for work.
 - **Heavy jobs** Gradle, Cargo and Tauri builds go to Blacksmith 4 vCPU,
   else to `[self-hosted, heavy]`. Android builds skip Oracle, since Google
   ships no ARM Linux build tools.
-- **Switch** the status page server sets the org variables `CI_RUNNER` and
-  `CI_HEAVY_RUNNER` each minute. A workflow that reads them falls back to the
+- **Switch** the status page server sets the variables `CI_RUNNER` and
+  `CI_HEAVY_RUNNER` in each private repo when the route changes, and checks
+  every repo each 30 minutes. GitHub Free hides org variables from private
+  repos. A workflow that reads them falls back to the
   PC labels while they are unset.
 - **Budget** the page counts the Blacksmith minutes of the month, a job's
   minutes rounded up times its vCPUs over 2, and stops at 2700 of the 3000

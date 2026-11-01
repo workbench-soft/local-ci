@@ -10,7 +10,7 @@ GitHub.
 ## User flows
 
 1. A push starts a workflow. Each portable job asks for the runner in the
-   org variable `CI_RUNNER` (light jobs) or `CI_HEAVY_RUNNER` (Gradle, Cargo,
+   repo variable `CI_RUNNER` (light jobs) or `CI_HEAVY_RUNNER` (Gradle, Cargo,
    Tauri builds).
 2. The router on the status page server sets both variables once a minute:
    - **Light** the Oracle runner when it is online, else Blacksmith 2 vCPU
@@ -26,8 +26,10 @@ GitHub.
 
 ## How it works: modules, files, data
 
-- **Variables** `CI_RUNNER` and `CI_HEAVY_RUNNER` hold a JSON label list,
-  visible to every org repo. A workflow reads one with a fallback, so a repo
+- **Variables** `CI_RUNNER` and `CI_HEAVY_RUNNER` hold a JSON label list in
+  each private repo. GitHub Free hides org variables from private repos, so
+  the router writes a copy into each one when the route changes and checks
+  them every 30 minutes. A workflow reads one with a fallback, so a repo
   builds on this PC until the router sets them:
   `runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}`.
 - **Where a job ran** `status/runner-kind.ts` reads the job's runner name and
@@ -77,4 +79,14 @@ GitHub.
 - **Steps** this spec, the runner kinds and the Where column, the router and
   its card, the Oracle script, then the docs.
 - **Docs** `docs/features.md`, `docs/architecture.md`, `README.md`,
+  `CHANGELOG.md`.
+
+### 2026-11-02 Repo variables in place of org variables
+
+- **Why** the first Blacksmith run still built on the PC. GitHub Free hides
+  org variables from private repos, so `vars.CI_RUNNER` read empty and the
+  fallback won.
+- **Changes** `status/cloud-router.ts` writes both variables into each
+  private repo that isn't archived, on a route change and every 30 minutes.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`.
