@@ -690,3 +690,14 @@ browser at each logon.
   `dashboard/app/icon.svg` for the tab, all 10 drafts in
   `design/icons/2026-10-31`.
 - **Docs** `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-11-01 A bolder icon
+
+- **Why** the person asked for a cooler icon than the gold circuit check.
+  A second round of `icon-styles` drew 10 styles the first round lacked.
+- **Pick** `05-gradient-mesh`: a white loop arrow round a check on a teal to
+  violet gradient tile.
+- **Files** `dashboard/icon.ico` for the Startup shortcut,
+  `dashboard/app/icon.svg` for the tab, all 10 drafts in
+  `design/icons/2026-11-01`.
+- **Docs** `docs/features.md`, `CHANGELOG.md`.
