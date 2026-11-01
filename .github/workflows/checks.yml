@@ -50,7 +50,10 @@ jobs:
       - run: git config --global core.autocrlf false
         working-directory: ${{ runner.temp }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # A cached markdownlint-cli2 came back without its unicorn-magic package, so this job installs fresh.
       - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
+        with:
+          cache: false
       - run: shellcheck install.sh runner/install.sh && shfmt -i 0 -d install.sh runner/install.sh
       - run: markdownlint-cli2
       # A syntax error in a .ps1 file shows only when a person runs it.

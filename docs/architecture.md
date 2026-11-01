@@ -13,12 +13,17 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   Windows it keeps the count in `~/actions-runner/runner-count`, removes the
   runners above it and registers the count task the status page starts.
 - **Boot task** `windows/boot-task.ps1` holds the admin check and the
-  scheduled task that both Windows boot scripts use. The page task runs at
-  normal priority, and the runner tasks keep the low default.
+  scheduled task that both Windows boot scripts use. The page task and the
+  runner tasks run at normal priority.
 - **Start button** `START.cmd` runs `windows/start.ps1`. The script takes
   the install lock, runs `windows/update.ps1 -FromStart`, adds the update task
   when it is missing, starts the runner and page tasks that aren't running,
   then opens the page.
+- **Watchdog** `windows/runner-watchdog.ps1` asks GitHub which runners are
+  offline. A runner task that runs, started over 10 minutes ago and whose
+  runner is offline gets stopped, its listener ended and the task started
+  again. The update task runs it ahead of the install lock, and `START.cmd`
+  runs it in its admin window.
 - **Install lock** `Enter-InstallLock` in `windows/boot-task.ps1` holds
   `~/.local-ci/install.lock` open. The update task skips its turn while
   `START.cmd` holds it, and `START.cmd` waits while the task holds it.

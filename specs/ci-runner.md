@@ -283,3 +283,34 @@ machine with several runners builds several jobs at once.
   setting is per program name, so it reaches any `Runner.Listener.exe` on
   the PC.
 - **Docs** `README.md`, `CHANGELOG.md`, `TODO.md`.
+
+### 2026-11-01 A watchdog restarts a runner that stays offline
+
+- **Why** on 2026-11-01 all 8 runners showed offline for 12 hours while
+  their tasks showed Running. The listeners from 12:53 wrote their first log
+  line 34 minutes after they started, at priority 7 on a PC at 100% CPU.
+  `START.cmd` skips a task that runs, so only an admin restart helped. The
+  priority fix of the entry above sat unused: the update task's
+  `git merge --ff-only` stopped on a `TODO.md` that another session had
+  edited in the checkout.
+- **Changes**
+  - **Watchdog** `windows/runner-watchdog.ps1` asks GitHub for the runners
+    of the org. A runner task that runs, started over 10 minutes ago and
+    whose runner GitHub shows offline counts as hung. The script stops the
+    task, ends its `Runner.Listener` and starts the task again.
+  - **Update task** `windows/update.ps1` runs the watchdog on each turn,
+    every 5 minutes, ahead of the install lock, since a stuck install held it
+    for over an hour on 2026-11-01. The task runs as admin,
+    so it can end the listener.
+  - **START.cmd** `windows/start.ps1` restarts a hung runner too. When it
+    runs without admin rights, it asks for them, as it does for a task
+    Windows refused to start.
+  - **Local edits** the update merge passes `--autostash`, so an edited
+    tracked file no longer blocks a release. When the edit clashes with the
+    release, git keeps it in the stash, and `update.log` says so.
+- **Limits** the watchdog needs the `gh` login with `admin:org`. Without an
+  answer from GitHub it leaves every runner alone. The update task runs only
+  while the person is logged in. A restart can't help while the PC starves
+  the listener, so the priority fix above still matters.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `CHANGELOG.md`, `TODO.md`.

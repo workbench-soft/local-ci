@@ -74,7 +74,10 @@ click, then opens `http://localhost:4280`.
 
 - **Starts** each `GitHub Actions runner` task and the `local-ci dashboard`
   task that isn't running.
-- **Admin** asked for only when Windows refuses to start a task.
+- **Restarts** each runner GitHub shows offline 10 minutes after its task
+  started.
+- **Admin** asked for when Windows refuses to start a task, or when a runner
+  needs a restart, since ending its listener takes admin.
 - **Limits** Windows only. A new PC runs the install scripts first.
 
 ## CI status page
@@ -200,4 +203,4 @@ icon: a white loop arrow round a check on a teal to violet gradient.
 
 - **What it gives** the Windows PC installs each release within minutes of the merge. The status page and the runners get the new code with no `git pull` by hand.
 - **Where** the `local-ci update` task in Task Scheduler, added by the first double click on `START.cmd`. `~/.local-ci/update.log` lists each install.
-- **Limits** it runs only while the person is logged in, and only on the default branch. A local edit that the pull would overwrite stops it. The Mac and the dev tools of the root `install.ps1` still update by hand.
+- **Limits** it runs only while the person is logged in, and only on the default branch. An edited file such as `TODO.md` waits in the stash during the move. The task also restarts each runner GitHub shows offline 10 minutes after its task started. The Mac and the dev tools of the root `install.ps1` still update by hand.

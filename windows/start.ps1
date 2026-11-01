@@ -2,10 +2,11 @@
 # install that is running, then windows\update.ps1 moves the checkout to the
 # newest release and installs what changed. It adds the "local-ci update" task
 # when it is missing, starts the runner tasks and the page task that aren't
-# running, then opens the page.
+# running, restarts the runners GitHub shows offline, then opens the page.
 param([switch]$TasksOnly)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'boot-task.ps1')
+. (Join-Path $PSScriptRoot 'runner-watchdog.ps1')
 
 $root = Split-Path $PSScriptRoot -Parent
 $port = if ($env:DASHBOARD_PORT) { $env:DASHBOARD_PORT } else { '4280' }
@@ -32,7 +33,15 @@ function Start-StoppedTasks {
 	return $refused
 }
 
+function Restart-HungRunners($hung) {
+	foreach ($task in $hung) {
+		Write-Host "Restarting $($task.TaskName), which GitHub shows offline"
+		Restart-RunnerTask $task
+	}
+}
+
 if ($TasksOnly) {
+	Restart-HungRunners @(Get-HungRunnerTasks)
 	$refused = Start-StoppedTasks
 	foreach ($name in $refused) { Write-Host "Failed    $name" }
 	exit $refused.Count
@@ -53,8 +62,11 @@ try {
 	}
 
 	$refused = Start-StoppedTasks
-	if ($refused.Count -gt 0 -and -not (Test-IsAdmin)) {
-		Write-Host 'Windows refused to start a task, so the script asks for admin rights.'
+	# Ending a listener takes admin rights, so a hung runner waits for the admin window.
+	$hung = @(Get-HungRunnerTasks)
+	if (Test-IsAdmin) { Restart-HungRunners $hung }
+	if ($refused.Count + $hung.Count -gt 0 -and -not (Test-IsAdmin)) {
+		Write-Host 'Windows refused to start a task, or a runner is offline, so the script asks for admin rights.'
 		Start-Process powershell -Verb RunAs -Wait -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", '-TasksOnly'
 	}
 } finally {
