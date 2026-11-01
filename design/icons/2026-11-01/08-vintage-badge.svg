@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Vintage badge: a forest green check on a cream seal with a thin inner ring and two stars</title>
+  <rect width="256" height="256" rx="48" fill="#1f3b2d"/>
+  <circle cx="128" cy="128" r="100" fill="#f3e6c8"/>
+  <circle cx="128" cy="128" r="84" fill="none" stroke="#1f3b2d" stroke-width="5"/>
+  <path d="M84 132 L114 162 L174 98" fill="none" stroke="#1f3b2d" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#b5482a">
+    <path d="M128 52 L133 64 L146 64 L136 72 L140 85 L128 77 L116 85 L120 72 L110 64 L123 64 Z"/>
+    <path d="M128 170 L133 182 L146 182 L136 190 L140 203 L128 195 L116 203 L120 190 L110 182 L123 182 Z"/>
+  </g>
+</svg>

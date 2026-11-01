@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Synthwave: a white check over a striped sunset sun and a pink grid floor</title>
+  <defs>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f"/><stop offset="1" stop-color="#ff3c8e"/></linearGradient>
+    <clipPath id="t"><rect width="256" height="256" rx="48"/></clipPath>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="#1a0b3d"/>
+  <g clip-path="url(#t)">
+    <circle cx="128" cy="124" r="84" fill="url(#sun)"/>
+    <g fill="#1a0b3d"><rect x="40" y="140" width="176" height="7"/><rect x="40" y="158" width="176" height="9"/><rect x="40" y="178" width="176" height="11"/></g>
+    <rect x="0" y="190" width="256" height="66" fill="#2b0f5c"/>
+    <g stroke="#ff3cac" stroke-width="5"><path d="M0 204 H256"/><path d="M0 224 H256"/><path d="M128 190 V256"/><path d="M88 190 L40 256"/><path d="M168 190 L216 256"/><path d="M48 190 L-40 256"/><path d="M208 190 L296 256"/></g>
+  </g>
+  <path d="M74 118 L112 156 L186 82" fill="none" stroke="#2b0f5c" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M74 118 L112 156 L186 82" fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

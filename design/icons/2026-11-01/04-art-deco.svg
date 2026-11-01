@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Art deco: a gold check inside a stepped octagon badge with a sunburst</title>
+  <rect width="256" height="256" rx="48" fill="#0b0b0b"/>
+  <g stroke="#d4af37" stroke-width="6" stroke-linecap="round" opacity="0.8">
+    <path d="M128 128 L128 18"/><path d="M128 128 L206 50"/><path d="M128 128 L238 128"/><path d="M128 128 L206 206"/><path d="M128 128 L128 238"/><path d="M128 128 L50 206"/><path d="M128 128 L18 128"/><path d="M128 128 L50 50"/>
+  </g>
+  <path d="M98 44 H158 L212 98 V158 L158 212 H98 L44 158 V98 Z" fill="#0b0b0b" stroke="#d4af37" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M104 64 H152 L192 104 V152 L152 192 H104 L64 152 V104 Z" fill="none" stroke="#f3d77a" stroke-width="4"/>
+  <path d="M90 130 L116 156 L168 100" fill="none" stroke="#f3d77a" stroke-width="20" stroke-linecap="square" stroke-linejoin="miter"/>
+</svg>
