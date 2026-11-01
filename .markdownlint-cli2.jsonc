@@ -1,0 +1,24 @@
+{
+  "config": {
+    // Tables and long links run past 80 columns.
+    "MD013": false,
+    // Specs repeat "Goal" and "Why" under each dated entry.
+    "MD024": { "siblings_only": true },
+    // READMEs use <kbd>, <details> and <img> on purpose.
+    "MD033": false,
+    // Each bullet opens with its point in bold, which looks like a heading to MD036.
+    "MD036": false,
+    // Skills and templates open with frontmatter or a comment, not a heading.
+    "MD041": false,
+  },
+  // CLAUDE.md holds only the @AGENTS.md import line.
+  "ignores": [
+    "**/node_modules/**",
+    "**/target/**",
+    "**/dist/**",
+    "**/build/**",
+    "CLAUDE.md",
+    "**/CLAUDE.md",
+  ],
+  "globs": ["**/*.md"],
+}
