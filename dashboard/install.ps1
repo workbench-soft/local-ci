@@ -59,13 +59,21 @@ try {
 	if ($LASTEXITCODE -ne 0) { throw 'pnpm build failed' }
 	# START.cmd rebuilds when dashboard/ moves past this commit.
 	git -C (Split-Path $appDir -Parent) log -1 --format=%H -- dashboard | Set-Content -LiteralPath (Join-Path $appDir '.built-commit') -Encoding ascii
+	$node = (& $mise x -- node -p 'process.execPath').Trim()
+	if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $node)) { throw 'mise found no node' }
+} catch {
+	# A failed build would leave the page down until the next install, so the old one starts again.
+	Start-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+	throw
 } finally { Pop-Location }
 
 Write-Step 'Writing the GitHub token to .env.local'
 Write-TokenFile
 
+# The boot task runs node on Next itself. Through mise and pnpm it hung on a busy
+# PC, or stopped on a mise.toml the task's mise hadn't trusted.
 $startScript = Join-Path $appDir 'start.cmd'
-Set-Content -LiteralPath $startScript -Encoding ascii -Value "@echo off`r`ncd /d `"%~dp0`"`r`n`"$mise`" x -- pnpm exec next start -H 127.0.0.1 -p $port >> dashboard.log 2>&1"
+Set-Content -LiteralPath $startScript -Encoding ascii -Value "@echo off`r`ncd /d `"%~dp0`"`r`n`"$node`" node_modules\next\dist\bin\next start -H 127.0.0.1 -p $port >> dashboard.log 2>&1"
 
 Write-Step 'Starting the page at boot'
 # Normal priority, so the page starts on a PC the runners keep busy.
