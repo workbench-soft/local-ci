@@ -111,6 +111,34 @@ running, then opens `http://localhost:4280`.
 - **First run** it builds the page and adds the update task. Without a runner
   task, it names `runner\install.ps1`.
 
+## Cloud runners first
+
+Jobs build in the cloud while the free minutes last, then on this PC. The
+status page server sets two org variables each minute, and each portable job
+reads one:
+
+```yaml
+runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}
+```
+
+| Lane | Variable | First | Then | Last |
+| --- | --- | --- | --- | --- |
+| Light: lint, tests | `CI_RUNNER` | Oracle VM | Blacksmith 2 vCPU | `[self-hosted, local]` |
+| Heavy: Gradle, Cargo, Tauri | `CI_HEAVY_RUNNER` | Blacksmith 4 vCPU | | `[self-hosted, heavy]` |
+
+- **Blacksmith** on once the Blacksmith app is installed in the org at
+  [app.blacksmith.sh](https://app.blacksmith.sh). The page stops at 2700 of
+  the 3000 free minutes, since Blacksmith bills past 3000.
+  `BLACKSMITH_BUDGET` in `dashboard.env.local` changes the stop.
+- **Oracle** create an Always Free Ampere A1 VM with Ubuntu, then run
+  `./runner/oracle.sh ubuntu@<vm address>` from Git Bash on this PC.
+- **Stuck** a job queued on Blacksmith for 5 minutes sends both lanes to
+  this PC for an hour, and its run starts again there.
+- **Off** `CLOUD_ROUTER=off` in `dashboard.env.local` stops the router. The
+  variables keep their last value.
+- **Fixed jobs** a job that needs Windows, the phone, the emulator or files
+  on this PC keeps `[self-hosted, local]` or its own labels.
+
 ## CI status page
 
 `http://localhost:4280` shows what builds on this PC and what waits on GitHub.
@@ -122,7 +150,8 @@ once, from the main checkout:
 ```
 
 - **Shows** the jobs on this PC, the jobs waiting on GitHub for a runner, the
-  org runners, and the latest runs with a filter and sorting.
+  org runners, the cloud routes, and the latest runs with the machine of each
+  run, a filter and sorting.
 - **Stop and Purge** each run gets a Stop button to force cancel it, so its
   runner is free at once. The button reads Stopping, then Stopped. A Purge
   button force cancels a run and deletes it from GitHub with its logs.
