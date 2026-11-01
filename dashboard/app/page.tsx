@@ -1,16 +1,19 @@
 import Link from 'next/link';
 import { AutoRefresh } from '@/cards/auto-refresh';
+import { CloudCard } from '@/cards/cloud-card';
 import { LatestRunsTable, type RunRow } from '@/cards/latest-runs-table';
 import { LiveJobsCard } from '@/cards/live-jobs-card';
 import { ReleasesCard } from '@/cards/releases-card';
 import { RunnersCard } from '@/cards/runners-card';
 import { StatusDot } from '@/cards/status-dot';
+import { routerState } from '@/status/cloud-router';
 import { runDuration } from '@/status/durations';
 import { summarizeCi } from '@/status/headline';
 import { latestReleases } from '@/status/latest-releases';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { releasesByRun } from '@/status/releases';
+import { kindsOfRun } from '@/status/runner-kind';
 import { readRunnerCount, readThisPc } from '@/status/this-pc';
 
 // Each visit reads the runner afresh, so Next must not prerender the page.
@@ -40,6 +43,7 @@ export default async function StatusPage({
       place: placeOfRun(run, local),
       release: releaseOf.get(run.id) ?? null,
       failure: failureOf(run),
+      machines: kindsOfRun(jobs, local),
     };
   });
   const apps = latestReleases(releases, rows);
@@ -65,6 +69,7 @@ export default async function StatusPage({
       {tab === 'status' ? (
         <div className="grid">
           {org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />}
+          <CloudCard state={routerState()} now={now} />
           <RunnersCard pc={pc} org={org} jobs={live} count={count} now={now} />
           {org.ok && <LatestRunsTable runs={rows} now={now} />}
         </div>

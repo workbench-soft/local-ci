@@ -731,3 +731,51 @@ td .run-controls {
   text-align: right;
   white-space: nowrap;
 }
+
+/* Each machine keeps one color, so a glance down the column tells cloud from this PC. */
+.machine {
+  display: inline-block;
+  font-size: 12px;
+  padding: 0 8px;
+  margin: 0 4px 2px 0;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+}
+
+.machine.pc {
+  color: var(--busy);
+}
+
+.machine.oracle {
+  color: #e5533d;
+}
+
+.machine.blacksmith {
+  color: #8b5cf6;
+}
+
+.machine.github,
+.machine.other {
+  color: var(--muted);
+}
+
+.cloud {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 8px 0 0;
+}
+
+.cloud dt {
+  color: var(--muted);
+}
+
+.cloud dd {
+  margin: 0;
+}
+
+.cloud meter {
+  display: block;
+  width: min(320px, 100%);
+  margin-top: 4px;
+}

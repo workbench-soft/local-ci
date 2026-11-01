@@ -246,11 +246,10 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
         number,
         url: `https://github.com/${fullName}/pull/${number}`,
       })),
+      // Every run needs its jobs, since only they tell which machine built it. A finished run's jobs read once.
       jobs: activeStatuses.has(run.status)
         ? await activeRunJobs(fullName, run)
-        : failedConclusions.has(run.conclusion ?? '')
-          ? await listRunJobs(fullName, run.id)
-          : [],
+        : await finishedRunJobs(fullName, run.id),
     })),
   );
   await addTypicalTimes(fullName, runs);
@@ -309,7 +308,7 @@ async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
   return jobs;
 }
 
-// A finished run never changes, so its jobs are read once. The oldest entry goes past 200 runs.
+// A finished run never changes, so its jobs are read once. The oldest entry goes past 400 runs.
 const finishedJobs = store.finishedJobs;
 
 function finishedRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
@@ -319,7 +318,7 @@ function finishedRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
     finishedJobs.set(runId, jobs);
     // A failed call gives no jobs, so the next load tries again.
     void jobs.then((list) => list.length || finishedJobs.delete(runId));
-    if (finishedJobs.size > 200) finishedJobs.delete(finishedJobs.keys().next().value as number);
+    if (finishedJobs.size > 400) finishedJobs.delete(finishedJobs.keys().next().value as number);
   }
   return jobs;
 }
@@ -407,11 +406,13 @@ export function githubStatus(error: unknown): number | null {
 /** One GitHub API call with the page's token. A status outside 2xx and 304 throws with the path in the message. */
 export async function callGitHub(
   path: string,
-  method: 'GET' | 'POST' | 'DELETE' = 'GET',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE' = 'GET',
   extra: Record<string, string> = {},
+  body?: unknown,
 ): Promise<Response> {
   const response = await fetch(`https://api.github.com${path}`, {
     method,
+    ...(body !== undefined && { body: JSON.stringify(body) }),
     headers: {
       Authorization: `Bearer ${await resolveToken()}`,
       Accept: 'application/vnd.github+json',

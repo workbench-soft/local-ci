@@ -1,5 +1,6 @@
 import type { OrgRunner, RunJob, WorkflowRun } from './org-status.ts';
 import type { StepCount } from './progress.ts';
+import { kindOfJob, type RunnerKind } from './runner-kind.ts';
 import type { PcRunner, ThisPcStatus } from './this-pc.ts';
 
 /** Statuses of a run or a job that hasn't finished. */
@@ -19,6 +20,8 @@ export type LiveJob = {
   place: Exclude<Place, 'done'>;
   runnerName: string | null;
   labels: string[];
+  /** The machine that builds the job, or the one it waits for. */
+  kind: RunnerKind;
   since: string;
   url: string;
   /** Null for a whole run without jobs, which has no steps to count. */
@@ -68,6 +71,7 @@ export function liveJobs(runs: WorkflowRun[], local: Set<string>): LiveJob[] {
           place,
           runnerName: null,
           labels: [],
+          kind: 'other',
           since: run.createdAt,
           url: run.url,
           steps: null,
@@ -86,6 +90,7 @@ export function liveJobs(runs: WorkflowRun[], local: Set<string>): LiveJob[] {
           place,
           runnerName: job.runnerName,
           labels: job.labels,
+          kind: kindOfJob(job, local),
           since: job.startedAt ?? run.createdAt,
           url: job.url,
           steps: job.steps,

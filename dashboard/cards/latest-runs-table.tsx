@@ -6,6 +6,7 @@ import { formatAge, toneOfRun } from '@/status/headline';
 import type { RunFailure, WorkflowRun } from '@/status/org-status';
 import { type Place, placeOrder } from '@/status/placement';
 import type { Release } from '@/status/releases';
+import { kindNames, type RunnerKind } from '@/status/runner-kind';
 import { Icon, placeIcons, resultOf } from './icons';
 import { InstallButton } from './install-button';
 import { PurgeAllButton } from './purge-all-button';
@@ -18,30 +19,40 @@ export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & {
   place: Place;
   release: Release | null;
   failure: RunFailure | null;
+  /** The machines of its jobs: where it built, builds, or waits to build. */
+  machines: RunnerKind[];
 };
 
-type SortKey = 'place' | 'repo' | 'workflow' | 'branch' | 'pr' | 'started' | 'took';
+type SortKey = 'place' | 'machine' | 'repo' | 'workflow' | 'branch' | 'pr' | 'started' | 'took';
 
 const rowLimit = 60;
 
 type Filter = { text: string; hint?: string; test: (row: RunRow) => boolean };
 
-const filters: Record<'all' | Exclude<Place, 'done'> | 'failed' | 'passed', Filter> = {
+const filters: Record<'all' | Exclude<Place, 'done'> | 'cloud' | 'failed' | 'passed', Filter> = {
   all: { text: 'All', test: () => true },
   local: { ...placeIcons.local, test: (row: RunRow) => row.place === 'local' },
   waiting: { ...placeIcons.waiting, test: (row: RunRow) => row.place === 'waiting' },
   elsewhere: { ...placeIcons.elsewhere, test: (row: RunRow) => row.place === 'elsewhere' },
+  cloud: {
+    text: 'Cloud',
+    hint: 'Runs with a job on Oracle, Blacksmith or a GitHub runner.',
+    test: (row: RunRow) => row.machines.some((kind) => kind !== 'pc'),
+  },
   failed: { text: 'Failed', test: (row: RunRow) => toneOfRun(row) === 'bad' },
   passed: { text: 'Passed', test: (row: RunRow) => row.conclusion === 'success' },
 };
 
 type FilterKey = keyof typeof filters;
 
+const machineText = (row: RunRow) => row.machines.map((kind) => kindNames[kind]).join(', ');
+
 const newestFirst = (a: RunRow, b: RunRow) => Date.parse(b.createdAt) - Date.parse(a.createdAt);
 
 // Each key sorts ascending. Ties go to the newest run.
 const compareBy: Record<SortKey, (a: RunRow, b: RunRow) => number> = {
   place: (a, b) => placeOrder[a.place] - placeOrder[b.place],
+  machine: (a, b) => machineText(a).localeCompare(machineText(b)),
   repo: (a, b) => a.repo.localeCompare(b.repo),
   workflow: (a, b) => a.workflow.localeCompare(b.workflow),
   branch: (a, b) => a.branch.localeCompare(b.branch),
@@ -53,6 +64,7 @@ const compareBy: Record<SortKey, (a: RunRow, b: RunRow) => number> = {
 
 const columns: { key: SortKey; text: string }[] = [
   { key: 'place', text: 'Where' },
+  { key: 'machine', text: 'Machine' },
   { key: 'repo', text: 'Repo' },
   { key: 'workflow', text: 'Workflow' },
   { key: 'branch', text: 'Branch' },
@@ -70,7 +82,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
   const words = search.toLowerCase().split(/\s+/).filter(Boolean);
   const matches = (row: RunRow) => {
     const text =
-      `${row.repo} ${row.workflow} ${row.title} ${row.branch} ${row.event} ${row.pullRequests.map((pr) => `#${pr.number}`).join(' ')} ${row.release?.tag ?? ''}`.toLowerCase();
+      `${machineText(row)} ${row.repo} ${row.workflow} ${row.title} ${row.branch} ${row.event} ${row.pullRequests.map((pr) => `#${pr.number}`).join(' ')} ${row.release?.tag ?? ''}`.toLowerCase();
     return words.every((word) => text.includes(word));
   };
   const direction = sort.descending ? -1 : 1;
@@ -91,8 +103,8 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
     <section className="card wide">
       <h2>Latest runs</h2>
       <p className="muted small">
-        An unfinished run says where it builds: on this PC, in the GitHub queue or on another runner. A finished run
-        shows only its result.
+        Machine names where each run built: this PC, Oracle, Blacksmith or GitHub. A queued run names the machine it
+        waits for.
       </p>
       <div className="toolbar">
         <div className="chips" role="group" aria-label="Filter runs">
@@ -113,7 +125,7 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
         <input
           type="search"
           aria-label="Search runs"
-          placeholder="Search repo, workflow, branch, PR"
+          placeholder="Search machine, repo, workflow, branch, PR"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
@@ -189,6 +201,13 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
             </div>
           )}
         </td>
+        <td className="nowrap">
+          {run.machines.map((kind) => (
+            <span key={kind} className={`machine ${kind}`} title={machineHint(run, kind)}>
+              {kindNames[kind]}
+            </span>
+          ))}
+        </td>
         <td>{run.repo}</td>
         <td>
           <a href={run.url} target="_blank" rel="noreferrer">
@@ -256,4 +275,9 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
       )}
     </Fragment>
   );
+}
+
+function machineHint(run: RunRow, kind: RunnerKind): string {
+  const verb = run.status === 'completed' ? 'built' : run.status === 'in_progress' ? 'builds' : 'waits to build';
+  return `A job of this run ${verb} on ${kind === 'pc' ? 'a runner of this PC' : kindNames[kind]}.`;
 }
