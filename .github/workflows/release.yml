@@ -1,8 +1,8 @@
 name: Release
 
 # Each push to main whose Checks run passes gets a release. The version is the date: 2026.10.30.1, then 2026.10.30.2.
-# The release carries notes only, since the repo builds no file to ship. The install job then starts
-# the update task on the Windows PC, which installs the release there.
+# The release carries notes only, since the repo builds no file to ship. The update task on the Windows PC
+# installs it within 5 minutes.
 on:
   workflow_run:
     workflows: [Checks]
@@ -18,11 +18,6 @@ env:
   # A workflow_run starts on the latest main, which can be newer than the commit Checks tested.
   SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-# Windows runs steps in PowerShell unless told otherwise.
-defaults:
-  run:
-    shell: bash
-
 jobs:
   release:
     if: >-
@@ -32,8 +27,8 @@ jobs:
     concurrency:
       group: release
       cancel-in-progress: true
-    # The PC runner costs 0 minutes on a private repo.
-    runs-on: [self-hosted, local]
+    # The repo is public, so GitHub runners cost 0 minutes.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -54,14 +49,3 @@ jobs:
           git tag "$TAG" "$SHA"
           git push origin "$TAG"
           gh release create "$TAG" --verify-tag --notes-file "$RUNNER_TEMP/notes.md" --title "$TAG"
-
-  install:
-    needs: release
-    # The update task lives on the Windows PC, and a runner there can start it.
-    runs-on: [self-hosted, Windows]
-    steps:
-      - name: Start the update task, which installs this release
-        shell: powershell
-        run: |
-          try { Start-ScheduledTask -TaskName 'local-ci update' -ErrorAction Stop; Write-Host 'Started local-ci update' }
-          catch { Write-Host "The PC runs the update task every 5 minutes, so this release installs then: $_" }

@@ -89,7 +89,7 @@
 - [ ] Delete the old Open Charge Map key of ServoHop. It sits in another Open Charge Map account than the one used on 2026-10-30.
 - [ ] Store the Queensland fuel token in servohop when its email arrives: `gh secret set QLD_FUEL_TOKEN -R workbench-soft/servohop`.
 
-- [ ] Runner jobs fail with "The self-hosted runner lost communication with the server" before their first step: 8 broker drops on NIFELHEIM between 09:31 and 12:15 UTC on 2026-10-30. Check whether the VPN on this PC reconnects, then rerun the failed jobs.
+- [ ] Runner jobs fail with "The self-hosted runner lost communication with the server" before their first step: 8 broker drops on the Windows PC between 09:31 and 12:15 UTC on 2026-10-30. Check whether the VPN on this PC reconnects, then rerun the failed jobs.
 
 ## purge-all-every-run
 

@@ -21,8 +21,6 @@ git clone https://github.com/workbench-soft/local-ci.git
 
 - **Run it again** each script skips the pieces already in place.
 - **Fresh Windows** install Git first: `winget install Git.Git`.
-- **Private repo** it sits in the `workbench-soft` org. On a new machine
-  `git clone` asks for your GitHub user name, with a token as the password.
 - **Old name** the `mac-setup` address redirects here.
 
 ## CI runner
@@ -167,8 +165,8 @@ Each push to `main` that passes Checks gets a release on the
 
 ## Updates by themselves
 
-The Windows PC installs each new release on its own. Release starts the
-`local-ci update` task, and the task also runs every 5 minutes and at logon.
+The Windows PC installs each new release on its own. The `local-ci update`
+task runs every 5 minutes and at logon, so a release lands within 5 minutes.
 
 - **What it runs** `windows\update.ps1` moves the checkout to the newest
   release tag. Then it runs `dashboard\install.ps1` or `runner\install.ps1`

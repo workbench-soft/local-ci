@@ -28,7 +28,7 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   tag. It runs `dashboard/install.ps1` when `dashboard/` moved past
   `dashboard/.built-commit`, and `runner/install.ps1` when the runner files
   moved past `~/.local-ci/runner-commit`. The `local-ci update` task runs it
-  every 5 minutes and at logon, and the Release workflow starts it.
+  every 5 minutes and at logon.
 - **Data files** `mcp-config.json` and `claude/MEMORY.md`, copied into the
   home folder when missing.
 
@@ -217,6 +217,7 @@ sequenceDiagram
   - **GitHub hosted runners** a private repo pays for each minute past the
     free quota.
   - **Public repos** the repos moved to the org to become private.
+- **This repo** it is public, so its own Checks and Release run on GitHub runners. A fork PR on the PC runner would run its code on the PC.
 - **Cost to undo** high. The `runs-on` line of every workflow in every org
   repo changes.
 
