@@ -24,7 +24,7 @@ The agent MUST act on each row that matches the output:
 | It shows | Do |
 | --- | --- |
 | A runner `offline` | Ask the user to double click `START.cmd`. It starts each runner task and the status page. |
-| Each runner `busy`, runs `queued` | The runs wait their turn. Cancel stale ones from step 3, or raise the count on the Runners card of http://localhost:4280. |
+| Each runner `busy`, runs `queued` | The runs wait their turn. Cancel stale ones from step 3, or raise the count on the Runners card of <http://localhost:4280>. |
 | A run `in_progress` for hours | Read its log, then cancel it: `GH_PAGER=cat gh run cancel <id> -R workbench-soft/<repo>`. |
 | No runner listed | The token lacks `admin:org`. Run `gh auth refresh -s admin:org`. |
 

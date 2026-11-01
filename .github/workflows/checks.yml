@@ -52,6 +52,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: jdx/mise-action@6be3c7ed4c21d4f76b208d351d95aac273ebb76d # v5.2.4
       - run: shellcheck install.sh runner/install.sh && shfmt -i 0 -d install.sh runner/install.sh
+      - run: markdownlint-cli2
       # A syntax error in a .ps1 file shows only when a person runs it.
       - shell: powershell
         run: |
