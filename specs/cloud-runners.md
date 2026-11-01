@@ -1,0 +1,80 @@
+# Cloud runners first, this PC last
+
+## What it does for the person
+
+CI jobs build on free cloud runners while their free minutes last, and fall
+back to the runners of this PC after that. The PC stays free for work. The
+status page shows where each job built: this PC, Oracle, Blacksmith or
+GitHub.
+
+## User flows
+
+1. A push starts a workflow. Each portable job asks for the runner in the
+   org variable `CI_RUNNER` (light jobs) or `CI_HEAVY_RUNNER` (Gradle, Cargo,
+   Tauri builds).
+2. The router on the status page server sets both variables once a minute:
+   - **Light** the Oracle runner when it is online, else Blacksmith 2 vCPU
+     while minutes are left, else `[self-hosted, local]`.
+   - **Heavy** Blacksmith 4 vCPU while minutes are left, else
+     `[self-hosted, heavy]`.
+3. A job that waits on Blacksmith for over 5 minutes means Blacksmith is
+   missing or down. The router turns Blacksmith off for an hour, sends both
+   lanes to this PC, cancels the run and starts it again.
+4. The Runs table and the Running now card name the machine of each job.
+   The Cloud card shows both routes, the Blacksmith minutes of the month and
+   the Oracle runner state.
+
+## How it works: modules, files, data
+
+- **Variables** `CI_RUNNER` and `CI_HEAVY_RUNNER` hold a JSON label list,
+  visible to every org repo. A workflow reads one with a fallback, so a repo
+  builds on this PC until the router sets them:
+  `runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}`.
+- **Where a job ran** `status/runner-kind.ts` reads the job's runner name and
+  labels: a runner folder of this PC, `oracle`, `blacksmith-*`,
+  `GitHub Actions *`, or another self-hosted runner.
+- **Blacksmith minutes** `status/blacksmith-usage.ts` reads each finished run
+  of the month once and keeps the counted minutes in
+  `dashboard/cloud-usage.json`. A job counts its minutes rounded up, times
+  its vCPU count over 2, as Blacksmith bills. The file starts over each
+  month.
+- **Blacksmith on** the router uses Blacksmith only when the Blacksmith app is
+  installed in the org, seen through `GET /orgs/{org}/installations`.
+- **Budget** `BLACKSMITH_BUDGET` in `.env.local`, 2700 of the 3000 free
+  minutes by default. Blacksmith bills past 3000, so the margin covers jobs
+  still running at the switch.
+- **Oracle** `runner/oracle.sh <user@host>` installs a runner on an Oracle
+  Always Free ARM VM over SSH, with the labels `self-hosted, Linux, ARM64,
+  oracle`. The PC asks GitHub for the registration token, so the VM needs
+  no GitHub login.
+- **Router** `status/cloud-route.ts` picks the routes from the state, and
+  `status/cloud-router.ts` runs it each minute beside the cancel sweep, sets
+  the variables that changed and logs each switch to `dashboard.log`.
+
+## Limits
+
+- **Jobs that stay** a job that needs Windows, the phone, the emulator, the
+  NAS or files on this PC keeps its fixed labels.
+- **Android on Oracle** Google ships no ARM Linux build tools, so Android
+  builds take the heavy lane, which skips Oracle.
+- **Count lag** a job counts once its run finishes. Several long jobs at the
+  switch can go a few minutes past the budget, which the margin absorbs.
+- **Oracle signup** needs a card and a free VM, which a person creates.
+- **Cold runners** a cloud job starts without the PC caches, so it installs
+  its tools and packages each time.
+
+## Changes
+
+### 2026-11-02 Route builds to Oracle and Blacksmith first
+
+- **Why** local builds load the PC. The person asked to build on Blacksmith
+  or Oracle while their free limit lasts, then on this PC, and to see in the
+  launcher where each build runs.
+- **Changes** `status/runner-kind.ts`, `status/cloud-route.ts`,
+  `status/blacksmith-usage.ts`, `status/cloud-router.ts`, a Cloud card, a
+  machine name on each run and live job, jobs read for finished runs too,
+  `runner/oracle.sh`.
+- **Steps** this spec, the runner kinds and the Where column, the router and
+  its card, the Oracle script, then the docs.
+- **Docs** `docs/features.md`, `docs/architecture.md`, `README.md`,
+  `CHANGELOG.md`.
