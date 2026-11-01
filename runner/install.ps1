@@ -152,11 +152,25 @@ function Set-RunnerWork($runner) {
 	Set-Content -LiteralPath $file -Encoding utf8 -Value ($config | ConvertTo-Json)
 }
 
+# At 100% CPU a below normal listener missed its GitHub polls and the runners went
+# offline. A child of an above normal process starts at normal, so the task priority
+# can't lift the listener or the worker it spawns per job. Windows reads this key at
+# each start of the program.
+function Set-RunnerPriority {
+	foreach ($program in 'Runner.Listener.exe', 'Runner.Worker.exe') {
+		$key = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$program\PerfOptions"
+		New-Item -Force -Path $key | Out-Null
+		# 6 is above normal.
+		Set-ItemProperty -Path $key -Name CpuPriorityClass -Value 6 -Type DWord
+	}
+}
+
 function Start-Runner($runner) {
 	Stop-RunnerWhenIdle $runner
 	Set-RunnerWork $runner
 	# Jobs reach GitHub through their GITHUB_TOKEN, since the task can't read the gh login.
-	Register-BootTask $runner.Task (Join-Path $runner.Dir 'start.cmd') $runner.Dir
+	# Priority 4 runs start.cmd at normal CPU, I/O and memory priority.
+	Register-BootTask $runner.Task (Join-Path $runner.Dir 'start.cmd') $runner.Dir 4
 }
 
 # A runner registered before the heavy label, or moved across the heavy count, gets its labels fixed on GitHub.
@@ -296,6 +310,8 @@ New-Item -ItemType Directory -Force -Path $actionCache | Out-Null
 Write-Step "Filling the action cache in $actionCache"
 # A download that fails leaves the runners to fetch that action themselves.
 try { & (Join-Path $PSScriptRoot 'cache-actions.ps1') } catch { Write-Host "The action cache stays as it is: $($_.Exception.Message)" }
+Write-Step 'Starting Runner.Listener and Runner.Worker at above normal priority'
+Set-RunnerPriority
 foreach ($runner in $runners) {
 	Write-Step "Writing start.cmd, .path and the job variables for $($runner.Name), and starting it at boot"
 	Write-RunnerEnvironment $runner.Dir $toolDirs $toolCache

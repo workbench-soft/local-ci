@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Runner priority** the Windows runners stay online while the PC sits at 100% CPU. `Runner.Listener` and `Runner.Worker` start above normal, and their boot task runs at normal priority in place of below normal. Run `runner\install.ps1` again as admin to move existing runners over.
+
 - **Status page start** the `local-ci dashboard` task runs node on Next directly, without mise and pnpm. On a PC at full load `mise x -- pnpm` hung for over 10 minutes, held `dashboard.log` open and made each restart fail.
 - **Status page install** a failed build starts the old page again. Before, the page stayed down until the next install worked.
 

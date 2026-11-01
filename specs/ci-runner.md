@@ -29,6 +29,9 @@ machine with several runners builds several jobs at once.
   Runner `n` sits in `~/actions-runner/<org>-<n>`.
 - **Names** the first runner takes the machine name. Runner `n` takes
   `<machine>-<n>`.
+- **Priority** the boot task runs at priority 4, normal. `Runner.Listener`
+  and `Runner.Worker` start above normal through their `PerfOptions` key, so
+  a busy PC can't starve their GitHub polls.
 - **Windows start** each runner gets a boot task. The first is
   `GitHub Actions runner (<org>)`, runner `n` gets
   `GitHub Actions runner (<org> <n>)`.
@@ -250,3 +253,33 @@ machine with several runners builds several jobs at once.
   The Mac runner has no heavy label, so a heavy job waits for the PC.
 - **Docs** `README.md`, `docs/architecture.md`, `docs/features.md`,
   `CHANGELOG.md`.
+
+### 2026-11-01 Runners keep GitHub while the PC sits at 100% CPU
+
+- **Why** on 2026-11-01 GitHub showed all 8 runners offline while their
+  `Runner.Listener` processes kept running. The `_diag` logs show token
+  requests taking 20 to 60 s, broker long polls timing out after 100 s and
+  jobs failing with 0 steps. The network was fine, and the PC sat at 100% CPU
+  with 2 GB of 31 GB free. The boot task had no priority set, so Task
+  Scheduler gave it 7: below normal CPU, I/O and memory priority, inherited by
+  the listener and the worker. Any desktop app beat them to the CPU.
+- **Changes**
+  - **Boot task** `Start-Runner` passes priority 4 to `Register-BootTask`,
+    as the status page task already does: normal for the CPU, I/O and memory. `start.cmd` and `run.cmd` then
+    start at normal, and the listener's pages stop going first under memory
+    pressure.
+  - **Process priority** a child process gets normal priority from an above
+    normal parent, so a task priority alone can't lift the listener.
+    `Set-RunnerPriority` writes `CpuPriorityClass` 6 (above normal) under
+    `Image File Execution Options\Runner.Listener.exe\PerfOptions` and the
+    same for `Runner.Worker.exe` in HKLM. Windows applies it to each start
+    of those programs, the worker the listener spawns per job included.
+  - **Rerun** `Register-ScheduledTask -Force` rewrites the task of an
+    existing runner, and `Start-Runner` restarts its listener once idle, so
+    a rerun of the script moves existing runners over.
+- **Limits** build steps the worker starts get normal priority, where they
+  had below normal through the task before. Builds now compete with the
+  desktop on equal terms. The heavy label still caps big builds at 2. The
+  setting is per program name, so it reaches any `Runner.Listener.exe` on
+  the PC.
+- **Docs** `README.md`, `CHANGELOG.md`, `TODO.md`.

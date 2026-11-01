@@ -99,3 +99,7 @@
 ## releases-tab
 
 - [ ] Open `http://localhost:4280/?tab=releases` once the update task installs the release after PR #74 (merged 2026-10-31). If the tab is missing, double click `START.cmd`.
+
+## runner-priority
+
+- [ ] In `C:\Programming\WorkbenchSoft\local-ci`, run `git pull`, then `.\runner\install.ps1` as admin, so the existing runner tasks run at priority 4 and `Runner.Listener` and `Runner.Worker` start above normal. Then check in Task Manager, Details tab, that both show "Above normal".
