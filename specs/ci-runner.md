@@ -29,6 +29,9 @@ machine with several runners builds several jobs at once.
   Runner `n` sits in `~/actions-runner/<org>-<n>`.
 - **Names** the first runner takes the machine name. Runner `n` takes
   `<machine>-<n>`.
+- **Priority** the boot task runs at priority 4, normal. `Runner.Listener`
+  and `Runner.Worker` start above normal through their `PerfOptions` key, so
+  a busy PC can't starve their GitHub polls.
 - **Windows start** each runner gets a boot task. The first is
   `GitHub Actions runner (<org>)`, runner `n` gets
   `GitHub Actions runner (<org> <n>)`.
@@ -261,10 +264,8 @@ machine with several runners builds several jobs at once.
   Scheduler gave it 7: below normal CPU, I/O and memory priority, inherited by
   the listener and the worker. Any desktop app beat them to the CPU.
 - **Changes**
-  - **`windows/boot-task.ps1`** `Register-BootTask` takes a task priority,
-    7 by default, so the status page task stays as it is.
-  - **Boot task** `Start-Runner` registers each runner task at priority 5,
-    normal for the CPU, I/O and memory. `start.cmd` and `run.cmd` then
+  - **Boot task** `Start-Runner` passes priority 4 to `Register-BootTask`,
+    as the status page task already does: normal for the CPU, I/O and memory. `start.cmd` and `run.cmd` then
     start at normal, and the listener's pages stop going first under memory
     pressure.
   - **Process priority** a child process gets normal priority from an above

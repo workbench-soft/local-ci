@@ -42,6 +42,10 @@ runner. The runner scripts also work alone:
   runner release notes.
 - **After a reboot** the Windows runner starts at boot as you, before anyone
   logs in. Setting that up takes admin rights, so the script asks Windows once.
+- **Priority** the boot task runs at normal priority, and `Runner.Listener`
+  and `Runner.Worker` start above normal through their `PerfOptions` key in
+  the registry. At 100% CPU they still reach GitHub, where below normal
+  runners went offline. Build steps run at normal.
 - **Errors and log** the admin window of `runner\install.ps1` stays open on
   an error until you press Enter. Each admin run writes its output to
   `~/actions-runner/install.log`.
