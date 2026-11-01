@@ -10,12 +10,12 @@ minutes. No `git pull` or `install.ps1` by hand.
 
 1. A PR merges into `main`.
 2. Checks passes, and Release tags the commit, such as `v2026.10.31.1`.
-3. Release starts the `local-ci update` task on the Windows PC.
+3. Within 5 minutes the `local-ci update` task on the Windows PC runs.
 4. The task moves the checkout to that tag.
 5. The task runs `dashboard\install.ps1` when the page code changed, and
    `runner\install.ps1` when the runner code changed.
 
-The task also runs every 5 minutes and at logon, so a release the PC missed
+The task runs every 5 minutes and at logon, so a release the PC missed
 installs on the next run.
 
 ## How it works
