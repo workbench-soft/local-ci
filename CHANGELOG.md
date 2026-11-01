@@ -3,7 +3,8 @@
 ## Unreleased
 
 - **Icon** the status page tab and the Startup shortcut show a white loop arrow round a check on a teal to violet gradient. The 10 drafts sit in `design/icons/2026-11-01`.
-
+- **Agent docs** `AGENTS.md` and the `fix-stuck-ci` skill state each rule with MUST, SHOULD or MAY.
+- **Status page start** the `local-ci dashboard` task runs at normal priority. At the default low priority, a busy PC kept `next start` from answering for over 19 minutes.
 - **Status page install** `dashboard\install.ps1` trusts the repo's `mise.toml` before it builds. An untrusted one failed each install, so the page stayed down and the Start button in Archon showed no page.
 
 - **Architecture decisions** `docs/architecture.md` gets a Decisions section. Each big choice names its reason, its cost and the rivals it beat.

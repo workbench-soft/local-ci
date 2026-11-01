@@ -13,7 +13,8 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   Windows it keeps the count in `~/actions-runner/runner-count`, removes the
   runners above it and registers the count task the status page starts.
 - **Boot task** `windows/boot-task.ps1` holds the admin check and the
-  scheduled task that both Windows boot scripts use.
+  scheduled task that both Windows boot scripts use. The page task runs at
+  normal priority, and the runner tasks keep the low default.
 - **Start button** `START.cmd` runs `windows/start.ps1`. The script takes
   the install lock, runs `windows/update.ps1 -FromStart`, adds the update task
   when it is missing, starts the runner and page tasks that aren't running,
