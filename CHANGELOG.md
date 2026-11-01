@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Status page start** the `local-ci dashboard` task runs node on Next directly, without mise and pnpm. On a PC at full load `mise x -- pnpm` hung for over 10 minutes, held `dashboard.log` open and made each restart fail.
+- **Status page install** a failed build starts the old page again. Before, the page stayed down until the next install worked.
+
 - **Icon** the status page tab and the Startup shortcut show a white loop arrow round a check on a teal to violet gradient. The 10 drafts sit in `design/icons/2026-11-01`.
 - **Agent docs** `AGENTS.md` and the `fix-stuck-ci` skill state each rule with MUST, SHOULD or MAY.
 - **Status page start** the `local-ci dashboard` task runs at normal priority. At the default low priority, a busy PC kept `next start` from answering for over 19 minutes.
