@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Brutalist: a black check on a white block with a hard shadow, on raw green</title>
+  <rect width="256" height="256" rx="48" fill="#3ddc84"/>
+  <rect x="56" y="56" width="156" height="156" fill="#000"/>
+  <rect x="44" y="44" width="156" height="156" fill="#fff" stroke="#000" stroke-width="12"/>
+  <path d="M72 124 L106 158 L172 90" fill="none" stroke="#000" stroke-width="26" stroke-linecap="square" stroke-linejoin="miter"/>
+</svg>

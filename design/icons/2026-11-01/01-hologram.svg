@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Hologram: a glowing cyan loop arrow round a check, the build cycle on a scan screen</title>
+  <defs>
+    <filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>
+    <pattern id="s" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="3" fill="#5ff6ff" opacity="0.12"/></pattern>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="#031418"/>
+  <rect width="256" height="256" rx="48" fill="url(#s)"/>
+  <g fill="none" stroke="#5ff6ff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" filter="url(#g)">
+    <path d="M179.4 66.7 A80 80 0 1 1 66.7 76.6"/><path d="M92 130 L118 156 L166 104"/>
+  </g>
+  <g fill="none" stroke="#b8fcff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M179.4 66.7 A80 80 0 1 1 66.7 76.6"/><path d="M92 130 L118 156 L166 104"/>
+  </g>
+  <path d="M84 56 L46 66 L76 98 Z" fill="#b8fcff"/>
+</svg>

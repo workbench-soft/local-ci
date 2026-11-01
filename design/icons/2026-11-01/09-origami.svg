@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <title>Origami: a check folded from green paper, each plane its own shade</title>
+  <rect width="256" height="256" rx="48" fill="#f2efe6"/>
+  <path d="M40 128 L74 96 L116 138 L100 172 Z" fill="#1f9d63"/>
+  <path d="M74 96 L116 138 L100 172 L96 132 Z" fill="#26b874"/>
+  <path d="M100 172 L116 138 L190 64 L222 92 Z" fill="#2fd086"/>
+  <path d="M116 138 L190 64 L200 100 Z" fill="#1a8a56"/>
+  <path d="M100 172 L222 92 L200 100 L116 138 Z" fill="#23ad6c"/>
+</svg>

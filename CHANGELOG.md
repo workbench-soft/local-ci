@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Icon** the status page tab and the Startup shortcut show a white loop arrow round a check on a teal to violet gradient. The 10 drafts sit in `design/icons/2026-11-01`.
+
 - **Status page install** `dashboard\install.ps1` trusts the repo's `mise.toml` before it builds. An untrusted one failed each install, so the page stayed down and the Start button in Archon showed no page.
 
 - **Architecture decisions** `docs/architecture.md` gets a Decisions section. Each big choice names its reason, its cost and the rivals it beat.

@@ -82,7 +82,7 @@ click, then opens `http://localhost:4280`.
 `http://localhost:4280` shows the local CI at a glance. `dashboard\install.ps1`
 sets it up. The page starts with Windows and opens in the browser after the
 install build and at each logon. The tab and the Startup shortcut show its
-icon: a gold check mark traced on a green circuit board.
+icon: a white loop arrow round a check on a teal to violet gradient.
 
 - **In the launcher** the CI tab of the Workbench launcher shows the same
   page. Only the launcher on `http://127.0.0.1:47821` may frame it, and other
