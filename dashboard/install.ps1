@@ -68,7 +68,8 @@ $startScript = Join-Path $appDir 'start.cmd'
 Set-Content -LiteralPath $startScript -Encoding ascii -Value "@echo off`r`ncd /d `"%~dp0`"`r`n`"$mise`" x -- pnpm exec next start -H 127.0.0.1 -p $port >> dashboard.log 2>&1"
 
 Write-Step 'Starting the page at boot'
-Register-BootTask $taskName $startScript $appDir
+# Normal priority, so the page starts on a PC the runners keep busy.
+Register-BootTask $taskName $startScript $appDir 4
 
 if ($Unattended) { exit 0 }
 

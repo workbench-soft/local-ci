@@ -18,13 +18,14 @@ function Start-AsAdmin([string]$scriptPath, [string[]]$scriptArgs = @()) {
 # A Windows service would run as NETWORK SERVICE, without the user's mise and
 # ~/.gitconfig. This task runs as the user from boot, before anyone logs in, and
 # again at logon. S4U stores no password, so the task can't read the Windows
-# credential store.
-function Register-BootTask([string]$name, [string]$program, [string]$folder) {
+# credential store. A task runs at priority 7 unless told otherwise, with low CPU,
+# disk and memory priority, so a busy PC can keep it from starting. 4 is normal.
+function Register-BootTask([string]$name, [string]$program, [string]$folder, [int]$priority = 7) {
 	$user = "$env:USERDOMAIN\$env:USERNAME"
 	$action = New-ScheduledTaskAction -Execute $program -WorkingDirectory $folder
 	$triggers = @((New-ScheduledTaskTrigger -AtStartup), (New-ScheduledTaskTrigger -AtLogOn -User $user))
 	$principal = New-ScheduledTaskPrincipal -UserId $user -LogonType S4U -RunLevel Limited
-	$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew
+	$settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit ([TimeSpan]::Zero) -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew -Priority $priority
 	Register-ScheduledTask -TaskName $name -Action $action -Trigger $triggers -Principal $principal -Settings $settings -Force | Out-Null
 	Start-ScheduledTask -TaskName $name
 	Get-ScheduledTask -TaskName $name | Format-Table TaskName, State
