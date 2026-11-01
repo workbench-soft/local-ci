@@ -99,7 +99,3 @@
 ## releases-tab
 
 - [ ] Open `http://localhost:4280/?tab=releases` once the update task installs the release after PR #74 (merged 2026-10-31). If the tab is missing, double click `START.cmd`.
-
-## auto-update
-
-- [ ] `http://localhost:4280` is down since 2026-11-01 09:00 Sydney. The agent restarted the `local-ci dashboard` task as admin twice. The task's `next start` node process started but didn't listen after 19 minutes, and `dashboard\dashboard.log` got no new line. The same command run by hand on port 4281 was ready in 12 s. The PC CPU sat at 100% with hundreds of node and mise processes. Once the load drops, end the task's process tree, start the task again and check the page.
