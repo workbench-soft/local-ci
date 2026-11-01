@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Agent docs** `AGENTS.md` and the `fix-stuck-ci` skill state each rule with MUST, SHOULD or MAY.
 - **Status page install** `dashboard\install.ps1` trusts the repo's `mise.toml` before it builds. An untrusted one failed each install, so the page stayed down and the Start button in Archon showed no page.
 
 - **Architecture decisions** `docs/architecture.md` gets a Decisions section. Each big choice names its reason, its cost and the rivals it beat.
