@@ -3,7 +3,8 @@
 # changed and runner\install.ps1 when the runner code changed. The task
 # "local-ci update" runs it every 5 minutes and at logon, and Release starts it
 # after each release. -Register adds that task. START.cmd runs it with
-# -FromStart, after it took the install lock itself.
+# -FromStart, after it took the install lock itself. The task also restarts
+# each runner GitHub shows offline, through windows\runner-watchdog.ps1.
 param(
 	[switch]$Register,
 	# Prints each step, and builds the page when it was never installed.
@@ -12,6 +13,7 @@ param(
 # Windows PowerShell turns git's stderr into an error under Stop, so each step checks the exit code instead.
 $ErrorActionPreference = 'Continue'
 . (Join-Path $PSScriptRoot 'boot-task.ps1')
+. (Join-Path $PSScriptRoot 'runner-watchdog.ps1')
 
 $root = Split-Path $PSScriptRoot -Parent
 $taskName = 'local-ci update'
@@ -61,8 +63,11 @@ function Update-Checkout {
 		if ($FromStart) { Write-Host "Code at   $(git -C $root log -1 --format='%h %s')" }
 		return $true
 	}
-	$output = git -C $root merge --ff-only --quiet $tag 2>&1
+	# Agents edit TODO.md in this checkout, and the edit would stop the merge.
+	# Git puts it back after the merge, or keeps it in the stash when it clashes.
+	$output = git -C $root merge --ff-only --autostash --quiet $tag 2>&1
 	if ($LASTEXITCODE -ne 0) { Write-Log "git merge $tag stopped: $output"; return $false }
+	if ($output) { Write-Log "git merge ${tag}: $output" }
 	Write-Log "Checkout moved to ${tag}: $(git -C $root log -1 --format='%h %s')"
 	return $true
 }
@@ -89,6 +94,16 @@ function Invoke-Installer([string]$script, [string[]]$scriptArgs = @()) {
 }
 
 if ($Register) { Register-UpdateTask; exit 0 }
+
+# The task runs as admin, so it can end a hung listener. START.cmd restarts them itself.
+# This runs ahead of the lock: on 2026-11-01 a stuck install held it for over an
+# hour. An install restarts a runner's task, and the 10 minute wait spares it.
+if (-not $FromStart) {
+	foreach ($task in Get-HungRunnerTasks) {
+		Write-Log "Restarting $($task.TaskName), which GitHub shows offline"
+		Restart-RunnerTask $task
+	}
+}
 
 # The task skips its turn while START.cmd or another run installs. Windows frees the lock when this process ends.
 if (-not $FromStart) {

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Runner watchdog** a Windows runner that GitHub shows offline while its task runs gets a restart. The update task checks every 5 minutes, and `START.cmd` checks on each double click. On 2026-11-01 all 8 runners sat offline for 12 hours with their tasks Running.
+- **Update with local edits** the update task stashes an edited `TODO.md` in the checkout during the move to a new release, where the edit stopped every update before.
+
 - **Open source** the repo gets an MIT `LICENSE` and runs its own CI on GitHub runners: Checks on `windows-latest` for pushes and PRs, Release on `ubuntu-latest`. The PC installs each release through the update task within 5 minutes, so Release no longer starts it.
 
 - **Runner priority** the Windows runners stay online while the PC sits at 100% CPU. `Runner.Listener` and `Runner.Worker` start above normal, and their boot task runs at normal priority in place of below normal. Run `runner\install.ps1` again as admin to move existing runners over.

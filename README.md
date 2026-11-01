@@ -44,6 +44,9 @@ runner. The runner scripts also work alone:
   and `Runner.Worker` start above normal through their `PerfOptions` key in
   the registry. At 100% CPU they still reach GitHub, where below normal
   runners went offline. Build steps run at normal.
+- **Watchdog** a runner that GitHub shows offline 10 minutes after its task
+  started gets a restart: from the update task every 5 minutes, and from
+  `START.cmd`. `windows\runner-watchdog.ps1` holds the check.
 - **Errors and log** the admin window of `runner\install.ps1` stays open on
   an error until you press Enter. Each admin run writes its output to
   `~/actions-runner/install.log`.
@@ -176,8 +179,11 @@ task runs every 5 minutes and at logon, so a release lands within 5 minutes.
 - **One at a time** the task and `START.cmd` share a lock file,
   `~/.local-ci/install.lock`. The task skips its turn while the lock is held.
 - **Log** `~/.local-ci/update.log`.
-- **Skipped** a checkout on another branch, a pull that would overwrite a
-  local edit, and the dev tools of the root `install.ps1`.
+- **Local edits** the merge stashes an edited file, such as `TODO.md`, and
+  puts it back after. An edit that clashes with the release stays in the
+  stash, and `update.log` says so.
+- **Skipped** a checkout on another branch and the dev tools of the root
+  `install.ps1`.
 
 ## Windows
 

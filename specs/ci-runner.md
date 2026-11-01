@@ -299,7 +299,8 @@ machine with several runners builds several jobs at once.
     whose runner GitHub shows offline counts as hung. The script stops the
     task, ends its `Runner.Listener` and starts the task again.
   - **Update task** `windows/update.ps1` runs the watchdog on each turn,
-    every 5 minutes, before it updates the checkout. The task runs as admin,
+    every 5 minutes, ahead of the install lock, since a stuck install held it
+    for over an hour on 2026-11-01. The task runs as admin,
     so it can end the listener.
   - **START.cmd** `windows/start.ps1` restarts a hung runner too. When it
     runs without admin rights, it asks for them, as it does for a task
