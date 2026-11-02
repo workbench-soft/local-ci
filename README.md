@@ -80,7 +80,7 @@ runner. The runner scripts also work alone:
   `pnpm_config_store_dir`, so `pnpm install` downloads a package once.
 - **Defender** `windows\defender-exclusions.ps1` holds every Defender
   exclusion: the runner folders, `C:\ci`, `DEV_DIR`, and the Gradle, Cargo,
-  pnpm, npm and mise caches. The runner script calls it, and it also runs
+  sccache, pnpm, npm and mise caches. The runner script calls it, and it also runs
   alone. Add a path there. `RUNNER_DEFENDER_EXCLUSIONS=off` skips it.
 - **Long paths** the script sets `git config --global core.longpaths true`
   and, in an admin run, `LongPathsEnabled` in the registry. `node_modules`
@@ -276,6 +276,14 @@ the script first.
 
 ```sh
 mise use -g node@22 pnpm@latest yarn@1
+```
+
+[sccache](https://github.com/mozilla/sccache) wraps rustc through the global
+mise env, so each worktree reuses the crates another one compiled:
+
+```sh
+mise use -g github:mozilla/sccache@0.19
+mise set -g RUSTC_WRAPPER=sccache SCCACHE_CACHE_SIZE=20G
 ```
 
 One npm global goes on top: the Copilot CLI,

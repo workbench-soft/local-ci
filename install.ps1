@@ -89,6 +89,14 @@ Write-Step 'Installing node, pnpm, yarn and python through mise'
 mise use -g node@22 pnpm@latest yarn@1 python@3.15
 if ($LASTEXITCODE -ne 0) { throw 'mise use failed' }
 
+# Each worktree starts with an empty target folder. sccache lets it reuse the
+# crates another worktree already compiled.
+Write-Step 'Installing sccache through mise'
+mise use -g github:mozilla/sccache@0.19
+if ($LASTEXITCODE -ne 0) { throw 'mise use failed' }
+mise set -g RUSTC_WRAPPER=sccache SCCACHE_CACHE_SIZE=20G
+if ($LASTEXITCODE -ne 0) { throw 'mise set failed' }
+
 # mise's Windows Python has no python3, so that name reaches the Store stub in
 # WindowsApps, which exits 49. These forwarders sit ahead of it in PATH.
 Set-Content -LiteralPath (Join-Path $localBin 'python3') -Encoding ascii -NoNewline -Value "#!/bin/sh`nexec python `"`$@`"`n"

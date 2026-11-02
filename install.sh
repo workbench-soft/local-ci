@@ -61,6 +61,12 @@ append_once "$zshrc" 'eval "$(mise activate zsh)"'
 step "Installing node, pnpm, yarn and python through mise"
 mise use -g node@22 pnpm@latest yarn@1 python@3.15
 
+# Each worktree starts with an empty target folder. sccache lets it reuse the
+# crates another worktree already compiled.
+step "Installing sccache through mise"
+mise use -g github:mozilla/sccache@0.19
+mise set -g RUSTC_WRAPPER=sccache SCCACHE_CACHE_SIZE=20G
+
 step "Installing the Copilot CLI"
 mise exec -- npm install -g @github/copilot
 

@@ -17,8 +17,10 @@ Spec: [mac-setup](../specs/mac-setup.md), [python-setup](../specs/python-setup.m
 - **Repos** land in `C:\Programming\WorkbenchSoft`, or in `DEV_DIR`.
 - **Python** mise installs 3.15, and `python3` runs it as on the Mac. Without
   that, `python3` reaches the Windows Store stub and fails.
+- **Rust cache** sccache wraps rustc, so a new worktree reuses the crates
+  another one compiled. The Mac gets it too.
 
-Spec: [windows-local-ci](../specs/windows-local-ci.md).
+Spec: [windows-local-ci](../specs/windows-local-ci.md), [rust-compile-cache](../specs/rust-compile-cache.md).
 
 ## Self-hosted CI runner
 

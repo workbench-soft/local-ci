@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Rust cache** the setup installs sccache and sets `RUSTC_WRAPPER` in the global mise env. A second worktree of `property-trends` got 136 of 151 crates from the cache. Run `windows\defender-exclusions.ps1` again to exclude its folder.
 - **Demo** the demo releases show Tick-a-Lot as the app spells it.
 
 - **Screenshots** the README shows the status page, the latest runs and the releases. `mise run demo` takes them again.
