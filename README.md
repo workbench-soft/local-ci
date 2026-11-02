@@ -114,8 +114,8 @@ running, then opens `http://localhost:4280`.
 ## Cloud runners first
 
 Jobs build in the cloud while the free minutes last, then on this PC. The
-status page server sets two org variables each minute, and each portable job
-reads one:
+status page server sets two variables in each private repo, and each portable
+job reads one:
 
 ```yaml
 runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}
