@@ -69,13 +69,13 @@ test('a release dates from its publish, since created_at is the date of the tagg
 test('the APK asset comes out of the release assets', () => {
   const parsed = toRelease({
     tag_name: 'tickalot-v1',
-    name: 'Tickalot v1',
+    name: 'Tick-a-Lot v1',
     html_url: 'https://github.com/r',
     created_at: '2025-10-29T12:00:00Z',
     assets: [
-      { name: 'Tickalot.aab', browser_download_url: 'https://x/aab' },
-      { name: 'Tickalot-1-android.apk', browser_download_url: 'https://x/apk' },
+      { name: 'Tick-a-Lot.aab', browser_download_url: 'https://x/aab' },
+      { name: 'Tick-a-Lot-1-android.apk', browser_download_url: 'https://x/apk' },
     ],
   });
-  assert.deepEqual(parsed.apk, { name: 'Tickalot-1-android.apk', url: 'https://x/apk' });
+  assert.deepEqual(parsed.apk, { name: 'Tick-a-Lot-1-android.apk', url: 'https://x/apk' });
 });
