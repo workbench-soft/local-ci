@@ -57,7 +57,7 @@ flowchart LR
 | --- | --- |
 | Homebrew, winget | tools and apps |
 | npm through mise | the Copilot CLI and agent-browser |
-| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page, the org variables `CI_RUNNER` and `CI_HEAVY_RUNNER` |
+| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page, the variables `CI_RUNNER` and `CI_HEAVY_RUNNER` |
 | Blacksmith | cloud runners for the org, 3000 free 2 vCPU minutes a month |
 | Oracle Cloud | an Always Free ARM VM that runs `oracle` runners |
 | `github.com/actions/runner` releases | the runner download and its SHA256 |
@@ -89,7 +89,7 @@ sequenceDiagram
   R->>G: org apps: is Blacksmith installed?
   R->>G: finished runs of the month and their jobs
   R->>R: Blacksmith minutes, kept in cloud-usage.json
-  R->>G: set CI_RUNNER and CI_HEAVY_RUNNER when they change
+  R->>G: set CI_RUNNER and CI_HEAVY_RUNNER in each private repo when they change
   W->>G: runs-on reads the variable, with the PC labels as fallback
   G-->>W: Oracle, Blacksmith or a PC runner takes the job
   R->>G: a job queued on Blacksmith 5 min: cancel, then rerun on the PC
@@ -245,11 +245,12 @@ sequenceDiagram
 - **Cost to undo** high. The `runs-on` line of every workflow in every org
   repo changes.
 
-### Cloud first: org variables set by the page server
+### Cloud first: repo variables set by the page server
 
-- **Picked** each portable job reads `runs-on` from an org variable, and the
-  status page server sets both variables each minute: Oracle, then Blacksmith
-  while its free minutes last, then this PC.
+- **Picked** each portable job reads `runs-on` from a repo variable, and the
+  status page server sets both variables in each private repo: Oracle, then
+  Blacksmith while its free minutes last, then this PC. It writes them when
+  the route changes, and checks every repo each 30 minutes.
 - **Why** builds load the PC the person works on. The variables cost no job,
   no minute and no change per repo when the route moves.
 - **Trade-off** the count of Blacksmith minutes lags until a run finishes,
@@ -260,6 +261,8 @@ sequenceDiagram
     and a GitHub runner for it costs minutes.
   - **Blacksmith alone** it bills past 3000 minutes, with no hard stop.
   - **Vercel CI** paid on Pro only, and it runs Turborepo tasks only.
+  - **Org variables** GitHub Free hides them from private repos, so a job
+    read the fallback labels and built on the PC.
   - **Public repos** unlimited GitHub minutes, but the repos moved to the
     org to become private.
 - **Cost to undo** low. Unset the variables, and every job falls back to

@@ -16,7 +16,7 @@ export function CloudCard({ state, now }: { state: RouterState; now: number }) {
       <h2>Cloud runners</h2>
       <p className="muted small">
         Jobs build on Oracle and Blacksmith while their free minutes last, then on this PC. Each minute the page server
-        sets the org variables CI_RUNNER and CI_HEAVY_RUNNER, which the workflows read.
+        sets the variables CI_RUNNER and CI_HEAVY_RUNNER in each private repo, which the workflows read.
       </p>
       {state.routes ? (
         <dl className="cloud">
