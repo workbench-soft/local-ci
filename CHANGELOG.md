@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Screenshots** the README shows the status page, the latest runs and the releases. `mise run demo` takes them again.
 - **Docs** each heading of `docs/features.md` links its spec, and each feature that had no spec got one.
 - **Cloud runners first** CI jobs build on an Oracle Always Free VM and on Blacksmith while their free minutes last, then on this PC. The status page sets the org variables `CI_RUNNER` and `CI_HEAVY_RUNNER` each minute, and a Cloud card shows the routes and the Blacksmith minutes of the month. `runner/oracle.sh` installs the Oracle runner over SSH.
 - **Repo variables** the cloud router writes `CI_RUNNER` and `CI_HEAVY_RUNNER` into each private repo. GitHub Free hides org variables from private repos, so jobs read the fallback and built on the PC.

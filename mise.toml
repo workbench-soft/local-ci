@@ -18,3 +18,9 @@ run = [
 [tasks.format]
 description = "Format the dashboard with oxfmt"
 run = "pnpm --dir dashboard format"
+
+[tasks.demo]
+description = "Take the README screenshots of the status page, with made up runs"
+dir = "dashboard"
+tools = { oxipng = "10.2.1" }
+run = ["node --no-warnings demo/run.ts", "oxipng -o 4 --strip safe ../docs/screenshots/*.png"]
