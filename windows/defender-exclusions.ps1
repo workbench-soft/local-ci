@@ -23,6 +23,7 @@ $paths = @(
 	(Join-Path $env:LOCALAPPDATA 'pnpm'),
 	(Join-Path $env:LOCALAPPDATA 'npm-cache'),
 	(Join-Path $env:LOCALAPPDATA 'mise'),
+	(Join-Path $env:LOCALAPPDATA 'Mozilla\sccache'),
 	# The media-organizer release builds Rust here, outside the checkout.
 	(Join-Path $env:LOCALAPPDATA 'media-organizer')
 )
