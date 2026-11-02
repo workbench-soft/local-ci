@@ -239,7 +239,7 @@ function answer(path: string): unknown {
   }
   if (url.pathname.endsWith('/releases')) {
     return [
-      release('tickalot', 'Tickalot', 130),
+      release('tickalot', 'Tick-a-Lot', 130),
       release('keeppad', 'KeepPad', 45),
       release('memoire', 'Memoire', 80),
       release('servohop', 'ServoHop', 300),
