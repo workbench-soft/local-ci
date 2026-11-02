@@ -129,12 +129,12 @@ runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}
 - **Blacksmith** on once the Blacksmith app is installed in the org at
   [app.blacksmith.sh](https://app.blacksmith.sh). The page stops at 2700 of
   the 3000 free minutes, since Blacksmith bills past 3000.
-  `BLACKSMITH_BUDGET` in `dashboard.env.local` changes the stop.
+  `BLACKSMITH_BUDGET` in `dashboard\.env.local` changes the stop.
 - **Oracle** create an Always Free Ampere A1 VM with Ubuntu, then run
   `./runner/oracle.sh ubuntu@<vm address>` from Git Bash on this PC.
 - **Stuck** a job queued on Blacksmith for 5 minutes sends both lanes to
   this PC for an hour, and its run starts again there.
-- **Off** `CLOUD_ROUTER=off` in `dashboard.env.local` stops the router. The
+- **Off** `CLOUD_ROUTER=off` in `dashboard\.env.local` stops the router. The
   variables keep their last value.
 - **Fixed jobs** a job that needs Windows, the phone, the emulator or files
   on this PC keeps `[self-hosted, local]` or its own labels.

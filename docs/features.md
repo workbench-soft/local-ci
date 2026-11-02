@@ -97,7 +97,7 @@ The PC stays free for work.
   PC labels while they are unset.
 - **Budget** the page counts the Blacksmith minutes of the month, a job's
   minutes rounded up times its vCPUs over 2, and stops at 2700 of the 3000
-  free ones. `BLACKSMITH_BUDGET` in `dashboard.env.local` moves the stop.
+  free ones. `BLACKSMITH_BUDGET` in `dashboard\.env.local` moves the stop.
 - **Stuck** a job queued on Blacksmith for 5 minutes sends both lanes to
   this PC for an hour. Its run gets cancelled and starts again once.
 - **Cloud card** on the status page: the runner of each lane, the Blacksmith
