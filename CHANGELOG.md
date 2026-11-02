@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Docs** each heading of `docs/features.md` links its spec, and each feature that had no spec got one.
 - **Cloud runners first** CI jobs build on an Oracle Always Free VM and on Blacksmith while their free minutes last, then on this PC. The status page sets the org variables `CI_RUNNER` and `CI_HEAVY_RUNNER` each minute, and a Cloud card shows the routes and the Blacksmith minutes of the month. `runner/oracle.sh` installs the Oracle runner over SSH.
 - **Machine column** each run in Latest runs names the machine its jobs built on: This PC, Oracle, Blacksmith or GitHub. A Cloud filter picks the runs with a cloud job, and the live jobs name the machine too.
 
