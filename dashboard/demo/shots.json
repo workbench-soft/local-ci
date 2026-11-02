@@ -1,0 +1,20 @@
+[
+  {
+    "name": "01-status",
+    "platform": "web",
+    "caption": "What builds now, on this PC and in the cloud",
+    "steps": "the status page with the made up runs of demo/fake-github.ts"
+  },
+  {
+    "name": "02-latest-runs",
+    "platform": "web",
+    "caption": "The latest runs of every repo, with where each one built",
+    "steps": "scroll to Latest runs"
+  },
+  {
+    "name": "03-releases",
+    "platform": "web",
+    "caption": "The newest release of each app, ready to install on the phone",
+    "steps": "open the Releases tab"
+  }
+]

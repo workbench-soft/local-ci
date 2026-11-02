@@ -23,6 +23,14 @@ git clone https://github.com/workbench-soft/local-ci.git
 - **Fresh Windows** install Git first: `winget install Git.Git`.
 - **Old name** the `mac-setup` address redirects here.
 
+## Screenshots
+
+<p><img src="docs/screenshots/01-status.png" width="400" alt="What builds now, on this PC and in the cloud">
+<img src="docs/screenshots/02-latest-runs.png" width="400" alt="The latest runs of every repo, with where each one built"></p>
+<p><img src="docs/screenshots/03-releases.png" width="400" alt="The newest release of each app, ready to install on the phone"></p>
+
+`mise run demo` takes them again from `next dev`, with made up runs and runners from `dashboard/demo/fake-github.ts`.
+
 ## CI runner
 
 The last question of each installer is whether to register the machine as a
