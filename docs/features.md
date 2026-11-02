@@ -6,6 +6,8 @@
 the `workbench-soft` repos, the VS Code extensions, the Claude memory and the
 MCP config. A second run skips what is already there.
 
+Spec: [mac-setup](../specs/mac-setup.md), [python-setup](../specs/python-setup.md).
+
 ## Windows setup
 
 `install.ps1` gets the same tools through winget and npm.
@@ -15,6 +17,8 @@ MCP config. A second run skips what is already there.
 - **Repos** land in `C:\Programming\WorkbenchSoft`, or in `DEV_DIR`.
 - **Python** mise installs 3.15, and `python3` runs it as on the Mac. Without
   that, `python3` reaches the Windows Store stub and fails.
+
+Spec: [windows-local-ci](../specs/windows-local-ci.md).
 
 ## Self-hosted CI runner
 
@@ -60,6 +64,8 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
 - **Long paths** git and Windows accept paths over 260 characters, so a
   checkout can delete a deep `node_modules` or build cache.
 
+Spec: [ci-runner](../specs/ci-runner.md).
+
 ## Start button
 
 `START.cmd` in the repo root runs the newest release of the CI with a double
@@ -79,6 +85,8 @@ click, then opens `http://localhost:4280`.
 - **Admin** asked for when Windows refuses to start a task, or when a runner
   needs a restart, since ending its listener takes admin.
 - **Limits** Windows only. A new PC runs the install scripts first.
+
+Spec: [ci-status-page](../specs/ci-status-page.md).
 
 ## Cloud runners first
 
@@ -110,6 +118,8 @@ The PC stays free for work.
   their last value. A job that needs Windows, the phone, the emulator or files
   on this PC keeps its fixed labels. A cloud job starts cold and installs its
   tools each time.
+
+Spec: [cloud-runners](../specs/cloud-runners.md).
 
 ## CI status page
 
@@ -229,14 +239,20 @@ icon: a white loop arrow round a check on a teal to violet gradient.
   folder of this PC, so the this PC checks need Windows. After a new gh login,
   run the install script again.
 
+Spec: [ci-status-page](../specs/ci-status-page.md).
+
 ## Releases
 
 - **What it gives** a tagged release such as `v2026.10.30.1` for each push to `main` that passes `Checks`. Its notes list the commits since the release before.
 - **Where** the [Releases page](https://github.com/workbench-soft/local-ci/releases).
 - **Limits** notes only, with no files to download.
 
+Spec: [releases](../specs/releases.md).
+
 ## Updates by themselves
 
 - **What it gives** the Windows PC installs each release within minutes of the merge. The status page and the runners get the new code with no `git pull` by hand.
 - **Where** the `local-ci update` task in Task Scheduler, added by the first double click on `START.cmd`. `~/.local-ci/update.log` lists each install.
 - **Limits** it runs only while the person is logged in, and only on the default branch. An edited file such as `TODO.md` waits in the stash during the move. The task also restarts each runner GitHub shows offline 10 minutes after its task started. The Mac and the dev tools of the root `install.ps1` still update by hand.
+
+Spec: [auto-update](../specs/auto-update.md).
