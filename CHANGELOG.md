@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **CI** Release waits while a PR of an agent session is open, so the last merge of a batch releases them all.
 - **Rust cache** the setup installs sccache and sets `RUSTC_WRAPPER` in the global mise env. A second worktree of `property-trends` got 136 of 151 crates from the cache. Run `windows\defender-exclusions.ps1` again to exclude its folder.
 - **Demo** the demo releases show Tick-a-Lot as the app spells it.
 
