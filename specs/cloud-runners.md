@@ -9,20 +9,24 @@ GitHub.
 
 ## User flows
 
-1. A push starts a workflow. Each portable job asks for the runner in the
-   repo variable `CI_RUNNER` (light jobs) or `CI_HEAVY_RUNNER` (Gradle, Cargo,
-   Tauri builds).
-2. The router on the status page server sets both variables once a minute:
-   - **Light** the Oracle runner when it is online, else Blacksmith 2 vCPU
-     while minutes are left, else `[self-hosted, local]`.
-   - **Heavy** Blacksmith 4 vCPU while minutes are left, else
+1. A push starts a workflow. Each job asks for the runner in the repo
+   variable `CI_RUNNER` (light jobs), `CI_HEAVY_RUNNER` (Gradle, Cargo,
+   Tauri builds) or `CI_WINDOWS_RUNNER` (jobs that build on Windows).
+2. The router on the status page server sets the variables once a minute,
+   in the order Blacksmith, Oracle, GitHub, this PC:
+   - **Light** Blacksmith 2 vCPU while its minutes last, else the Oracle
+     runner when it is online, else `ubuntu-latest` while the GitHub minutes
+     last, else `[self-hosted, local]`.
+   - **Heavy** Blacksmith 4 vCPU, else `ubuntu-latest`, else
+     `[self-hosted, heavy]`. Oracle is skipped: Android doesn't build on ARM.
+   - **Windows** Blacksmith 2 vCPU Windows, else `windows-latest`, else
      `[self-hosted, heavy]`.
 3. A job that waits on Blacksmith for over 5 minutes means Blacksmith is
    missing or down. The router turns Blacksmith off for an hour, sends both
    lanes to this PC, cancels the run and starts it again.
 4. The Runs table and the Running now card name the machine of each job.
-   The Cloud card shows both routes, the Blacksmith minutes of the month and
-   the Oracle runner state.
+   The Cloud card shows the routes, the Blacksmith and GitHub minutes of the
+   month and the Oracle runner state.
 
 ## How it works: modules, files, data
 
@@ -88,5 +92,25 @@ GitHub.
   fallback won.
 - **Changes** `status/cloud-router.ts` writes both variables into each
   private repo that isn't archived, on a route change and every 30 minutes.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `CHANGELOG.md`.
+
+### 2026-11-03 Blacksmith, Oracle, GitHub, then the PC, for every pipeline
+
+- **Why** the person asked for one order across all projects: Blacksmith,
+  then Oracle, then the GitHub runners, and the PC only once all of them run
+  out. Blacksmith used 2059 of its 2700 minutes in two days.
+- **Changes** `status/cloud-route.ts` picks three lanes in the new order,
+  `status/github-usage.ts` counts the GitHub minutes of the private repos
+  from the billing API (Linux 1x, Windows 2x, macOS 10x) and stops at
+  `GITHUB_BUDGET`, 1800 of 2000 by default. `status/blacksmith-usage.ts`
+  counts a Windows job at its full vCPU count. The router writes
+  `CI_WINDOWS_RUNNER`, and the Cloud card shows the third lane and the
+  GitHub minutes.
+- **Workflows** the jobs held on the PC move to a lane: the Android builds
+  of lumiere-player and guitar-upscale to the heavy lane, the Windows builds
+  of reddit-desk and memories and the check of agent-skills-private to the
+  Windows lane. `translate` of guitar-upscale stays on the PC, since it runs
+  the Claude Code login there.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`.
