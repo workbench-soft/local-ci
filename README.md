@@ -389,4 +389,4 @@ installer adds the writing-style import to the same file.
 
 ## Left to do by hand
 
-- **Secrets** live in 1Password, and no dotfile holds them.
+- **Secrets** live in Bitwarden Secrets Manager, project `workbench-soft`, and no dotfile holds them.
