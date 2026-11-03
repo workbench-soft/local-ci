@@ -89,10 +89,11 @@ sequenceDiagram
   R->>G: org apps: is Blacksmith installed?
   R->>G: finished runs of the month and their jobs
   R->>R: Blacksmith minutes, kept in cloud-usage.json
-  R->>G: set CI_RUNNER and CI_HEAVY_RUNNER in each private repo when they change
+  R->>G: billing usage: GitHub minutes of the private repos
+  R->>G: set CI_RUNNER, CI_HEAVY_RUNNER and CI_WINDOWS_RUNNER in each private repo when they change
   W->>G: runs-on reads the variable, with the PC labels as fallback
-  G-->>W: Oracle, Blacksmith or a PC runner takes the job
-  R->>G: a job queued on Blacksmith 5 min: cancel, then rerun on the PC
+  G-->>W: Blacksmith, Oracle, a GitHub runner or a PC runner takes the job
+  R->>G: a job queued on Blacksmith 5 min: cancel, then rerun on the next runner
 ```
 
 ## How the page changes the runner count
@@ -247,10 +248,11 @@ sequenceDiagram
 
 ### Cloud first: repo variables set by the page server
 
-- **Picked** each portable job reads `runs-on` from a repo variable, and the
-  status page server sets both variables in each private repo: Oracle, then
-  Blacksmith while its free minutes last, then this PC. It writes them when
-  the route changes, and checks every repo each 30 minutes.
+- **Picked** each job reads `runs-on` from a repo variable, and the status
+  page server sets the variables in each private repo: Blacksmith, then
+  Oracle, then GitHub runners while their free minutes last, then this PC.
+  It writes them when the route changes, and checks every repo each 30
+  minutes.
 - **Why** builds load the PC the person works on. The variables cost no job,
   no minute and no change per repo when the route moves.
 - **Trade-off** the count of Blacksmith minutes lags until a run finishes,
@@ -260,6 +262,8 @@ sequenceDiagram
   - **A route job in each workflow** each run would wait for an extra job,
     and a GitHub runner for it costs minutes.
   - **Blacksmith alone** it bills past 3000 minutes, with no hard stop.
+  - **Oracle first** it has no minute limit, but it is one ARM VM. Blacksmith
+    runs jobs side by side, so the person picked it first.
   - **Vercel CI** paid on Pro only, and it runs Turborepo tasks only.
   - **Org variables** GitHub Free hides them from private repos, so a job
     read the fallback labels and built on the PC.

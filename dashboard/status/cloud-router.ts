@@ -1,5 +1,6 @@
 import { blacksmithMinutes } from './blacksmith-usage.ts';
 import { pickRoutes, type Routes, stuckOnBlacksmith, variablesToSet } from './cloud-route.ts';
+import { githubMinutes } from './github-usage.ts';
 import { callGitHub, fetchOrgStatus, forgetOrgStatus } from './org-status.ts';
 import { orgName } from './settings.ts';
 
@@ -9,6 +10,8 @@ export type RouterState = {
   routes: Routes | null;
   used: number | null;
   budget: number;
+  githubUsed: number | null;
+  githubBudget: number;
   oracleOnline: boolean;
   blacksmithInstalled: boolean;
   blacksmithDownUntil: number;
@@ -21,12 +24,16 @@ const appsMs = 10 * 60_000;
 const downMs = 60 * 60_000;
 const syncMs = 30 * 60_000;
 const budget = Number(process.env.BLACKSMITH_BUDGET) || 2700;
+// GitHub Free gives private repos 2000 minutes a month, and its billing API lags by hours.
+const githubBudget = Number(process.env.GITHUB_BUDGET) || 1800;
+const githubMs = 10 * 60_000;
 
 // Next bundles this module for the page and for the sweep, so both share one state on globalThis.
 type Store = {
   state: RouterState;
   started: boolean;
   usageAt: number;
+  githubAt: number;
   appsAt: number;
   rerun: Map<number, string>;
   restarted: Set<number>;
@@ -40,6 +47,8 @@ const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.f
     routes: null,
     used: null,
     budget,
+    githubUsed: null,
+    githubBudget,
     oracleOnline: false,
     blacksmithInstalled: false,
     blacksmithDownUntil: 0,
@@ -47,6 +56,7 @@ const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.f
   },
   started: false,
   usageAt: 0,
+  githubAt: 0,
   appsAt: 0,
   rerun: new Map(),
   restarted: new Set(),
@@ -56,7 +66,7 @@ const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.f
 
 export const routerState = (): RouterState => store.state;
 
-/** Each minute points CI_RUNNER and CI_HEAVY_RUNNER at the free runner that fits. CLOUD_ROUTER=off stops it. */
+/** Each minute points CI_RUNNER, CI_HEAVY_RUNNER and CI_WINDOWS_RUNNER at the free runner that fits. CLOUD_ROUTER=off stops it. */
 export function startCloudRouter(): void {
   if (store.started || process.env.CLOUD_ROUTER === 'off') return;
   store.started = true;
@@ -97,16 +107,24 @@ async function tick(now: number): Promise<void> {
     state.used = await blacksmithMinutes(new Date(now));
     store.usageAt = now;
   }
+  if (now - store.githubAt > githubMs) {
+    state.githubUsed = await githubMinutes(new Date(now));
+    store.githubAt = now;
+  }
   const stuck = stuckOnBlacksmith(status.runs, now);
   if (stuck.length && now > state.blacksmithDownUntil) {
     state.blacksmithDownUntil = now + downMs;
-    log(`Blacksmith left ${stuck.length} run(s) queued over 5 minutes, so this PC builds for the next hour.`);
+    log(
+      `Blacksmith left ${stuck.length} run(s) queued over 5 minutes, so the next runner in line builds for the next hour.`,
+    );
   }
   const routes = pickRoutes({
     oracleOnline: state.oracleOnline,
     blacksmithOn: state.blacksmithInstalled && now > state.blacksmithDownUntil,
     blacksmithUsed: state.used ?? 0,
     blacksmithBudget: budget,
+    githubUsed: state.githubUsed,
+    githubBudget,
   });
   await setVariables(routes, now);
   state.routes = routes;
@@ -117,7 +135,7 @@ async function tick(now: number): Promise<void> {
 // GitHub Free hides org variables from private repos, so each private repo holds its own copy.
 // The repos get a full pass when the routes change and every 30 minutes, which catches a new repo.
 async function setVariables(routes: Routes, now: number): Promise<void> {
-  const key = JSON.stringify([routes.light, routes.heavy]);
+  const key = JSON.stringify([routes.light, routes.heavy, routes.windows]);
   if (store.applied === key && now - store.appliedAt < syncMs) return;
   const repos = await read<{ name: string; archived: boolean }[]>(`/orgs/${orgName}/repos?type=private&per_page=100`);
   const changed: string[] = [];
@@ -132,8 +150,8 @@ async function setVariables(routes: Routes, now: number): Promise<void> {
     }
   }
   if (changed.length) {
-    const lanes = `light ${JSON.stringify(routes.light)}, heavy ${JSON.stringify(routes.heavy)}`;
-    log(`Set the runners of ${new Set(changed).size} repo(s): ${lanes}. ${routes.why}`);
+    const lanes = (['light', 'heavy', 'windows'] as const).map((lane) => `${lane} ${JSON.stringify(routes[lane])}`);
+    log(`Set the runners of ${new Set(changed).size} repo(s): ${lanes.join(', ')}. ${routes.why}`);
   }
   store.applied = key;
   store.appliedAt = now;

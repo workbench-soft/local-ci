@@ -17,12 +17,16 @@ const pagesPerRepo = 5;
 // These reads skip the ETag store of the page, so they can't push its entries out.
 const getJson = async <T>(path: string) => (await (await callGitHub(path)).json()) as T;
 
-/** Blacksmith bills each job by the minute, rounded up, at its vCPU count over 2. */
+/**
+ * Blacksmith bills each job by the minute, rounded up, at its vCPU count over 2.
+ * A Windows job counts its full vCPU count, so 10 minutes on 4 vCPU cost 40.
+ */
 export function jobMinutes(job: ApiJob): number {
   const cpus = blacksmithCpus(job.labels);
   if (!cpus || !job.started_at || !job.completed_at) return 0;
   const ms = Date.parse(job.completed_at) - Date.parse(job.started_at);
-  return Math.max(Math.ceil(ms / 60_000), 1) * (cpus / 2);
+  const windows = job.labels.some((label) => label.toLowerCase().includes('windows'));
+  return Math.max(Math.ceil(ms / 60_000), 1) * (windows ? cpus : cpus / 2);
 }
 
 export const monthOf = (now: Date) => now.toISOString().slice(0, 7);

@@ -3,6 +3,10 @@ import { test } from 'node:test';
 import {
   blacksmithHeavy,
   blacksmithLight,
+  blacksmithWindows,
+  type CloudState,
+  githubLinux,
+  githubWindows,
   localHeavy,
   localLight,
   oracleLight,
@@ -12,31 +16,44 @@ import {
 } from './cloud-route.ts';
 import { blacksmithCpus, kindOfJob, kindsOfRun } from './runner-kind.ts';
 
-const state = { oracleOnline: false, blacksmithOn: true, blacksmithUsed: 100, blacksmithBudget: 2700 };
+const state: CloudState = {
+  oracleOnline: false,
+  blacksmithOn: true,
+  blacksmithUsed: 100,
+  blacksmithBudget: 2700,
+  githubUsed: 500,
+  githubBudget: 1800,
+};
+const lanes = (changed: Partial<CloudState> = {}) => {
+  const routes = pickRoutes({ ...state, ...changed });
+  return [routes.light, routes.heavy, routes.windows];
+};
 
-test('Blacksmith takes both lanes while minutes last', () => {
-  const routes = pickRoutes(state);
-  assert.deepEqual([routes.light, routes.heavy], [blacksmithLight, blacksmithHeavy]);
-  assert.match(routes.why, /2600 of 2700 minutes left/);
+test('Blacksmith takes every lane while its minutes last, Oracle online or not', () => {
+  assert.deepEqual(lanes(), [blacksmithLight, blacksmithHeavy, blacksmithWindows]);
+  assert.deepEqual(lanes({ oracleOnline: true }), [blacksmithLight, blacksmithHeavy, blacksmithWindows]);
+  assert.match(pickRoutes(state).why, /2600 of 2700 minutes left/);
 });
 
-test('Oracle takes the light lane when it is online', () => {
-  const routes = pickRoutes({ ...state, oracleOnline: true });
-  assert.deepEqual([routes.light, routes.heavy], [oracleLight, blacksmithHeavy]);
+test('Oracle takes only the light lane once Blacksmith runs out', () => {
+  assert.deepEqual(lanes({ blacksmithUsed: 2700, oracleOnline: true }), [oracleLight, githubLinux, githubWindows]);
 });
 
-test('this PC takes over once the budget is spent or Blacksmith is off', () => {
-  for (const changed of [{ blacksmithUsed: 2700 }, { blacksmithOn: false }]) {
-    const routes = pickRoutes({ ...state, ...changed });
-    assert.deepEqual([routes.light, routes.heavy], [localLight, localHeavy]);
-  }
+test('GitHub runners come next, then this PC', () => {
+  assert.deepEqual(lanes({ blacksmithOn: false }), [githubLinux, githubLinux, githubWindows]);
+  for (const githubUsed of [1800, null])
+    assert.deepEqual(lanes({ blacksmithOn: false, githubUsed }), [localLight, localHeavy, localHeavy]);
 });
 
 test('only variables with other labels get set', () => {
   const routes = pickRoutes(state);
-  const current = { CI_RUNNER: JSON.stringify(blacksmithLight), CI_HEAVY_RUNNER: '["self-hosted","heavy"]' };
+  const current = {
+    CI_RUNNER: JSON.stringify(blacksmithLight),
+    CI_HEAVY_RUNNER: '["self-hosted","heavy"]',
+    CI_WINDOWS_RUNNER: JSON.stringify(blacksmithWindows),
+  };
   assert.deepEqual(variablesToSet(current, routes), [['CI_HEAVY_RUNNER', JSON.stringify(blacksmithHeavy)]]);
-  assert.equal(variablesToSet({}, routes).length, 2);
+  assert.equal(variablesToSet({}, routes).length, 3);
 });
 
 test('a job queued on Blacksmith over 5 minutes marks its run stuck', () => {
@@ -96,4 +113,23 @@ test('a Blacksmith job counts its minutes rounded up, times its vCPUs over 2', a
   assert.equal(jobMinutes(job(blacksmithLight, 61)), 2);
   assert.equal(jobMinutes(job(blacksmithHeavy, 600)), 20);
   assert.equal(jobMinutes(job(localHeavy, 600)), 0);
+  assert.equal(jobMinutes(job(['blacksmith-4vcpu-windows-2025'], 600)), 40);
+});
+
+test('GitHub minutes count private repos only, Windows twice and macOS 10 times', async () => {
+  const { quotaMinutes } = await import('./github-usage.ts');
+  const item = (repositoryName: string, sku: string, quantity: number) => ({
+    product: 'actions',
+    unitType: 'Minutes',
+    repositoryName,
+    sku,
+    quantity,
+  });
+  const items = [
+    item('app', 'Actions Linux', 100),
+    item('app', 'Actions Windows', 10),
+    item('app', 'Actions macOS 3-core', 1),
+    item('site', 'Actions Linux', 500),
+  ];
+  assert.equal(quotaMinutes(items, new Set(['app'])), 130);
 });

@@ -121,31 +121,36 @@ running, then opens `http://localhost:4280`.
 
 ## Cloud runners first
 
-Jobs build in the cloud while the free minutes last, then on this PC. The
-status page server sets two variables in each private repo, and each portable
-job reads one:
+Jobs build on Blacksmith, then Oracle, then GitHub runners while the free
+minutes last, then on this PC. The status page server sets three variables in
+each private repo, and each job reads one:
 
 ```yaml
 runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}
 ```
 
-| Lane | Variable | First | Then | Last |
-| --- | --- | --- | --- | --- |
-| Light: lint, tests | `CI_RUNNER` | Oracle VM | Blacksmith 2 vCPU | `[self-hosted, local]` |
-| Heavy: Gradle, Cargo, Tauri | `CI_HEAVY_RUNNER` | Blacksmith 4 vCPU | | `[self-hosted, heavy]` |
+| Lane | Variable | 1 | 2 | 3 | 4 |
+| --- | --- | --- | --- | --- | --- |
+| Light: lint, tests | `CI_RUNNER` | Blacksmith 2 vCPU | Oracle VM | `ubuntu-latest` | `[self-hosted, local]` |
+| Heavy: Gradle, Cargo, Tauri | `CI_HEAVY_RUNNER` | Blacksmith 4 vCPU | | `ubuntu-latest` | `[self-hosted, heavy]` |
+| Windows builds | `CI_WINDOWS_RUNNER` | Blacksmith 2 vCPU Windows | | `windows-latest` | `[self-hosted, heavy]` |
 
 - **Blacksmith** on once the Blacksmith app is installed in the org at
   [app.blacksmith.sh](https://app.blacksmith.sh). The page stops at 2700 of
   the 3000 free minutes, since Blacksmith bills past 3000.
   `BLACKSMITH_BUDGET` in `dashboard\.env.local` changes the stop.
 - **Oracle** create an Always Free Ampere A1 VM with Ubuntu, then run
-  `./runner/oracle.sh ubuntu@<vm address>` from Git Bash on this PC.
-- **Stuck** a job queued on Blacksmith for 5 minutes sends both lanes to
-  this PC for an hour, and its run starts again there.
+  `./runner/oracle.sh ubuntu@<vm address>` from Git Bash on this PC. Heavy
+  and Windows jobs skip it, since Android and Windows don't build on ARM.
+- **GitHub** private repos get 2000 free minutes a month, Windows counted
+  twice. The page reads them from the billing API and stops at 1800.
+  `GITHUB_BUDGET` in `dashboard\.env.local` changes the stop.
+- **Stuck** a job queued on Blacksmith for 5 minutes turns Blacksmith off for
+  an hour, and its run starts again on the next runner in line.
 - **Off** `CLOUD_ROUTER=off` in `dashboard\.env.local` stops the router. The
   variables keep their last value.
-- **Fixed jobs** a job that needs Windows, the phone, the emulator or files
-  on this PC keeps `[self-hosted, local]` or its own labels.
+- **Fixed jobs** a job that needs files or a login on this PC keeps its PC
+  labels, such as `translate` of guitar-upscale.
 
 ## CI status page
 
