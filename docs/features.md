@@ -110,9 +110,10 @@ free minutes last, then on this PC. The PC stays free for work.
   are unset.
 - **Budgets** the page counts the Blacksmith minutes of the month, a job's
   minutes rounded up times its vCPUs over 2, or its full vCPUs on Windows,
-  and stops at 2700 of the 3000 free ones. It reads the GitHub minutes of the
-  private repos from the billing API, Windows counted twice, and stops at
-  1800 of 2000. `BLACKSMITH_BUDGET` and `GITHUB_BUDGET` in
+  and stops at 2700 of the 3000 free ones. It reads the GitHub minutes of every
+  repo from the billing API, Windows x2 and macOS x10, adds the jobs running
+  on GitHub now, and stops at 1700, 300 short of the free 2000.
+  `BLACKSMITH_BUDGET`, `GITHUB_FREE` and `GITHUB_MARGIN` in
   `dashboard\.env.local` move the stops.
 - **Stuck** a job queued on Blacksmith for 5 minutes turns Blacksmith off for
   an hour. Its run gets cancelled and starts again once, on the next runner
@@ -126,7 +127,7 @@ free minutes last, then on this PC. The PC stays free for work.
 - **Limits** the router runs only while the PC is on, and the variables keep
   their last value. A job that needs the phone, the emulator, files or a login
   on this PC keeps its fixed labels. The GitHub billing API lags by hours, so
-  the 200 minute margin covers that. A cloud job starts cold and installs its
+  the 300 minute margin and the running jobs cover that. A cloud job starts cold and installs its
   tools each time.
 
 Spec: [cloud-runners](../specs/cloud-runners.md).

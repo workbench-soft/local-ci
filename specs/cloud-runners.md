@@ -114,3 +114,25 @@ GitHub.
   the Claude Code login there.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`.
+
+### 2026-11-03 GitHub minutes counted org-wide, with a margin
+
+- **Why** GitHub canceled 4 skyaltar Release jobs on `ubuntu-latest` after 8
+  to 12 minutes. The billing summary showed about 1930 of the 2000 free
+  minutes used (Linux 1338, Windows 256 x2, macOS 8 x10), while the router
+  counted only the private repos, 1266, and kept GitHub. It reverted the
+  hand-set `["self-hosted","heavy"]` within minutes.
+- **Count** the router counts the minutes of every repo in the billing API,
+  Windows x2 and macOS x10, since the summary GitHub cancels by holds them
+  all. It adds the minutes of the jobs running now on GitHub runners, since
+  the billing API lags by hours.
+- **Margin** the stop is `GITHUB_FREE` (2000) less `GITHUB_MARGIN` (300), so
+  a few 30 minute Gradle builds that start under it still finish. Past it,
+  the heavy lane goes to `[self-hosted, heavy]` and the light lane to
+  `[self-hosted, local]`. `GITHUB_BUDGET` goes.
+- **Cloud card** shows the billed and running minutes against the free 2000,
+  and the stop.
+- **Test** `cloud-route.test.ts` covers the count with the multipliers, the
+  running jobs and the switch to the PC at the stop.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `CHANGELOG.md`.

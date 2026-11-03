@@ -13,6 +13,7 @@ const laneText = (labels: string[]) =>
 /** Where new jobs go now, and why: Blacksmith, then Oracle, then GitHub, then this PC. */
 export function CloudCard({ state, now }: { state: RouterState; now: number }) {
   const left = state.used === null ? null : Math.max(state.budget - state.used, 0);
+  const githubTotal = state.githubUsed === null ? null : state.githubUsed + state.githubRunning;
   return (
     <section className="card wide">
       <h2>Cloud runners</h2>
@@ -44,11 +45,13 @@ export function CloudCard({ state, now }: { state: RouterState; now: number }) {
           </dd>
           <dt>GitHub</dt>
           <dd>
-            {state.githubUsed === null
+            {githubTotal === null
               ? 'Reading the minutes of this month.'
-              : `${state.githubUsed} of ${state.githubBudget} minutes used this month by the private repos.`}
-            {state.githubUsed !== null && (
-              <meter min={0} max={state.githubBudget} value={state.githubUsed} high={state.githubBudget * 0.8} />
+              : `${githubTotal} of ${state.githubFree} free minutes used this month: ${state.githubUsed} billed, ` +
+                `${state.githubRunning} running now, Windows x2 and macOS x10. Jobs move to this PC at ` +
+                `${state.githubStop}, so a running build finishes before GitHub cancels it.`}
+            {githubTotal !== null && (
+              <meter min={0} max={state.githubFree} value={githubTotal} high={state.githubStop} />
             )}
           </dd>
           <dt>Oracle</dt>

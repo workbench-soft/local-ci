@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **GitHub minutes** the router counts every repo in the billing API, Windows x2 and macOS x10, plus the jobs running on GitHub now, and sends jobs to this PC at 1700 of the 2000 free minutes. It counted only the private repos before, so GitHub cancelled Gradle builds at the cap. `GITHUB_FREE` and `GITHUB_MARGIN` replace `GITHUB_BUDGET`.
 - **Runner order** jobs build on Blacksmith, then Oracle, then GitHub runners while their free minutes last, then on this PC. A third lane, `CI_WINDOWS_RUNNER`, takes the Windows builds to Blacksmith Windows or `windows-latest` first. The Cloud card shows the GitHub minutes of the private repos, read from the billing API with a stop at 1800 of 2000.
 
 - **CI** Release waits while a PR of an agent session is open, so the last merge of a batch releases them all.

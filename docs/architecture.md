@@ -89,7 +89,7 @@ sequenceDiagram
   R->>G: org apps: is Blacksmith installed?
   R->>G: finished runs of the month and their jobs
   R->>R: Blacksmith minutes, kept in cloud-usage.json
-  R->>G: billing usage: GitHub minutes of the private repos
+  R->>G: billing usage: GitHub minutes of every repo, plus the running GitHub jobs
   R->>G: set CI_RUNNER, CI_HEAVY_RUNNER and CI_WINDOWS_RUNNER in each private repo when they change
   W->>G: runs-on reads the variable, with the PC labels as fallback
   G-->>W: Blacksmith, Oracle, a GitHub runner or a PC runner takes the job

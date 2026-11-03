@@ -142,9 +142,10 @@ runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}
 - **Oracle** create an Always Free Ampere A1 VM with Ubuntu, then run
   `./runner/oracle.sh ubuntu@<vm address>` from Git Bash on this PC. Heavy
   and Windows jobs skip it, since Android and Windows don't build on ARM.
-- **GitHub** private repos get 2000 free minutes a month, Windows counted
-  twice. The page reads them from the billing API and stops at 1800.
-  `GITHUB_BUDGET` in `dashboard\.env.local` changes the stop.
+- **GitHub** the org gets 2000 free minutes a month, Windows counted twice
+  and macOS 10 times. The page reads every repo from the billing API, adds
+  the jobs running on GitHub now, and stops 300 minutes short, at 1700.
+  `GITHUB_FREE` and `GITHUB_MARGIN` in `dashboard\.env.local` change it.
 - **Stuck** a job queued on Blacksmith for 5 minutes turns Blacksmith off for
   an hour, and its run starts again on the next runner in line.
 - **Off** `CLOUD_ROUTER=off` in `dashboard\.env.local` stops the router. The
