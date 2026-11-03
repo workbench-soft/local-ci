@@ -116,20 +116,37 @@ test('a Blacksmith job counts its minutes rounded up, times its vCPUs over 2', a
   assert.equal(jobMinutes(job(['blacksmith-4vcpu-windows-2025'], 600)), 40);
 });
 
-test('GitHub minutes count private repos only, Windows twice and macOS 10 times', async () => {
+test('GitHub minutes count every repo, Windows twice and macOS 10 times', async () => {
   const { quotaMinutes } = await import('./github-usage.ts');
-  const item = (repositoryName: string, sku: string, quantity: number) => ({
+  const item = (sku: string, quantity: number, unitType = 'Minutes') => ({
     product: 'actions',
-    unitType: 'Minutes',
-    repositoryName,
+    unitType,
     sku,
     quantity,
   });
   const items = [
-    item('app', 'Actions Linux', 100),
-    item('app', 'Actions Windows', 10),
-    item('app', 'Actions macOS 3-core', 1),
-    item('site', 'Actions Linux', 500),
+    item('Actions Linux', 1338),
+    item('Actions Windows', 256),
+    item('Actions macOS 3-core', 8),
+    item('Actions storage', 127, 'GigabyteHours'),
   ];
-  assert.equal(quotaMinutes(items, new Set(['app'])), 130);
+  assert.equal(quotaMinutes(items), 1930);
+});
+
+test('running GitHub jobs count their minutes so far, weighted, and PC jobs count none', async () => {
+  const { runningMinutes } = await import('./github-usage.ts');
+  const now = Date.parse('2026-11-03T07:00:00Z');
+  const job = (labels: string[], startedAt: string, status = 'in_progress') => ({ labels, startedAt, status });
+  const runs = [
+    { jobs: [job(githubLinux, '2026-11-03T06:50:00Z'), job(githubWindows, '2026-11-03T06:55:00Z')] },
+    { jobs: [job(localHeavy, '2026-11-03T06:00:00Z'), job(githubLinux, '2026-11-03T06:00:00Z', 'completed')] },
+  ] as unknown as Parameters<typeof runningMinutes>[0];
+  assert.equal(runningMinutes(runs, now), 10 + 5 * 2);
+});
+
+test('jobs move to the PC labels once billed and running minutes reach the free 2000 less the margin', () => {
+  const stop = { blacksmithOn: false, githubBudget: 2000 - 300 };
+  assert.deepEqual(lanes({ ...stop, githubUsed: 1699 }), [githubLinux, githubLinux, githubWindows]);
+  assert.deepEqual(lanes({ ...stop, githubUsed: 1700 }), [localLight, localHeavy, localHeavy]);
+  assert.deepEqual(lanes({ ...stop, githubUsed: 1930 }), [localLight, localHeavy, localHeavy]);
 });

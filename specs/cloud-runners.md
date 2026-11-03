@@ -134,4 +134,5 @@ GitHub.
   and the stop.
 - **Test** `cloud-route.test.ts` covers the count with the multipliers, the
   running jobs and the switch to the PC at the stop.
-- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `CHANGELOG.md`.

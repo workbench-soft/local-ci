@@ -1,6 +1,6 @@
 import { blacksmithMinutes } from './blacksmith-usage.ts';
 import { pickRoutes, type Routes, stuckOnBlacksmith, variablesToSet } from './cloud-route.ts';
-import { githubMinutes } from './github-usage.ts';
+import { githubMinutes, runningMinutes } from './github-usage.ts';
 import { callGitHub, fetchOrgStatus, forgetOrgStatus } from './org-status.ts';
 import { orgName } from './settings.ts';
 
@@ -10,8 +10,13 @@ export type RouterState = {
   routes: Routes | null;
   used: number | null;
   budget: number;
+  /** Billed this month, Windows x2 and macOS x10, null until the billing API answers. */
   githubUsed: number | null;
-  githubBudget: number;
+  /** The minutes so far of the jobs running on GitHub runners now. */
+  githubRunning: number;
+  githubFree: number;
+  /** The free minutes less the margin. Past it, jobs build on this PC. */
+  githubStop: number;
   oracleOnline: boolean;
   blacksmithInstalled: boolean;
   blacksmithDownUntil: number;
@@ -24,8 +29,10 @@ const appsMs = 10 * 60_000;
 const downMs = 60 * 60_000;
 const syncMs = 30 * 60_000;
 const budget = Number(process.env.BLACKSMITH_BUDGET) || 2700;
-// GitHub Free gives private repos 2000 minutes a month, and its billing API lags by hours.
-const githubBudget = Number(process.env.GITHUB_BUDGET) || 1800;
+// GitHub Free gives 2000 minutes a month, and its billing API lags by hours.
+// The margin lets a few 30 minute Gradle builds that start under the stop finish before GitHub cancels them.
+const githubFree = Number(process.env.GITHUB_FREE) || 2000;
+const githubStop = githubFree - (Number(process.env.GITHUB_MARGIN) || 300);
 const githubMs = 10 * 60_000;
 
 // Next bundles this module for the page and for the sweep, so both share one state on globalThis.
@@ -48,7 +55,9 @@ const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.f
     used: null,
     budget,
     githubUsed: null,
-    githubBudget,
+    githubRunning: 0,
+    githubFree,
+    githubStop,
     oracleOnline: false,
     blacksmithInstalled: false,
     blacksmithDownUntil: 0,
@@ -111,6 +120,7 @@ async function tick(now: number): Promise<void> {
     state.githubUsed = await githubMinutes(new Date(now));
     store.githubAt = now;
   }
+  state.githubRunning = runningMinutes(status.runs, now);
   const stuck = stuckOnBlacksmith(status.runs, now);
   if (stuck.length && now > state.blacksmithDownUntil) {
     state.blacksmithDownUntil = now + downMs;
@@ -123,8 +133,8 @@ async function tick(now: number): Promise<void> {
     blacksmithOn: state.blacksmithInstalled && now > state.blacksmithDownUntil,
     blacksmithUsed: state.used ?? 0,
     blacksmithBudget: budget,
-    githubUsed: state.githubUsed,
-    githubBudget,
+    githubUsed: state.githubUsed === null ? null : state.githubUsed + state.githubRunning,
+    githubBudget: githubStop,
   });
   await setVariables(routes, now);
   state.routes = routes;
