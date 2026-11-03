@@ -6,17 +6,20 @@ const laneText = (labels: string[]) =>
     ? 'Oracle'
     : labels.some((label) => label.startsWith('blacksmith'))
       ? `Blacksmith (${labels[0]})`
-      : `This PC (${labels.join(', ')})`;
+      : labels.some((label) => /^(ubuntu|windows)-/.test(label))
+        ? `GitHub (${labels[0]})`
+        : `This PC (${labels.join(', ')})`;
 
-/** Where new jobs go now, and why: Oracle, then Blacksmith while its free minutes last, then this PC. */
+/** Where new jobs go now, and why: Blacksmith, then Oracle, then GitHub, then this PC. */
 export function CloudCard({ state, now }: { state: RouterState; now: number }) {
   const left = state.used === null ? null : Math.max(state.budget - state.used, 0);
   return (
     <section className="card wide">
       <h2>Cloud runners</h2>
       <p className="muted small">
-        Jobs build on Oracle and Blacksmith while their free minutes last, then on this PC. Each minute the page server
-        sets the variables CI_RUNNER and CI_HEAVY_RUNNER in each private repo, which the workflows read.
+        Jobs build on Blacksmith, then Oracle, then GitHub runners while their free minutes last, then on this PC. The
+        page server sets CI_RUNNER, CI_HEAVY_RUNNER and CI_WINDOWS_RUNNER in each private repo, which the workflows
+        read.
       </p>
       {state.routes ? (
         <dl className="cloud">
@@ -24,6 +27,8 @@ export function CloudCard({ state, now }: { state: RouterState; now: number }) {
           <dd>{laneText(state.routes.light)}</dd>
           <dt>Heavy jobs</dt>
           <dd>{laneText(state.routes.heavy)}</dd>
+          <dt>Windows jobs</dt>
+          <dd>{laneText(state.routes.windows)}</dd>
           <dt>Blacksmith</dt>
           <dd>
             {!state.blacksmithInstalled
@@ -37,8 +42,19 @@ export function CloudCard({ state, now }: { state: RouterState; now: number }) {
               <meter min={0} max={state.budget} value={state.used ?? 0} high={state.budget * 0.8} />
             )}
           </dd>
+          <dt>GitHub</dt>
+          <dd>
+            {state.githubUsed === null
+              ? 'Reading the minutes of this month.'
+              : `${state.githubUsed} of ${state.githubBudget} minutes used this month by the private repos.`}
+            {state.githubUsed !== null && (
+              <meter min={0} max={state.githubBudget} value={state.githubUsed} high={state.githubBudget * 0.8} />
+            )}
+          </dd>
           <dt>Oracle</dt>
-          <dd>{state.oracleOnline ? 'Online, takes the light jobs.' : 'No Oracle runner online.'}</dd>
+          <dd>
+            {state.oracleOnline ? 'Online, takes the light jobs once Blacksmith runs out.' : 'No Oracle runner online.'}
+          </dd>
           <dt>Checked</dt>
           <dd>{state.at ? formatAge(new Date(state.at).toISOString(), now) : 'not yet'}</dd>
         </dl>

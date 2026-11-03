@@ -92,33 +92,41 @@ Spec: [ci-status-page](../specs/ci-status-page.md).
 
 ## Cloud runners first
 
-CI jobs build on free cloud runners while their minutes last, then on this PC.
-The PC stays free for work.
+CI jobs build on Blacksmith, then Oracle, then GitHub runners while their
+free minutes last, then on this PC. The PC stays free for work.
 
-- **Light jobs** lint and tests go to the Oracle VM when its runner is
-  online, else to Blacksmith 2 vCPU, else to `[self-hosted, local]`.
+- **Light jobs** lint and tests go to Blacksmith 2 vCPU, else to the Oracle
+  VM when its runner is online, else to `ubuntu-latest`, else to
+  `[self-hosted, local]`.
 - **Heavy jobs** Gradle, Cargo and Tauri builds go to Blacksmith 4 vCPU,
-  else to `[self-hosted, heavy]`. Android builds skip Oracle, since Google
-  ships no ARM Linux build tools.
-- **Switch** the status page server sets the variables `CI_RUNNER` and
-  `CI_HEAVY_RUNNER` in each private repo when the route changes, and checks
+  else to `ubuntu-latest`, else to `[self-hosted, heavy]`. They skip Oracle,
+  since Google ships no ARM Linux build tools.
+- **Windows jobs** go to Blacksmith 2 vCPU Windows, else to
+  `windows-latest`, else to `[self-hosted, heavy]`.
+- **Switch** the status page server sets `CI_RUNNER`, `CI_HEAVY_RUNNER` and
+  `CI_WINDOWS_RUNNER` in each private repo when the route changes, and checks
   every repo each 30 minutes. GitHub Free hides org variables from private
-  repos. A workflow that reads them falls back to the
-  PC labels while they are unset.
-- **Budget** the page counts the Blacksmith minutes of the month, a job's
-  minutes rounded up times its vCPUs over 2, and stops at 2700 of the 3000
-  free ones. `BLACKSMITH_BUDGET` in `dashboard\.env.local` moves the stop.
-- **Stuck** a job queued on Blacksmith for 5 minutes sends both lanes to
-  this PC for an hour. Its run gets cancelled and starts again once.
+  repos. A workflow that reads them falls back to the PC labels while they
+  are unset.
+- **Budgets** the page counts the Blacksmith minutes of the month, a job's
+  minutes rounded up times its vCPUs over 2, or its full vCPUs on Windows,
+  and stops at 2700 of the 3000 free ones. It reads the GitHub minutes of the
+  private repos from the billing API, Windows counted twice, and stops at
+  1800 of 2000. `BLACKSMITH_BUDGET` and `GITHUB_BUDGET` in
+  `dashboard\.env.local` move the stops.
+- **Stuck** a job queued on Blacksmith for 5 minutes turns Blacksmith off for
+  an hour. Its run gets cancelled and starts again once, on the next runner
+  in line.
 - **Cloud card** on the status page: the runner of each lane, the Blacksmith
-  minutes used and left with a bar, the Oracle runner state, and when the
-  router last checked.
+  and GitHub minutes used with a bar each, the Oracle runner state, and when
+  the router last checked.
 - **Oracle setup** `./runner/oracle.sh ubuntu@<vm address>` installs 2
   runners with the `oracle` label on the VM over SSH. The PC asks GitHub for
   the registration token.
 - **Limits** the router runs only while the PC is on, and the variables keep
-  their last value. A job that needs Windows, the phone, the emulator or files
-  on this PC keeps its fixed labels. A cloud job starts cold and installs its
+  their last value. A job that needs the phone, the emulator, files or a login
+  on this PC keeps its fixed labels. The GitHub billing API lags by hours, so
+  the 200 minute margin covers that. A cloud job starts cold and installs its
   tools each time.
 
 Spec: [cloud-runners](../specs/cloud-runners.md).

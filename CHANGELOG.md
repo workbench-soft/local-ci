@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Runner order** jobs build on Blacksmith, then Oracle, then GitHub runners while their free minutes last, then on this PC. A third lane, `CI_WINDOWS_RUNNER`, takes the Windows builds to Blacksmith Windows or `windows-latest` first. The Cloud card shows the GitHub minutes of the private repos, read from the billing API with a stop at 1800 of 2000.
+
 - **CI** Release waits while a PR of an agent session is open, so the last merge of a batch releases them all.
 - **Rust cache** the setup installs sccache and sets `RUSTC_WRAPPER` in the global mise env. A second worktree of `property-trends` got 136 of 151 crates from the cache. Run `windows\defender-exclusions.ps1` again to exclude its folder.
 - **Demo** the demo releases show Tick-a-Lot as the app spells it.

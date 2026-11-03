@@ -5,28 +5,46 @@ export type CloudState = {
   blacksmithOn: boolean;
   blacksmithUsed: number;
   blacksmithBudget: number;
+  /** Null until the billing API answers, which counts as no minutes left. */
+  githubUsed: number | null;
+  githubBudget: number;
 };
 
 /** The labels each lane asks for, with the reason in words for the Cloud card and the log. */
-export type Routes = { light: string[]; heavy: string[]; why: string };
+export type Routes = { light: string[]; heavy: string[]; windows: string[]; why: string };
 
 export const localLight = ['self-hosted', 'local'];
 export const localHeavy = ['self-hosted', 'heavy'];
 export const oracleLight = ['self-hosted', 'oracle'];
 export const blacksmithLight = ['blacksmith-2vcpu-ubuntu-2404'];
 export const blacksmithHeavy = ['blacksmith-4vcpu-ubuntu-2404'];
+export const blacksmithWindows = ['blacksmith-2vcpu-windows-2025'];
+export const githubLinux = ['ubuntu-latest'];
+export const githubWindows = ['windows-latest'];
 
-/** Oracle first for light jobs, then Blacksmith while minutes last, then this PC. */
+const left = (name: string, used: number, budget: number) =>
+  used < budget ? `${name} has ${budget - used} of ${budget} minutes left` : `${name} used its ${budget} minutes`;
+
+/**
+ * Blacksmith while its minutes last, then Oracle, then GitHub while its minutes last, then this PC.
+ * Heavy and Windows jobs skip Oracle, since Android and Windows don't build on ARM Linux.
+ */
 export function pickRoutes(state: CloudState): Routes {
-  const minutesLeft = state.blacksmithOn && state.blacksmithUsed < state.blacksmithBudget;
-  const light = state.oracleOnline ? oracleLight : minutesLeft ? blacksmithLight : localLight;
-  const heavy = minutesLeft ? blacksmithHeavy : localHeavy;
-  const blacksmith = !state.blacksmithOn
-    ? 'Blacksmith is off'
-    : minutesLeft
-      ? `Blacksmith has ${state.blacksmithBudget - state.blacksmithUsed} of ${state.blacksmithBudget} minutes left`
-      : `Blacksmith used its ${state.blacksmithBudget} minutes this month`;
-  return { light, heavy, why: `${state.oracleOnline ? 'Oracle is online' : 'Oracle is offline'}. ${blacksmith}.` };
+  const blacksmith = state.blacksmithOn && state.blacksmithUsed < state.blacksmithBudget;
+  const github = state.githubUsed !== null && state.githubUsed < state.githubBudget;
+  const pick = (first: string[], oracle: string[] | null, hosted: string[], pc: string[]) =>
+    blacksmith ? first : oracle && state.oracleOnline ? oracle : github ? hosted : pc;
+  const why = [
+    state.blacksmithOn ? left('Blacksmith', state.blacksmithUsed, state.blacksmithBudget) : 'Blacksmith is off',
+    state.oracleOnline ? 'Oracle is online' : 'Oracle is offline',
+    state.githubUsed === null ? 'GitHub minutes unknown' : left('GitHub', state.githubUsed, state.githubBudget),
+  ];
+  return {
+    light: pick(blacksmithLight, oracleLight, githubLinux, localLight),
+    heavy: pick(blacksmithHeavy, null, githubLinux, localHeavy),
+    windows: pick(blacksmithWindows, null, githubWindows, localHeavy),
+    why: `${why.join('. ')}.`,
+  };
 }
 
 const sameLabels = (a: string[], b: string[]) => a.length === b.length && a.every((label, i) => label === b[i]);
@@ -36,6 +54,7 @@ export function variablesToSet(current: Record<string, string | undefined>, rout
   const wanted: [string, string[]][] = [
     ['CI_RUNNER', routes.light],
     ['CI_HEAVY_RUNNER', routes.heavy],
+    ['CI_WINDOWS_RUNNER', routes.windows],
   ];
   return wanted
     .filter(([name, labels]) => {
