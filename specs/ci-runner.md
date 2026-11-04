@@ -314,3 +314,61 @@ machine with several runners builds several jobs at once.
   the listener, so the priority fix above still matters.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`, `TODO.md`.
+
+### 2026-11-05 Each runner cleans its own work folder
+
+- **Why** on 2026-11-05 `C:\ci` held 64.7 GB in `C:\ci\1` alone, and C:
+  had 33 GB free of 932 GB. Each of the 8 runners keeps a checkout and its
+  `node_modules` of every repo it ever built, and a repo that stopped
+  getting jobs stays there. Emptying `C:\ci` by hand meant stopping all 8
+  runners, since only the runner itself knows when it is idle.
+- **Changes**
+  - **Hook** `runner/clean-work.ps1` runs as the runner's job started hook,
+    through `ACTIONS_RUNNER_HOOK_JOB_STARTED` in `.env`. The runner runs it
+    before the first step, so its own folder is free to clean, and the
+    other 7 runners stay untouched.
+  - **Folder** the hook takes the runner's work folder from the parent of
+    `RUNNER_WORKSPACE`, such as `C:\ci\3`, and the current repo from its
+    leaf. `_actions`, `_temp`, `_tool` and `_PipelineMapping` stay.
+  - **Last use** the hook sets the current repo folder's last write time to
+    now, since a checkout leaves the top folder's time as it was.
+  - **Old repos** a repo folder unused for `RUNNER_CLEAN_DAYS` days, 3 by
+    default, goes.
+  - **Low disk** with less than `RUNNER_CLEAN_MIN_FREE_GB` free on the
+    work drive, 60 by default, every repo folder but the current one goes.
+  - **Fast start** the hook renames each folder to `_trash-<time>` on the
+    same drive, which is instant, and a detached `robocopy /MIR` from an
+    empty folder deletes it after. `robocopy` handles paths over 260
+    characters. The next hook run also deletes a `_trash-*` folder a
+    reboot left behind.
+  - **Safe fail** the hook catches each error, prints it to the job log and
+    exits 0, so a locked file can't fail a build.
+  - **Install** `runner/install.ps1` copies the hook to
+    `~/actions-runner/hooks/clean-work.ps1`, so a move of this repo keeps
+    the path valid, and writes the hook and both settings into each `.env`.
+    A rerun applies them once each runner is idle, as for the other `.env`
+    settings.
+  - **Status page** the Runners card shows the size of the work root and
+    the free space on its drive.
+- **Limits**
+  - **Cold builds** the first job of a repo after a clean checks it out and
+    installs its packages again. The shared pnpm store and Gradle cache keep
+    the download small.
+  - **Copies per runner** 8 runners still keep up to 8 copies of an active
+    repo. The low disk rule caps them when space runs short.
+  - **Idle runner** a runner that gets no job cleans nothing. The low disk
+    rule then waits for its next job.
+  - **Windows only** the Mac runner keeps one runner and its `_work`
+    folder as before.
+  - **Other folders** the Claude worktrees, the leftover git worktrees
+    beside the repos, `%TEMP%` and the package caches stay out of this
+    change.
+- **Steps**
+  1. This spec.
+  2. `runner/clean-work.ps1` with a test that runs it on a temp work
+     folder.
+  3. `runner/install.ps1`: the copy and the `.env` lines.
+  4. The status page line.
+  5. Docs and changelog, and the top sections of this spec.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `CHANGELOG.md`.
