@@ -1,4 +1,6 @@
 # Empties every runner's work folder at once, for when the disk runs full.
+# Keep in step with runner/install.ps1: AGENTS.md lists what to change here, and
+# dashboard/status/clean-sync.test.ts checks the shared settings.
 # CLEAN-CI.cmd at the repo root starts it. runner/clean-work.ps1 does the same
 # job a bit at a time before each job, so a run here is the exception.
 $ErrorActionPreference = 'Stop'
