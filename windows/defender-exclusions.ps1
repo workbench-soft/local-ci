@@ -9,7 +9,8 @@ if ($env:RUNNER_DEFENDER_EXCLUSIONS -eq 'off') { Write-Host 'RUNNER_DEFENDER_EXC
 if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath) }
 
 $workRoot = if ($env:RUNNER_WORK_ROOT) { $env:RUNNER_WORK_ROOT } else { Join-Path $env:SystemDrive 'ci' }
-$devDir = if ($env:DEV_DIR) { $env:DEV_DIR } else { 'C:\Programming\WorkbenchSoft' }
+# WBS_ROOT names the workspace root. Without it, the root is the folder that holds this clone.
+$devDir = if ($env:WBS_ROOT) { $env:WBS_ROOT } elseif ($env:DEV_DIR) { $env:DEV_DIR } else { Split-Path (Split-Path $PSScriptRoot -Parent) -Parent }
 $paths = @(
 	# The runners, their tool cache and the checkouts of their jobs.
 	(Join-Path $HOME 'actions-runner'),

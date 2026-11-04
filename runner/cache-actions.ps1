@@ -8,7 +8,8 @@ $ErrorActionPreference = 'Stop'
 # Windows PowerShell redraws a progress bar per chunk, which made a 2 MB zip take 6.6 s in place of 0.65 s.
 $ProgressPreference = 'SilentlyContinue'
 
-$devDir = if ($env:DEV_DIR) { $env:DEV_DIR } else { 'C:\Programming\WorkbenchSoft' }
+# WBS_ROOT names the workspace root. Without it, the root is the folder that holds this clone.
+$devDir = if ($env:WBS_ROOT) { $env:WBS_ROOT } elseif ($env:DEV_DIR) { $env:DEV_DIR } else { Split-Path (Split-Path $PSScriptRoot -Parent) -Parent }
 $cache = if ($env:RUNNER_ACTION_CACHE) { $env:RUNNER_ACTION_CACHE } else { Join-Path $HOME 'actions-runner\_actions-cache' }
 $env:GH_PAGER = 'cat'
 New-Item -ItemType Directory -Force -Path $cache | Out-Null

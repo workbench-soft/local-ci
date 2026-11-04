@@ -245,8 +245,8 @@ VS Code, Docker Desktop, Claude and the Android platform tools. npm adds
   notifications.
 - **twg** its installer is a bash script for macOS.
 
-- **Repos** land in `C:\Programming\WorkbenchSoft`. `DEV_DIR` picks another
-  folder.
+- **Repos** land in `WBS_ROOT`, by default the folder that holds the
+  `local-ci` clone. `DEV_DIR` still works in its place.
 - **Line endings** git gets `core.autocrlf input` on top of the Mac config.
   Checkouts keep LF, so bash scripts run on the Windows runner.
 

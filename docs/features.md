@@ -14,7 +14,8 @@ Spec: [mac-setup](../specs/mac-setup.md), [python-setup](../specs/python-setup.m
 
 - **Skipped** the Mac only pieces: Oh My Zsh, Maccy, gh-review-notify,
   terminal-notifier and twg.
-- **Repos** land in `C:\Programming\WorkbenchSoft`, or in `DEV_DIR`.
+- **Repos** land in `WBS_ROOT`, by default the folder that holds the
+  `local-ci` clone.
 - **Python** mise installs 3.15, and `python3` runs it as on the Mac. Without
   that, `python3` reaches the Windows Store stub and fails.
 - **Rust cache** sccache wraps rustc, so a new worktree reuses the crates
