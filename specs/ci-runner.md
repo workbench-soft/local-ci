@@ -40,6 +40,10 @@ machine with several runners builds several jobs at once.
   folder. One registration token registers them all.
 - **Labels** every runner on a machine has the same labels, so any of them
   takes a job.
+- **Clean** before each job `runner/clean-work.ps1` deletes the runner's
+  repo checkouts unused for 3 days, and all but the current one under 60 GB
+  free. `CLEAN-CI.cmd` runs `windows/clean-ci.ps1`, which empties every work
+  folder at once.
 
 ## Limits
 
@@ -47,8 +51,9 @@ machine with several runners builds several jobs at once.
   jobs, a `matrix`, or runs of several repos.
 - **Shared machine** jobs at the same time share ports, the Android emulator
   and the Gradle cache. A test on a fixed port can fail when 2 jobs run it.
-- **Disk** each runner keeps its own `_work` folder with checkouts and
-  `node_modules`.
+- **Disk** each runner keeps its own work folder in `C:ci<n>` with
+  checkouts and `node_modules`. The job started hook deletes the old ones,
+  and `CLEAN-CI.cmd` empties them all.
 - **Fewer runners** on Windows a lower count removes the runners numbered
   above it: from GitHub, their boot task and their folder. A runner on a job
   goes once the job ends. On a Mac a lower `RUNNER_COUNT` leaves the extra
@@ -340,7 +345,8 @@ machine with several runners builds several jobs at once.
     same drive, which is instant, and a detached `robocopy /MIR` from an
     empty folder deletes it after. `robocopy` handles paths over 260
     characters. The next hook run also deletes a `_trash-*` folder a
-    reboot left behind.
+    reboot left behind. The hook clears `RUNNER_TRACKING_ID` first, since
+    the runner ends the processes a job leaves with that id.
   - **Safe fail** the hook catches each error, prints it to the job log and
     exits 0, so a locked file can't fail a build.
   - **Install** `runner/install.ps1` copies the hook to
@@ -348,8 +354,12 @@ machine with several runners builds several jobs at once.
     the path valid, and writes the hook and both settings into each `.env`.
     A rerun applies them once each runner is idle, as for the other `.env`
     settings.
-  - **Status page** the Runners card shows the size of the work root and
-    the free space on its drive.
+  - **By hand** `CLEAN-CI.cmd` in the repo root runs
+    `windows/clean-ci.ps1` as admin. It waits up to 10 minutes for a gap
+    between jobs, stops the runners, moves each work folder to
+    `C:ci-trash-<time>`, starts the runners on empty folders, then deletes
+    the trash at idle priority, 4 folders at a time. Only an admin can stop
+    the listeners, so the script asks for the rights.
 - **Limits**
   - **Cold builds** the first job of a repo after a clean checks it out and
     installs its packages again. The shared pnpm store and Gradle cache keep
@@ -368,7 +378,7 @@ machine with several runners builds several jobs at once.
   2. `runner/clean-work.ps1` with a test that runs it on a temp work
      folder.
   3. `runner/install.ps1`: the copy and the `.env` lines.
-  4. The status page line.
+  4. `CLEAN-CI.cmd` and `windows/clean-ci.ps1`.
   5. Docs and changelog, and the top sections of this spec.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`.

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Work folder clean** each Windows runner deletes its old repo checkouts in `C:ci` before a job, and `CLEAN-CI.cmd` empties `C:ci` by hand. `C:ci` had grown to about 200 GB.
 - **Root folder** the scripts read the workspace root from `WBS_ROOT`, then `DEV_DIR`, then the folder that holds the clone. No script holds a fixed path.
 
 - **Docs** the README names Bitwarden Secrets Manager as the place for secrets, in place of 1Password.
