@@ -1,4 +1,6 @@
 # The job started hook of each Windows runner: ACTIONS_RUNNER_HOOK_JOB_STARTED in .env
+# Keep in step with runner/install.ps1: AGENTS.md lists what to change here, and
+# dashboard/status/clean-sync.test.ts checks the shared settings.
 # points here, through the copy runner/install.ps1 keeps in ~/actions-runner/hooks.
 # It runs before the job's first step, so it cleans only this runner's own work folder,
 # such as C:\ci\3, and the jobs of the other runners stay untouched.

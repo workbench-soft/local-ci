@@ -347,6 +347,10 @@ machine with several runners builds several jobs at once.
     characters. The next hook run also deletes a `_trash-*` folder a
     reboot left behind. The hook clears `RUNNER_TRACKING_ID` first, since
     the runner ends the processes a job leaves with that id.
+  - **Keep in step** `AGENTS.md` lists the changes that MUST update both
+    clean scripts, and `dashboard/status/clean-sync.test.ts` checks that
+    they read the work root, the org and the task names as
+    `runner/install.ps1` sets them.
   - **Safe fail** the hook catches each error, prints it to the job log and
     exits 0, so a locked file can't fail a build.
   - **Install** `runner/install.ps1` copies the hook to
