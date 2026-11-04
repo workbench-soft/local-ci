@@ -2,7 +2,8 @@
 # since each step looks for its piece first. install.sh is the Mac version.
 $ErrorActionPreference = 'Stop'
 
-$devDir = if ($env:DEV_DIR) { $env:DEV_DIR } else { 'C:\Programming\WorkbenchSoft' }
+# WBS_ROOT names the workspace root. Without it, the root is the folder that holds this clone.
+$devDir = if ($env:WBS_ROOT) { $env:WBS_ROOT } elseif ($env:DEV_DIR) { $env:DEV_DIR } else { Split-Path $PSScriptRoot -Parent }
 $env:GH_PAGER = 'cat'
 
 $wingetPackages = @(
