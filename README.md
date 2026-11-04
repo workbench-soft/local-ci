@@ -85,6 +85,13 @@ runner. The runner scripts also work alone:
 - **Long paths** the script sets `git config --global core.longpaths true`
   and, in an admin run, `LongPathsEnabled` in the registry. `node_modules`
   and the `.open-next` cache hold paths over 260 characters.
+- **Work folder clean** before each job, `runnerclean-work.ps1` deletes the
+  runner's repo checkouts in `C:ci<n>` unused for 3 days, and all but the
+  current one when the drive has under 60 GB free. `RUNNER_CLEAN_DAYS` and
+  `RUNNER_CLEAN_MIN_FREE_GB` change the limits.
+- **Clean by hand** double click `CLEAN-CI.cmd` in the repo root to empty
+  `C:ci` at once. The runners stop for a few seconds, and the old files
+  delete in the background at idle priority.
 - **Folders** the first runner sits in `~/actions-runner/workbench-soft`, the
   next in `workbench-soft-2` and up. `RUNNER_ORG` picks another org.
 - **Fewer runners** on Windows a lower count removes the runners above it

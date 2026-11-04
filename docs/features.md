@@ -66,6 +66,11 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   The window that Apply on the status page opens does the same.
 - **Long paths** git and Windows accept paths over 260 characters, so a
   checkout can delete a deep `node_modules` or build cache.
+- **Work folder clean** before each job a runner deletes its own repo
+  checkouts unused for 3 days, and all but the current one when the drive
+  has under 60 GB free, so `C:ci` stops filling the disk.
+- **Clean by hand** `CLEAN-CI.cmd` in the repo root empties `C:ci` at once.
+  The runners pause for a few seconds, and the delete runs in the background.
 
 Spec: [ci-runner](../specs/ci-runner.md).
 

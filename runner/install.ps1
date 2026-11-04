@@ -130,6 +130,8 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	# when GitHub throttled it. The runner only reads the folder: runner\cache-actions.ps1 fills it, and
 	# every runner shares it.
 	$jobVars.ACTIONS_RUNNER_ACTION_ARCHIVE_CACHE = $actionCache
+	# Before each job the runner cleans its own work folder of old checkouts, see runner/clean-work.ps1.
+	$jobVars.ACTIONS_RUNNER_HOOK_JOB_STARTED = $cleanHook
 	Set-Content -LiteralPath (Join-Path $runnerDir '.env') -Encoding ascii -Value ($jobVars.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" })
 }
 
@@ -310,6 +312,10 @@ New-Item -ItemType Directory -Force -Path $actionCache | Out-Null
 Write-Step "Filling the action cache in $actionCache"
 # A download that fails leaves the runners to fetch that action themselves.
 try { & (Join-Path $PSScriptRoot 'cache-actions.ps1') } catch { Write-Host "The action cache stays as it is: $($_.Exception.Message)" }
+# A copy outside this clone, so a move of the repo keeps the hook path in .env valid.
+$cleanHook = Join-Path $HOME 'actions-runner\hooks\clean-work.ps1'
+New-Item -ItemType Directory -Force -Path (Split-Path $cleanHook) | Out-Null
+Copy-Item -Force -LiteralPath (Join-Path $PSScriptRoot 'clean-work.ps1') -Destination $cleanHook
 Write-Step 'Starting Runner.Listener and Runner.Worker at above normal priority'
 Set-RunnerPriority
 foreach ($runner in $runners) {
