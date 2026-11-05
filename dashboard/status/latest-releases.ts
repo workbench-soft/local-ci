@@ -57,7 +57,7 @@ export type AppRelease = {
   run: RunView | null;
   wait: RunWait | null;
   /** The words a cancel was logged with, and when. */
-  why: { words: string; at: string } | null;
+  why: CancelEntry | null;
 };
 
 const defaultBranches = new Set(['main', 'master']);
@@ -193,9 +193,7 @@ export function latestReleases(
     const decided = feeder ?? run;
     const state = decided ? stateOfRun(decided, pipeline, release) : 'released';
     const why =
-      state === 'cancelled' && decided && cancels.get(decided.id)
-        ? { words: (cancels.get(decided.id) as CancelEntry).words, at: (cancels.get(decided.id) as CancelEntry).at }
-        : null;
+      state === 'cancelled' && decided && cancels.get(decided.id) ? (cancels.get(decided.id) as CancelEntry) : null;
     apps.push({
       app,
       repo,
@@ -206,7 +204,7 @@ export function latestReleases(
       // The usual life comes from every finished run of the workflow in the repo, not only the
       // runs after this release: the ones that made the earlier releases sit before it.
       wait: decided && (state === 'building' || state === 'queued') ? waitOf(decided, shipsOf(repo), now) : null,
-      why,
+      why: why ?? null,
     });
   }
 
@@ -214,7 +212,7 @@ export function latestReleases(
   for (const repo of new Set(runs.map((run) => run.repo))) {
     if (releasedRepos.has(repo)) continue;
     const all = shipsOf(repo);
-    if (!all.some((run) => run.event === 'workflow_run')) continue;
+    if (!all.some((run) => run.event === 'workflow_run' || /release|deploy/i.test(run.workflow))) continue;
     const run = all.toSorted(newestFirst)[0] ?? null;
     const state = run ? stateOfRun(run, null, null) : 'no-release';
     const why = state === 'cancelled' && run && cancels.get(run.id) ? cancels.get(run.id) : null;
@@ -226,7 +224,7 @@ export function latestReleases(
       state,
       run: run && state !== 'no-release' ? viewOf(run) : null,
       wait: run && (state === 'building' || state === 'queued') ? waitOf(run, all, now) : null,
-      why: why ? { words: why.words, at: why.at } : null,
+      why: why ?? null,
     });
   }
 

@@ -61,7 +61,7 @@ flowchart TD
 ## Get a new version installed
 
 1. A PR merges into `main`.
-2. Checks passes, and Release tags the commit.
+2. Checks and Release start together. Publication waits for this commit's Checks.
 3. Within 5 minutes the `local-ci update` task on the Windows PC runs.
 4. The task moves the checkout to the new tag.
 5. The task rebuilds the status page or reinstalls the runners when their
@@ -69,8 +69,9 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A[PR merges into main] --> B[Checks passes]
-  B --> C[Release tags the commit]
+  A[PR merges into main] --> B[Checks runs]
+  A --> R[Release builds]
+  B & R --> C[Passing Checks lets Release publish and tag]
   T[every 5 minutes, at logon] --> E
   C -.-> E[windows/update.ps1 moves the checkout to the tag]
   E --> F{dashboard/ changed?}
@@ -140,6 +141,8 @@ flowchart TD
    its APK to the phone. A local build uses the app's local release key when
    available and leaves the source checkout unchanged.
 9. Click the branch or the PR link to open it on GitHub.
+   Open Cancellation history on either tab to read a saved stop reason.
+   Follow its links to the replacement build, failed Checks, commit or PR.
 10. To change the number of runners, type it in Runners on this PC, or press
     Use with the suggested count. Press Apply, and watch
     `runner\install.ps1` add or remove runners in its window.

@@ -178,9 +178,11 @@ once, from the main checkout:
   button force cancels a run and deletes it from GitHub with its logs.
   Purge all, after a confirm, purges every run the filter and search match,
   older runs included, until none match.
-- **Old runs die** the page server force cancels a run that a newer run of
-  its workflow and branch replaced, or whose PR is merged or closed. Each
-  cancel goes to `dashboard.log`. `CANCEL_SUPERSEDED=off` in
+- **Replaced builds** the server cancels an active build only when a newer
+  push builds a different commit in the same repo, workflow, branch and event.
+  Closing a PR alone keeps the build. Failed Checks stop releases of the same
+  commit. The cancellation history links the causing build, commit and PR.
+  Requests are saved before GitHub is called. `CANCEL_SUPERSEDED=off` in
   `dashboard\.env.local` turns it off. A rerun of the install script keeps it.
 - **Release and Install** a run that published a release links to it in the
   Release column. Install puts its APK on the phone plugged in over USB,
@@ -221,6 +223,8 @@ Each push to `main` that passes Checks gets a release on the
 [Releases page](https://github.com/workbench-soft/local-ci/releases), such as
 `v2026.10.30.1`. Its notes list the commits since the release before.
 `START.cmd` and the update task install the newest release.
+Release starts alongside Checks; publication alone waits for the matching
+commit's successful checks. Open PRs hold no release build.
 
 From the Releases tab, **Release on CI** dispatches a supported app workflow
 on `main`. **Build locally** fetches the latest `main` of memories-mobile,

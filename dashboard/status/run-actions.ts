@@ -87,7 +87,12 @@ function purgeAt(path: string): Promise<void> {
   return purgeRun({
     status: async () => ((await (await callGitHub(path)).json()) as { status: string }).status,
     forceCancel: async () => {
+      const parts = path.split('/');
+      const repo = parts[3];
+      const runId = Number(parts[6]);
+      await recordCancel(repo, runId, 'Purged from the page', { cause: { kind: 'manual' }, outcome: 'requested' });
       await callGitHub(`${path}/force-cancel`, 'POST');
+      await recordCancel(repo, runId, 'Purged from the page', { cause: { kind: 'manual' }, outcome: 'accepted' });
     },
     remove: async () => {
       await callGitHub(path, 'DELETE');
@@ -118,12 +123,14 @@ async function runAction(
 ): Promise<ActionResult> {
   if (!isRun(repo, runId)) return { ok: false, error: 'Unknown run.' };
   try {
+    await recordCancel(repo, runId, words, { cause: { kind: 'manual' }, outcome: 'requested' });
     await act(runPath(repo, runId));
     // The reason reaches the Releases tab, so a stopped release says who stopped it.
-    await recordCancel(repo, runId, words);
+    await recordCancel(repo, runId, words, { cause: { kind: 'manual' }, outcome: 'accepted' });
     return { ok: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    await recordCancel(repo, runId, words, { cause: { kind: 'manual' }, outcome: 'failed' }).catch(() => {});
     // GitHub answers 409 to a cancel of a run that has already finished, and 404 to a run deleted meanwhile.
     const status = githubStatus(error);
     return {

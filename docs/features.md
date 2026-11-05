@@ -223,11 +223,13 @@ icon: a white loop arrow round a check on a teal to violet gradient.
   stays.
 - **Old runs die** every 10 seconds the page server force cancels an
   unfinished push or PR run when a newer run of the same repo, workflow,
-  branch and event exists, or when it checks a PR that is merged or closed.
-  Main and open PRs keep building, and so do `workflow_run` and `schedule`
+  branch and event builds a different commit. PR closure alone cancels no run.
+  Failed Checks stop releases of the same repo, branch and commit.
+  Repeating the same commit keeps the build, and so do `workflow_run` and `schedule`
   runs. `CANCEL_SUPERSEDED=off` in `.env.local` turns it off, and a rerun of
   the install script keeps that line. `pnpm dev` doesn't cancel. Each cancel
-  goes to `dashboard.log` with its time and reason.
+  is saved before the GitHub call. Cancellation history on both tabs links
+  the causing build, commit and PR with the request result.
 - **Stale page** when refreshes hang for 45 seconds, the line under the
   headline turns red and says when the page last updated. A stopped server
   shows the browser's error page instead, since Next reloads the tab. A
@@ -255,8 +257,8 @@ icon: a white loop arrow round a check on a teal to violet gradient.
   phone one by one, and each row shows Installed or adb's error.
 - **Limits** a release with several APKs installs the first. A run on `main`
   counts toward a release when a push, a dispatch or a finished workflow
-  started it, so Dependabot runs stay out. The reason of a cancel older than
-  the last 200 lines of the log is gone. The public repo keeps 3 releases
+  started it, so Dependabot runs stay out. The append-only log keeps earlier
+  cancellation evidence. The public repo keeps 3 releases
   per app, so the tab shows only the newest.
 - **Failed step** a failed run names its failed job and step under the
   result, linked to that job's log.

@@ -10,7 +10,8 @@
 
 ## What it does for the person
 
-Each push to `main` that passes the `Checks` workflow gets a GitHub release
+Each push to `main` starts Release alongside the `Checks` workflow. Publication
+waits for successful Checks of the same commit and branch. A passing commit gets a GitHub release
 in this repo, such as `v2026.10.30.1`. Its notes list the commits since the
 release before. From the Releases page, a person can also dispatch an app's
 release workflow on `main`, install its published APK over ADB, or build an
@@ -19,7 +20,7 @@ APK from the latest `main` in a separate worktree and install that build.
 ## User flows
 
 1. A PR merges into `main`.
-2. `Checks` runs on the push and passes.
+2. `Checks` and Release start on the push. Release builds while Checks runs.
 3. Release tags the commit and publishes the notes on the Releases page.
 4. To release by hand, the person chooses an app and presses **Release on CI**.
    Local CI dispatches its release workflow against `main`.
@@ -30,8 +31,9 @@ APK from the latest `main` in a separate worktree and install that build.
 
 ## How it works
 
-- **`.github/workflows/release.yml`** starts when `checks.yml` finishes on a
-  push to `main`. It runs on `ubuntu-latest`, free for a public repo.
+- **`.github/workflows/release.yml`** starts on a push to `main` alongside
+  Checks. Publication waits through `.github/scripts/wait-for-checks.sh`.
+  It runs on `ubuntu-latest`, free for a public repo.
 - **`.github/scripts/next-version.sh`** picks the tag: the date, then the
   number of the release that day.
 - **`.github/scripts/release-notes.sh`** writes the notes from the commits
@@ -57,6 +59,12 @@ APK from the latest `main` in a separate worktree and install that build.
 - **Failed check** a red `Checks` run or a PR run starts no release.
 
 ## Changes
+
+### 2026-11-05 build releases alongside Checks
+
+- **Why** waiting for Checks and unrelated open PRs delays the release build.
+- **Changes** push starts both workflows; only publication waits for matching Checks.
+- **Docs** README, architecture, features, user flows and changelog.
 
 ### 2026-10-30 a release after each passing check
 

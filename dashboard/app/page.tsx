@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CancellationHistory } from '@/cards/cancellation-history';
 import { AutoRefresh } from '@/cards/auto-refresh';
 import { CloudCard } from '@/cards/cloud-card';
 import { LatestRunsTable, type RunRow } from '@/cards/latest-runs-table';
@@ -52,6 +53,7 @@ export default async function StatusPage({
       release: releaseOf.get(run.id) ?? null,
       failure: failureOf(run),
       machines: kindsOfRun(jobs, local),
+      cancellation: cancels.get(run.id) ?? null,
     };
   });
   // The release states need the place of each run and the failure inside its jobs.
@@ -105,6 +107,7 @@ export default async function StatusPage({
           {org.ok && <LatestRunsTable runs={rows} now={now} />}
         </div>
       )}
+      <CancellationHistory entries={[...cancels.values()]} />
     </main>
   );
 }
