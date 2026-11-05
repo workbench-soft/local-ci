@@ -2,19 +2,31 @@ import type { CancelCause } from './cancel-log.ts';
 import type { WorkflowRun } from './org-status.ts';
 import { activeStatuses } from './placement.ts';
 
-type RunKey = Pick<WorkflowRun, 'id' | 'repo' | 'workflowId' | 'branch' | 'event' | 'status' | 'headSha'>;
-const replaceableEvents = new Set(['push', 'pull_request', 'pull_request_target']);
+type RunKey = Pick<
+  WorkflowRun,
+  'id' | 'repo' | 'workflowId' | 'branch' | 'event' | 'status' | 'headSha' | 'pullRequests' | 'conclusion'
+>;
+const replaceableEvents = new Set(['push', 'workflow_dispatch', 'pull_request', 'pull_request_target']);
+const prEvents = new Set(['pull_request', 'pull_request_target']);
+
+function groupOf(run: RunKey): string {
+  // A fork can call its branch main too; only an identified PR shares that build scope.
+  const scope = prEvents.has(run.event)
+    ? [run.event, run.pullRequests.length ? run.pullRequests.map((pr) => pr.number).toSorted((a, b) => a - b) : run.id]
+    : 'branch';
+  return JSON.stringify([run.repo, run.workflowId, run.branch, scope]);
+}
 
 /** Only a build of a different commit in the same workflow and branch replaces a run. */
 export function replacementRuns<T extends RunKey>(runs: T[]): { run: T; replacement: T }[] {
   const newest = new Map<string, T>();
   for (const run of runs) {
-    if (!run.headSha || !replaceableEvents.has(run.event)) continue;
-    const key = JSON.stringify([run.repo, run.workflowId, run.branch, run.event]);
+    if (!run.headSha || !replaceableEvents.has(run.event) || run.conclusion === 'skipped') continue;
+    const key = groupOf(run);
     if ((newest.get(key)?.id ?? 0) < run.id) newest.set(key, run);
   }
   return runs.flatMap((run) => {
-    const replacement = newest.get(JSON.stringify([run.repo, run.workflowId, run.branch, run.event]));
+    const replacement = newest.get(groupOf(run));
     return activeStatuses.has(run.status) &&
       run.headSha &&
       replacement &&
@@ -48,6 +60,21 @@ export function failedCheckReleases(
       run.status === 'completed' &&
       run.conclusion === 'failure' &&
       run.jobs.some((job) => /^Wait for matching checks before publication$/i.test(job.failedStep ?? ''));
+    const integrated = (
+      {
+        consdr: { workflow: 'Deploy', job: /^checks$/ },
+        'guitar-upscale': { workflow: 'CI', job: /^checks$/ },
+        spotthecam: { workflow: 'Deploy', job: /^check \/ / },
+        'workbench-soft.github.io': { workflow: 'Pages', job: /^checks$/ },
+      } as Record<string, { workflow: string; job: RegExp }>
+    )[run.repo];
+    if (integrated?.workflow === run.workflow && (blocked ? stoppedAtGuard : activeStatuses.has(run.status))) {
+      const job = run.jobs.find(
+        (item) =>
+          integrated.job.test(item.name) && ['failure', 'timed_out', 'startup_failure'].includes(item.conclusion ?? ''),
+      );
+      if (job && run.headSha) return [{ run, replacement: { ...run, url: job.url } }];
+    }
     if (
       !(blocked ? stoppedAtGuard : activeStatuses.has(run.status)) ||
       !run.headSha ||
