@@ -51,9 +51,29 @@ test('a finished newer build still replaces an older active build on any branch'
   assert.deepEqual(replacementRuns([old, newer]), [{ run: old, replacement: newer }]);
 });
 
-test('schedule, dispatch and workflow_run builds do not replace one another', () => {
-  for (const event of ['schedule', 'workflow_dispatch', 'workflow_run'])
+test('schedule and workflow_run builds do not replace one another', () => {
+  for (const event of ['schedule', 'workflow_run'])
     assert.deepEqual(replacementRuns([run(1, { event }), run(2, { event })]), []);
+});
+
+test('a different commit replaces a manual build with a push build and vice versa', () => {
+  for (const event of ['push', 'workflow_dispatch']) {
+    const old = run(1, { event });
+    const replacement = run(2, { event: event === 'push' ? 'workflow_dispatch' : 'push' });
+    assert.deepEqual(replacementRuns([old, replacement]), [{ run: old, replacement }]);
+  }
+});
+
+test('fork PRs with the same branch name keep their separate scope', () => {
+  const old = run(1, {
+    event: 'pull_request',
+    pullRequests: [{ number: 7, url: 'https://github.com/demo/app/pull/7' }],
+  });
+  const other = run(2, {
+    event: 'pull_request',
+    pullRequests: [{ number: 8, url: 'https://github.com/demo/app/pull/8' }],
+  });
+  assert.deepEqual(replacementRuns([old, other]), []);
 });
 
 test('failed Checks cancel releases only of the same repo, branch and SHA', () => {

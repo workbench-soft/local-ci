@@ -10,8 +10,9 @@
 
 ## Behaviour
 
-A newer push replaces an active run of the same repo, workflow, branch and
-event only when the commits differ. Closing a PR alone stops no build.
+A newer push or dispatch replaces an active run of the same repo, workflow
+and branch only when the commits differ. Identified PRs keep separate scopes
+so forks with the same branch name cannot stop each other. Closing a PR alone stops no build.
 Missing commit identities stop no build. Manual reruns of the same commit
 are not replacements. Other products and build types keep running.
 
@@ -26,6 +27,7 @@ commit SHA, branch and any PR links. Each request is durable before the
 GitHub call. Accepted and failed requests receive separate result records.
 Logging failures prevent automatic cancellation. A later request can recover
 after a temporary logging error. Status and Releases show linked evidence.
+The first accepted cancellation remains the cause; later retries cannot overwrite it.
 Manual stops record that the page requested them. External cancellations
 without evidence show an unknown cause rather than an invented cause.
 If the publication guard stops a release before the sweep, the history records
