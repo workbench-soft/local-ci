@@ -1,0 +1,38 @@
+# Build cancellation
+
+## One-pager
+
+- **Problem** a build can stop without a replacement or a useful reason.
+- **Fix** replace builds only within one repo, workflow and branch when a different commit starts that build type.
+- **Checks** build releases alongside Checks; failed Checks stop releases of that same commit.
+- **History** save each cancellation request, its result and the causing run, commit and PR before stopping a build.
+- **Limits** external cancellations without evidence remain unattributed.
+
+## Behaviour
+
+A newer push replaces an active run of the same repo, workflow, branch and
+event only when the commits differ. Closing a PR alone stops no build.
+Missing commit identities stop no build. Manual reruns of the same commit
+are not replacements. Other products and build types keep running.
+
+Release workflows start on pushes to main alongside Checks. A failed job in
+Checks stops active release workflows of the same repo, branch and commit.
+The dashboard does not infer a dependency from an unrelated workflow failure.
+
+## Cancellation history
+
+The JSONL cancellation log stores the reason, causing run ID and URL,
+commit SHA, branch and any PR links. Each request is durable before the
+GitHub call. Accepted and failed requests receive separate result records.
+Logging failures prevent automatic cancellation. A later request can recover
+after a temporary logging error. Status and Releases show linked evidence.
+Manual stops record that the page requested them. External cancellations
+without evidence show an unknown cause rather than an invented cause.
+
+## Changes
+
+### 2026-11-05 scope cancellation and record its cause
+
+- **Changes** cancellation selection, commit metadata, durable history and linked reasons on both dashboard tabs.
+- **Steps** spec, selection and log tests, server actions, dashboard and docs, workflow rollout.
+- **Docs** README, architecture, features, user flows and changelog.

@@ -22,6 +22,7 @@ export type WorkflowRun = {
   workflowId: number;
   title: string;
   branch: string;
+  headSha?: string;
   event: string;
   status: string;
   conclusion: string | null;
@@ -161,6 +162,7 @@ type ApiRun = {
   name: string;
   display_title: string;
   head_branch: string;
+  head_sha?: string;
   event: string;
   status: string;
   conclusion: string | null;
@@ -234,6 +236,7 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
       workflowId: run.workflow_id,
       title: run.display_title,
       branch: run.head_branch,
+      headSha: run.head_sha,
       event: run.event,
       status: run.status,
       conclusion: run.conclusion,

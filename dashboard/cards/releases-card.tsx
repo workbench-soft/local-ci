@@ -1,4 +1,5 @@
 'use client';
+import { CancelReason } from './cancel-reason';
 
 import { useState } from 'react';
 import { formatAge } from '@/status/headline';
@@ -296,7 +297,13 @@ function Detail({
   if (state === 'cancelled') {
     return (
       <p className="release-detail bad small">
-        {why ? `${why.words}, ${formatAge(why.at, now)}` : 'The reason sits before the cancel log began.'}
+        {why ? (
+          <>
+            <CancelReason entry={why} /> · {formatAge(why.at, now)}
+          </>
+        ) : (
+          'No cancellation evidence was recorded.'
+        )}
       </p>
     );
   }

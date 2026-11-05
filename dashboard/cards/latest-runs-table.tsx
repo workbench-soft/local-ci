@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useState } from 'react';
+import type { CancelEntry } from '@/status/cancel-log';
 import { formatDuration } from '@/status/durations';
 import { formatAge, toneOfRun } from '@/status/headline';
 import type { RunFailure, WorkflowRun } from '@/status/org-status';
@@ -12,6 +13,7 @@ import { InstallButton } from './install-button';
 import { PurgeAllButton } from './purge-all-button';
 import { RunControls } from './run-controls';
 import { RunTimings } from './run-timings';
+import { CancelReason } from './cancel-reason';
 
 export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & {
   /** From the start of the run to its end, or up to now. Null while it waits in the queue. */
@@ -21,6 +23,7 @@ export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & {
   failure: RunFailure | null;
   /** The machines of its jobs: where it built, builds, or waits to build. */
   machines: RunnerKind[];
+  cancellation?: CancelEntry | null;
 };
 
 type SortKey = 'place' | 'machine' | 'repo' | 'workflow' | 'branch' | 'pr' | 'started' | 'took';
@@ -214,6 +217,11 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
             {run.workflow}
           </a>
           <div className="muted small">{run.title}</div>
+          {run.cancellation && (
+            <div>
+              <CancelReason entry={run.cancellation} />
+            </div>
+          )}
         </td>
         <td>
           <a href={run.branchUrl} target="_blank" rel="noreferrer">

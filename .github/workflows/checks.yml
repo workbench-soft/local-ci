@@ -7,10 +7,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-concurrency:
-  group: checks-${{ github.ref }}
-  cancel-in-progress: true
-
 # The repo is public, so jobs run on GitHub runners: a fork PR on the PC runner would run its code there.
 # Each action is pinned to a commit, and Dependabot moves the pin and its version comment.
 permissions:

@@ -1,108 +1,97 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { prListsToRead, reposWithPrRuns, supersededRuns } from './superseded.ts';
+import type { WorkflowRun } from './org-status.ts';
+import { replacementRuns, failedCheckReleases } from './superseded.ts';
 
-const run = (
-  id: number,
-  status: string,
-  change: Partial<{ repo: string; workflowId: number; branch: string; event: string }> = {},
-) => ({
+const run = (id: number, change: Partial<WorkflowRun> = {}): WorkflowRun => ({
   id,
   repo: 'app',
   workflowId: 1,
+  workflow: 'Checks',
   branch: 'main',
   event: 'push',
-  status,
+  headSha: `commit-${id}`,
+  status: 'in_progress',
+  conclusion: null,
+  jobs: [],
+  title: '',
+  createdAt: '',
+  startedAt: null,
+  updatedAt: '',
+  url: '',
+  branchUrl: '',
+  pullRequests: [],
   ...change,
 });
 
-const noPrs = new Map<string, Set<string>>();
-const ids = (runs: { id: number }[]) => runs.map((item) => item.id);
-
-test('a newer run replaces the queued and running runs before it', () => {
-  assert.deepEqual(ids(supersededRuns([run(3, 'queued'), run(2, 'in_progress'), run(1, 'queued')], noPrs)), [2, 1]);
-});
-
-test('a newer run that already finished still replaces the older ones', () => {
-  assert.deepEqual(ids(supersededRuns([run(2, 'completed'), run(1, 'queued')], noPrs)), [1]);
-});
-
-test('finished runs and the newest run stay', () => {
-  assert.deepEqual(supersededRuns([run(2, 'queued'), run(1, 'completed')], noPrs), []);
-});
-
-test('other workflows, branches, events and repos of the same moment stay', () => {
-  const open = new Map([['app', new Set(['main'])]]);
-  const runs = [
-    run(5, 'queued'),
-    run(4, 'queued', { workflowId: 2 }),
-    run(3, 'queued', { branch: 'feature' }),
-    run(2, 'queued', { event: 'pull_request' }),
-    run(1, 'queued', { repo: 'other' }),
+test('a new commit replaces only the same product, workflow, branch and event', () => {
+  const old = run(1);
+  const newer = run(10);
+  const others = [
+    run(2, { repo: 'other' }),
+    run(3, { branch: 'feature' }),
+    run(4, { workflowId: 2 }),
+    run(5, { event: 'pull_request' }),
   ];
-  assert.deepEqual(supersededRuns(runs, open), []);
+  assert.deepEqual(replacementRuns([old, newer, ...others]), [{ run: old, replacement: newer }]);
 });
 
-test('a run of a merged or closed PR dies, a run of an open PR stays', () => {
-  const open = new Map([['app', new Set(['open-pr'])]]);
-  const runs = [
-    run(3, 'queued', { event: 'pull_request', branch: 'open-pr' }),
-    run(2, 'queued', { event: 'pull_request', branch: 'merged' }),
-    run(1, 'queued', { branch: 'merged' }),
+test('reruns of the same commit and missing commit identities stop no build', () => {
+  assert.deepEqual(replacementRuns([run(1), run(2, { headSha: 'commit-1' })]), []);
+  assert.deepEqual(replacementRuns([run(1, { headSha: undefined }), run(2)]), []);
+});
+
+test('closing a PR without a new commit stops no build', () => {
+  assert.deepEqual(replacementRuns([run(1, { event: 'pull_request' })]), []);
+});
+
+test('a finished newer build still replaces an older active build on any branch', () => {
+  const old = run(1, { branch: 'feature/a' });
+  const newer = run(2, { branch: 'feature/a', status: 'completed' });
+  assert.deepEqual(replacementRuns([old, newer]), [{ run: old, replacement: newer }]);
+});
+
+test('schedule, dispatch and workflow_run builds do not replace one another', () => {
+  for (const event of ['schedule', 'workflow_dispatch', 'workflow_run'])
+    assert.deepEqual(replacementRuns([run(1, { event }), run(2, { event })]), []);
+});
+
+test('failed Checks cancel releases only of the same repo, branch and SHA', () => {
+  const checks = run(1, { status: 'completed', conclusion: 'failure' });
+  const release = run(2, { workflow: 'Release Android', headSha: checks.headSha });
+  const others = [
+    run(3, { workflow: 'Release', headSha: 'different' }),
+    run(4, { workflow: 'Release', headSha: checks.headSha, repo: 'other' }),
+    run(5, { workflow: 'Release', headSha: checks.headSha, branch: 'feature' }),
+    run(6, { workflow: 'Unrelated build', headSha: checks.headSha }),
   ];
-  assert.deepEqual(ids(supersededRuns(runs, open)), [2]);
+  assert.deepEqual(failedCheckReleases([checks, release, ...others]), [{ run: release, replacement: checks }]);
 });
 
-test('open PRs are read only for repos with an unfinished PR run', () => {
-  const runs = [
-    run(3, 'queued', { event: 'pull_request' }),
-    run(2, 'completed', { repo: 'done', event: 'pull_request' }),
-    run(1, 'queued', { repo: 'push' }),
-  ];
-  assert.deepEqual(reposWithPrRuns(runs), ['app']);
+test('a failed Checks job stops a release before other check jobs finish', () => {
+  const checks = run(1, { jobs: [{ conclusion: 'failure' } as WorkflowRun['jobs'][number]] });
+  const release = run(2, { workflow: 'Release', headSha: checks.headSha });
+  assert.equal(failedCheckReleases([checks, release]).length, 1);
+  assert.deepEqual(failedCheckReleases([{ ...checks, jobs: [] }, release]), []);
 });
 
-test('a PR run of a repo whose open PR list failed stays', () => {
-  const runs = [
-    run(2, 'queued', { event: 'pull_request', branch: 'new-pr' }),
-    run(1, 'queued', { repo: 'other', event: 'pull_request', branch: 'gone' }),
-  ];
-  assert.deepEqual(ids(supersededRuns(runs, new Map([['other', new Set<string>()]]))), [1]);
-});
-
-test('a PR run that started after the last read of the open PRs gets a fresh read', () => {
-  const at = Date.parse('2026-10-29T10:00:00Z');
-  const pr = (id: number, createdAt: string, repo = 'app') => ({
-    ...run(id, 'queued', { repo, event: 'pull_request' }),
-    createdAt,
+test('monorepo products use their own Checks workflow', () => {
+  const mobile = run(1, { repo: 'memories', conclusion: 'failure' });
+  const desktop = run(2, { repo: 'memories', workflow: 'Desktop release', headSha: mobile.headSha });
+  const camera = run(3, { repo: 'memories', workflow: 'Shuttrix release', headSha: mobile.headSha });
+  assert.deepEqual(failedCheckReleases([mobile, desktop, camera]), []);
+  const checks = run(4, {
+    repo: 'memories',
+    workflow: 'Desktop checks',
+    headSha: mobile.headSha,
+    conclusion: 'failure',
   });
-  const readAt = new Map([
-    ['app', at],
-    ['old', at],
-  ]);
-  const runs = [
-    pr(2, '2026-10-29T10:00:30Z'),
-    pr(1, '2026-10-29T09:59:00Z', 'old'),
-    pr(3, '2026-10-29T10:00:30Z', 'new'),
-  ];
-  assert.deepEqual(prListsToRead(runs, readAt, at + 40_000, 60_000), ['app', 'new']);
-  assert.deepEqual(prListsToRead(runs, readAt, at + 60_000, 60_000), ['app', 'old', 'new']);
+  assert.deepEqual(failedCheckReleases([mobile, checks, desktop, camera]), [{ run: desktop, replacement: checks }]);
 });
 
-test('a newer workflow_run or schedule run leaves the older one to its own concurrency rule', () => {
-  const runs = [
-    run(4, 'queued', { event: 'workflow_run' }),
-    run(3, 'in_progress', { event: 'workflow_run' }),
-    run(2, 'queued', { event: 'schedule' }),
-    run(1, 'in_progress', { event: 'schedule' }),
-  ];
-  assert.deepEqual(supersededRuns(runs, noPrs), []);
-});
-
-test('a PR run stamped in the same second as the read, or by a clock behind this PC, still gets a fresh read', () => {
-  const at = Date.parse('2026-10-29T10:00:00.700Z');
-  const runs = [{ ...run(1, 'queued', { event: 'pull_request' }), createdAt: '2026-10-29T10:00:00Z' }];
-  assert.deepEqual(prListsToRead(runs, new Map([['app', at]]), at + 10_000, 60_000), ['app']);
-  const old = [{ ...run(1, 'queued', { event: 'pull_request' }), createdAt: '2026-10-29T09:59:00Z' }];
-  assert.deepEqual(prListsToRead(old, new Map([['app', at]]), at + 10_000, 60_000), []);
+test('a new check attempt supersedes an earlier failure of the same commit', () => {
+  const old = run(1, { conclusion: 'failure' });
+  const latest = run(2, { headSha: old.headSha });
+  const release = run(3, { workflow: 'Release', headSha: old.headSha });
+  assert.deepEqual(failedCheckReleases([old, latest, release]), []);
 });

@@ -183,11 +183,12 @@ The server renders the page for each request.
   cache.
 - **Old runs die** `instrumentation.ts` starts
   `status/cancel-superseded.ts` with the production server only. Every 10
-  seconds it reads the runs through the shared cache, and the open PRs of
-  repos with an unfinished PR run. A PR list is kept for a minute, and read
-  again when a PR run started after it. `status/superseded.ts` picks the
-  push and PR runs to kill, and each one gets `force-cancel`. A repo whose PR
-  read fails, or returns 100 PRs, keeps its PR runs.
+  seconds it reads runs through the shared cache. `status/superseded.ts`
+  compares commit identities within one repo, workflow, branch and event.
+  PR closure alone cancels no run. Failed Checks or a failed Checks job stop
+  active release workflows of the same repo, branch and SHA. The JSONL log
+  saves requests before cancellation and then saves the result. Both tabs
+  link the causing run, commit and PR from a shared history component.
 - **Releases** the app repos are private, so their release workflows publish
   to the public `workbench-soft/workbench-soft.github.io` with the tag
   `<repo>-v<version>`. `status/releases.ts` gives each release to the run of
@@ -213,7 +214,7 @@ The server renders the page for each request.
   `dashboard/cancel-reasons.jsonl`: repo, run id, the words and the time.
   The sweep writes `a newer run replaced it` or `its PR is closed`, Stop
   and Purge write theirs, and the card reads the file back on each render.
-  The file keeps its last 200 lines. `CANCEL_REASONS_FILE` in `.env.local`
+  The append-only file keeps earlier evidence across restarts. `CANCEL_REASONS_FILE` in `.env.local`
   picks another file.
 - **Install** `status/install-apk.ts` is a server action. It checks
   `adb devices` for one phone, downloads the release's `.apk` to
@@ -387,12 +388,13 @@ sequenceDiagram
 ### Old runs: the page server cancels them
 
 - **Picked** `status/cancel-superseded.ts` force cancels a run that a newer
-  run of the same repo, workflow, branch and event replaced. It also kills
-  runs of merged or closed PRs.
+  commit of the same repo, workflow, branch and event replaced.
 - **Why** the queue filled with runs of replaced commits and merged PRs.
   They took runners to build code already replaced. One loop covers every org repo.
 - **Trade-off** a run dies up to 30 seconds late, and only while the page
-  server runs. A manual rerun of an older commit dies too.
+  server runs. Runs with unknown commit identities stay. Repeating the same
+  commit keeps the running build. Publication also waits for matching Checks
+  in the workflow, so a stopped dashboard cannot publish an unchecked build.
 - **Rejected**
   - **`concurrency` groups in each workflow** each repo needs the block, and
     they leave runs of merged PRs alone.

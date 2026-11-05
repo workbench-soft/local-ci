@@ -98,7 +98,8 @@ browser at each logon.
   the sweep or from Stop and Purge, to `dashboard/cancel-reasons.jsonl`:
   repo, run id, the words and the time. The card reads the file and pairs the
   lines with runs by id. `CANCEL_REASONS_FILE` in `.env.local` picks another
-  file. The file keeps its last 200 lines.
+  file. The append-only file keeps earlier records across restarts. Both tabs
+  show linked causes and request outcomes. Policy: [build cancellation](build-cancellation.md).
 
 ## Limits
 

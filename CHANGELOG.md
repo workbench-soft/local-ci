@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **Build cancellation** only a different commit building in the same repo,
+  workflow and branch replaces an active run. Closing a PR keeps its build.
+  Failed Checks stop releases of the same commit. Both tabs show saved
+  cancellation evidence with links to the causing run, commit and PR.
+- **Parallel release builds** Release starts alongside Checks on pushes to
+  main. Publication waits for matching Checks. Open PRs hold no release.
+
 - **Manual and local app releases** the Releases tab can dispatch a supported
   app release on CI, build the latest `main` of supported Android apps in a
   temporary clone, and install the local APK over ADB. Published APK installs
