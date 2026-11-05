@@ -47,9 +47,36 @@ export async function installRelease(tag: string): Promise<InstallResult> {
     await mkdir(folder, { recursive: true });
     const file = join(folder, release.apk.name.replace(/[^\w.-]/g, '_'));
     await writeFile(file, Buffer.from(await response.arrayBuffer()));
-    // -r keeps the app data, -d allows a lower version code than the installed one.
-    await execFileAsync(adb, ['-s', devices[0], 'install', '-r', '-d', file], { timeout: 180_000 });
-    return { ok: true, device: devices[0] };
+    return installFileOn(adb, devices[0], file);
+  } catch (error) {
+    return { ok: false, error: adbError(error) };
+  }
+}
+
+/** Installs a local APK on the one authorized phone connected over USB. */
+export async function installApkFile(file: string): Promise<InstallResult> {
+  const adb = findAdb();
+  if (!adb) return { ok: false, error: 'adb not found. Install Android platform tools, or set ADB_PATH.' };
+  try {
+    const devices = await listDevices(adb);
+    if (devices.length === 0)
+      return { ok: false, error: 'No phone in adb devices. Plug it in over USB and allow USB debugging.' };
+    if (devices.length > 1)
+      return {
+        ok: false,
+        error: `${devices.length} phones in adb devices: ${devices.join(', ')}. Leave one plugged in.`,
+      };
+    return installFileOn(adb, devices[0], file);
+  } catch (error) {
+    return { ok: false, error: adbError(error) };
+  }
+}
+
+async function installFileOn(adb: string, device: string, file: string): Promise<InstallResult> {
+  try {
+    // -r keeps app data, and -d permits a lower version code from a local build.
+    await execFileAsync(adb, ['-s', device, 'install', '-r', '-d', file], { timeout: 180_000 });
+    return { ok: true, device };
   } catch (error) {
     return { ok: false, error: adbError(error) };
   }

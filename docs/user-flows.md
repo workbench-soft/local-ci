@@ -134,7 +134,11 @@ flowchart TD
    app says whether its release builds, waits, failed or was cancelled, how
    long the wait still is, and why a release stopped. Read what changed under
    Changes, tick the apps and press Install. Each row says Installed or
-   shows adb's error.
+   shows adb's error. Press **Release on CI** to start a supported app's
+   release workflow on `main`. Press **Build locally** to fetch and build the
+   latest `main` for a supported Android app, then **Install local** to send
+   its APK to the phone. A local build uses the app's local release key when
+   available and leaves the source checkout unchanged.
 9. Click the branch or the PR link to open it on GitHub.
 10. To change the number of runners, type it in Runners on this PC, or press
     Use with the suggested count. Press Apply, and watch

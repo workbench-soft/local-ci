@@ -271,11 +271,11 @@ Spec: [ci-status-page](../specs/ci-status-page.md).
 
 ## Releases
 
-- **What it gives** a tagged release such as `v2026.10.30.1` for each push to `main` that passes `Checks`. Its notes list the commits since the release before.
+- **What it gives** a tagged release after each passing push to `main`. On the Releases tab, a person can dispatch supported app workflows on CI, install a published APK over ADB or build the latest `main` of a supported Android app locally and install that APK.
 - **Where** the [Releases page](https://github.com/workbench-soft/local-ci/releases).
-- **Limits** notes only, with no files to download.
+- **Limits** local builds need a local app clone, its `scripts/build-apk.sh` and any app signing key on this PC. The supported builds include SpotTheCam. ADB needs one authorized phone. Published releases include the APKs from their app workflows.
 
-Spec: [releases](../specs/releases.md).
+Spec: [releases](../specs/releases.md)
 
 ## Updates by themselves
 

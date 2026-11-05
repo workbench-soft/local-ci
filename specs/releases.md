@@ -46,9 +46,14 @@ APK from the latest `main` in a separate worktree and install that build.
 
 - **Local build setup** an app needs a local clone, a `scripts/build-apk.sh`
   entry point and any signing or build secrets on this PC.
+- **Supported local apps** memories-mobile, Shuttrix, Tick-a-Lot, SkyAltar,
+  Memoire, Shuttrix Legacy and SpotTheCam have a local build entry point.
 - **ADB** installation requires exactly one authorized phone in `adb devices`.
 - **CI workflow** manual dispatch is available only for apps with a release
   workflow that accepts `workflow_dispatch`.
+- **Temporary files** the build clone is removed after each run. The APK stays
+  in the OS temp folder until install, or up to 6 hours; the next local build
+  clears expired folders.
 - **Failed check** a red `Checks` run or a PR run starts no release.
 
 ## Changes

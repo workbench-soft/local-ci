@@ -113,6 +113,19 @@ input[type='checkbox'] {
   gap: 4px;
 }
 
+.release-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0 28px;
+}
+
+.release-actions .install-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
 .notes {
   margin: 6px 0 0 28px;
   font-size: 13px;
