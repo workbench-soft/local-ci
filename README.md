@@ -222,6 +222,15 @@ Each push to `main` that passes Checks gets a release on the
 `v2026.10.30.1`. Its notes list the commits since the release before.
 `START.cmd` and the update task install the newest release.
 
+From the Releases tab, **Release on CI** dispatches a supported app workflow
+on `main`. **Build locally** fetches the latest `main` of memories-mobile,
+Shuttrix, Tick-a-Lot, SkyAltar, Memoire, Shuttrix Legacy or SpotTheCam and builds its APK
+in a temporary clone. The build uses the app's local release key when it is
+set up on this PC. **Install local** sends that APK to the connected phone.
+Tick a published APK and press **Install** to install a CI release instead.
+ADB needs one authorized phone; local builds also need the app clone and its
+Android SDK.
+
 ## Updates by themselves
 
 The Windows PC installs each new release on its own. The `local-ci update`

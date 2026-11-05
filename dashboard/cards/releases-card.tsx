@@ -4,10 +4,19 @@ import { useState } from 'react';
 import { formatAge } from '@/status/headline';
 import { installRelease } from '@/status/install-apk';
 import { formatDuration } from '@/status/durations';
+import { buildLatestMain, installLocalBuild } from '@/status/local-build';
 import type { AppRelease, ReleaseState, RunView } from '@/status/latest-releases';
+import { dispatchRelease } from '@/status/release-actions';
+import { releaseTargetFor } from '@/status/release-config';
 import { Icon, placeIcons, type IconName } from './icons';
 
 type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
+type LocalAction = {
+  busy?: 'dispatch' | 'build' | 'install';
+  message?: string;
+  error?: string;
+  artifact?: { token: string; fileName: string; commit: string };
+};
 
 /** The look and the words of each release state. */
 const chipOf: Record<ReleaseState, { icon: IconName; text: string; tone: 'ok' | 'busy' | 'warn' | 'bad' | 'muted' }> = {
@@ -25,6 +34,7 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
   // Apps stay ticked across refreshes, and Install takes the release that is newest at the click.
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
+  const [localActions, setLocalActions] = useState<Record<string, LocalAction>>({});
   const [running, setRunning] = useState(false);
   const withApk = apps.filter((app) => app.release?.apk);
   const chosen = withApk.filter((app) => ticked.has(app.app));
@@ -33,6 +43,46 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
   const toggle = (app: string) =>
     setTicked((current) => new Set(current.has(app) ? [...current].filter((item) => item !== app) : [...current, app]));
   const setOutcome = (app: string, outcome: Outcome) => setOutcomes((current) => ({ ...current, [app]: outcome }));
+  const setLocalAction = (app: string, action: LocalAction) =>
+    setLocalActions((current) => ({ ...current, [app]: { ...current[app], ...action } }));
+
+  const runReleaseAction = async (app: string, kind: 'dispatch' | 'build' | 'install') => {
+    setLocalAction(app, { busy: kind, error: undefined, message: undefined });
+    if (kind === 'dispatch') {
+      const answer = await dispatchRelease(app).catch((error: Error) => ({ ok: false as const, error: error.message }));
+      setLocalAction(app, {
+        busy: undefined,
+        ...(answer.ok ? { message: 'Release queued on CI.' } : { error: answer.error }),
+      });
+      return;
+    }
+    if (kind === 'build') {
+      const answer = await buildLatestMain(app).catch((error: Error) => ({ ok: false as const, error: error.message }));
+      setLocalAction(app, {
+        busy: undefined,
+        ...(answer.ok
+          ? {
+              message: `Built from ${answer.commit.slice(0, 7)}.`,
+              artifact: { token: answer.token, fileName: answer.fileName, commit: answer.commit },
+            }
+          : { error: answer.error }),
+      });
+      return;
+    }
+    const artifact = localActions[app]?.artifact;
+    if (!artifact) {
+      setLocalAction(app, { busy: undefined, error: 'Build a local APK first.' });
+      return;
+    }
+    const answer = await installLocalBuild(artifact.token).catch((error: Error) => ({
+      ok: false as const,
+      error: error.message,
+    }));
+    setLocalAction(app, {
+      busy: undefined,
+      ...(answer.ok ? { message: `Installed on ${answer.device}.`, artifact: undefined } : { error: answer.error }),
+    });
+  };
 
   const installChosen = async () => {
     setRunning(true);
@@ -84,7 +134,11 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
             ticked={ticked.has(app.app)}
             disabled={running}
             outcome={outcomes[app.app]}
+            actions={localActions[app.app] ?? {}}
+            hasReleaseWorkflow={releaseTargetFor(app.app) !== null}
+            canBuildLocally={!!releaseTargetFor(app.app)?.build}
             onToggle={() => toggle(app.app)}
+            onAction={(kind) => runReleaseAction(app.app, kind)}
           />
         ))}
       </ul>
@@ -99,7 +153,11 @@ type ItemProps = {
   ticked: boolean;
   disabled: boolean;
   outcome: Outcome | undefined;
+  actions: LocalAction;
+  hasReleaseWorkflow: boolean;
+  canBuildLocally: boolean;
   onToggle: () => void;
+  onAction: (kind: 'dispatch' | 'build' | 'install') => void;
 };
 
 function AppItem({
@@ -108,7 +166,11 @@ function AppItem({
   ticked,
   disabled,
   outcome,
+  actions,
+  hasReleaseWorkflow,
+  canBuildLocally,
   onToggle,
+  onAction,
 }: ItemProps) {
   const chip = chipOf[state];
   const hint = run && run.place !== 'done' && state === 'building' ? placeIcons[run.place].hint : undefined;
@@ -146,6 +208,41 @@ function AppItem({
         <OutcomeText outcome={outcome} />
       </div>
       <Detail state={state} run={run} wait={wait} why={why} now={now} />
+      {(hasReleaseWorkflow || canBuildLocally) && (
+        <div className="release-actions">
+          {hasReleaseWorkflow && (
+            <button type="button" className="action" disabled={!!actions.busy} onClick={() => onAction('dispatch')}>
+              {actions.busy === 'dispatch' ? 'Queueing' : 'Release on CI'}
+            </button>
+          )}
+          {canBuildLocally && (
+            <button
+              type="button"
+              className="action"
+              disabled={!!actions.busy}
+              onClick={() => onAction('build')}
+              title="Fetch main and build in a temporary checkout on this PC"
+            >
+              {actions.busy === 'build' ? 'Building locally' : 'Build locally'}
+            </button>
+          )}
+          {actions.artifact && (
+            <button type="button" className="action" disabled={!!actions.busy} onClick={() => onAction('install')}>
+              {actions.busy === 'install' ? 'Installing' : 'Install local'}
+            </button>
+          )}
+          {actions.message && (
+            <span className="install-ok small" role="status">
+              {actions.message}
+            </span>
+          )}
+          {actions.error && (
+            <pre className="install-error" role="alert">
+              {actions.error}
+            </pre>
+          )}
+        </div>
+      )}
       {release?.notesHtml && (
         <details className="notes">
           <summary>Changes</summary>

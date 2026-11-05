@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Manual and local app releases** the Releases tab can dispatch a supported
+  app release on CI, build the latest `main` of supported Android apps in a
+  temporary clone, and install the local APK over ADB. Published APK installs
+  stay available.
 - **Releases tab first** the page opens on the Releases tab, with Status one
   click away at `/?tab=status`. Each app shows the state of its release:
   released, building, queued, errored, cancelled, held while a session PR is

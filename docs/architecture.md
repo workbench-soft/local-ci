@@ -29,6 +29,11 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   `START.cmd` holds it, and `START.cmd` waits while the task holds it.
 - **Status page** `dashboard/` is a Next.js app. `dashboard/install.ps1`
   builds it and starts it at boot.
+- **Release controls** `dashboard/status/release-actions.ts` dispatches a
+  supported app workflow on `main`. `status/local-build-runner.ts` fetches the
+  app's latest `main`, builds in a temporary clone and retains only its APK.
+  `status/local-build.ts` installs that APK through ADB. Local build clones
+  are removed after the build; uninstalled APKs expire after 6 hours.
 - **Updates** `windows/update.ps1` moves the checkout to the newest release
   tag. It runs `dashboard/install.ps1` when `dashboard/` moved past
   `dashboard/.built-commit`, and `runner/install.ps1` when the runner files
@@ -140,6 +145,11 @@ The server renders the page for each request.
   under a pile of newer queued runs stays on the page. For each unfinished
   run it also reads the jobs, with the runner that took each one. The jobs of
   a queued run stay in memory while its `updated_at` holds, for up to 60 s.
+- **App releases** `status/release-config.ts` maps each published Android app
+  to its CI workflow and local build script. The Releases page dispatches the
+  CI workflow through the GitHub API. A local build fetches `main` from the
+  app clone, builds its APK in a temporary clone, and gives the ADB installer
+  an opaque token; the client never receives the file path.
 - **Rate limit** each GET sends back the ETag of its last answer. GitHub
   answers 304 when the data is the same, and a 304 costs no part of the 5000
   calls an hour.
