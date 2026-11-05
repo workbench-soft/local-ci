@@ -1,4 +1,4 @@
-import { loggedCancellation, type CancelCause } from './cancel-log.ts';
+import { loggedCancellation, readCancels, recordCancel, type CancelCause } from './cancel-log.ts';
 import { callGitHub, fetchOrgStatus, forgetOrgStatus, githubStatus } from './org-status.ts';
 import { orgName } from './settings.ts';
 import { cancelCause, failedCheckReleases, replacementRuns } from './superseded.ts';
@@ -26,6 +26,20 @@ export function startCancellingSuperseded(): void {
 async function cancelSuperseded(): Promise<void> {
   const status = await fetchOrgStatus();
   if (!status.ok) return;
+  const blocked = failedCheckReleases(status.runs, true);
+  if (blocked.length) {
+    const recorded = await readCancels();
+    await Promise.all(
+      blocked
+        .filter(({ run }) => !recorded.has(run.id))
+        .map(({ run, replacement }) =>
+          recordCancel(run.repo, run.id, 'Matching checks failed; publication was blocked', {
+            cause: cancelCause('checks-failed', replacement),
+            outcome: 'blocked',
+          }),
+        ),
+    );
+  }
   const decisions = new Map<number, { repo: string; words: string; cause: CancelCause }>();
   for (const { run, replacement } of replacementRuns(status.runs)) {
     decisions.set(run.id, {

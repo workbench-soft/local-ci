@@ -28,6 +28,10 @@ Logging failures prevent automatic cancellation. A later request can recover
 after a temporary logging error. Status and Releases show linked evidence.
 Manual stops record that the page requested them. External cancellations
 without evidence show an unknown cause rather than an invented cause.
+If the publication guard stops a release before the sweep, the history records
+the blocked publication and links the matching failed checks without another
+cancellation request. Busy repos retain check results and replacements for
+their active commits even past the displayed recent-run limit.
 
 ## Changes
 

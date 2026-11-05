@@ -25,16 +25,12 @@ The agent MUST act on each row that matches the output:
 | --- | --- |
 | A runner `offline` | Ask the user to double click `START.cmd`. It starts each runner task and the status page. |
 | Each runner `busy`, runs `queued` | The runs wait their turn. Cancel stale ones from step 3, or raise the count on the Runners card of <http://localhost:4280>. |
-| A run `in_progress` for hours | Read its log, then cancel it: `GH_PAGER=cat gh run cancel <id> -R workbench-soft/<repo>`. |
+| A run `in_progress` for hours | Read its log, then use LocalCI Stop so the cancellation reason is saved. |
 | No runner listed | The token lacks `admin:org`. Run `gh auth refresh -s admin:org`. |
 
 ## 3. Cancel stale runs
 
-A run for an older commit of the same branch is stale once a newer one is queued. Most workflows cancel those by themselves. The agent MUST cancel the rest:
-
-```sh
-GH_PAGER=cat gh run cancel <id> -R workbench-soft/<repo>
-```
+A run MUST count as replaced only when a newer push builds a different commit in the same repo, workflow, branch and event. Closing a PR alone MUST NOT cancel it. LocalCI MUST save the causing run, commit and PR before cancellation. The agent MUST use LocalCI Stop for a manual stop rather than bypass its history with `gh run cancel`.
 
 ## 4. A job fails only on the runner
 

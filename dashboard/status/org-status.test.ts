@@ -19,6 +19,7 @@ const apiRun = (id: number) => ({
   name: 'ci',
   display_title: 'title',
   head_branch: 'main',
+  head_sha: `sha-${id}`,
   event: 'push',
   status: 'completed',
   conclusion: 'success',
@@ -209,6 +210,18 @@ test('pickRuns keeps the latest 5 runs and every unfinished run past them', asyn
     picked.map((run) => run.index),
     [0, 1, 2, 3, 4, 5, 7],
   );
+});
+
+test('busy repos retain a release check and the newest replacement past the display limit', async () => {
+  const { pickRuns } = await freshModule();
+  const unrelated = Array.from({ length: 5 }, (_, i) => ({ ...apiRun(20 - i), workflow_id: 99 }));
+  const check = { ...apiRun(8), workflow_id: 1, head_sha: 'release-sha', conclusion: 'failure' };
+  const newestBuild = { ...apiRun(7), workflow_id: 2 };
+  const olderBuild = { ...apiRun(6), workflow_id: 2, status: 'in_progress' };
+  const release = { ...apiRun(5), workflow_id: 3, status: 'in_progress', head_sha: 'release-sha' };
+  const selected = pickRuns([...unrelated, check, newestBuild, olderBuild, release]);
+  assert.ok(selected.includes(check));
+  assert.ok(selected.includes(newestBuild));
 });
 
 test('a second load sends the ETag back, and a 304 answer reuses the runs read before', async () => {
