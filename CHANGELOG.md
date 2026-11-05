@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Releases tab first** the page opens on the Releases tab, with Status one
+  click away at `/?tab=status`. Each app shows the state of its release:
+  released, building, queued, errored, cancelled, held while a session PR is
+  open, or no release yet. A building or queued row says how long the run
+  took and how long until the release, from the usual life of its workflow.
+  A cancelled row says why: each force cancel writes its reason to
+  `dashboard\cancel-reasons.jsonl`, from Stop and Purge or from the sweep.
+  An app with no release yet shows from its repo's runs.
 - **Clean scripts in step** `AGENTS.md` names what must change in the clean scripts, and a test fails when `runner/install.ps1` moves the work root, the org or the task names without them.
 - **Work folder clean** each Windows runner deletes its old repo checkouts in `C:ci` before a job, and `CLEAN-CI.cmd` empties `C:ci` by hand. `C:ci` had grown to about 200 GB.
 - **Root folder** the scripts read the workspace root from `WBS_ROOT`, then `DEV_DIR`, then the folder that holds the clone. No script holds a fixed path.

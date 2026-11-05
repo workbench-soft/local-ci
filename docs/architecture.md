@@ -185,12 +185,26 @@ The server renders the page for each request.
   `RELEASES_REPO` picks another repo. The call asks for
   `application/vnd.github.full+json`, so each release comes with its notes
   as cleaned HTML in `body_html`.
-- **Releases tab** `/?tab=releases`. `status/latest-releases.ts` takes the
-  app name from each tag, keeps the newest release per app and maps the app
-  to its repo. Unfinished push, dispatch or `workflow_run` runs on `main`
-  mark the app as building. A failed one after the release marks it failed.
-  `cards/releases-card.tsx` calls the install action once per ticked app,
-  in turn.
+- **Releases tab** `/` by default, Status at `/?tab=status`.
+  `status/latest-releases.ts` takes the app name from each tag, keeps the
+  newest release per app and maps the app to its repo. The run that made
+  the release names the app's release pipeline, the workflow that owns its
+  releases. The runs of the repo on the default branch newer than the
+  release decide the state, with runs of another app's pipeline in the same
+  repo left out: the newest says released, building, queued, errored or
+  cancelled, a skipped run of the pipeline says the gate held it, and a
+  failed run that made the pipeline skip says errored. The wait is the
+  whole life of the run so far, its queue time included, against the
+  Kaplan-Meier usual life of the workflow's finished runs. A repo with runs
+  and no release yet shows as an app once a workflow runs there after
+  another one. `cards/releases-card.tsx` calls the install action once per
+  ticked app, in turn.
+- **Cancel reasons** `status/cancel-log.ts` appends each force cancel to
+  `dashboard/cancel-reasons.jsonl`: repo, run id, the words and the time.
+  The sweep writes `a newer run replaced it` or `its PR is closed`, Stop
+  and Purge write theirs, and the card reads the file back on each render.
+  The file keeps its last 200 lines. `CANCEL_REASONS_FILE` in `.env.local`
+  picks another file.
 - **Install** `status/install-apk.ts` is a server action. It checks
   `adb devices` for one phone, downloads the release's `.apk` to
   `%TEMP%local-ci-apk` and runs `adb install -r -d`. adb's output goes

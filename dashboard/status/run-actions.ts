@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { recordCancel } from './cancel-log.ts';
 import type { JobTiming } from './durations.ts';
 import { callGitHub, forgetOrgStatus, githubStatus, readJobTimings } from './org-status.ts';
 import { purgeRun, purgeRuns } from './purge.ts';
@@ -12,9 +13,14 @@ export type PurgeAllResult = { purged: number; failed: number; failedIds: number
 
 /** Force cancels a run. It also skips steps with if: always(), so the runner takes the next job at once. */
 export async function stopRun(repo: string, runId: number): Promise<ActionResult> {
-  return runAction(repo, runId, async (path) => {
-    await callGitHub(`${path}/force-cancel`, 'POST');
-  });
+  return runAction(
+    repo,
+    runId,
+    async (path) => {
+      await callGitHub(`${path}/force-cancel`, 'POST');
+    },
+    'Stopped from the page',
+  );
 }
 
 /** Whether GitHub reads the run as completed. It only reads, so the page stays as it is. */
@@ -48,7 +54,7 @@ export async function runTimings(
 
 /** Force cancels a run when it hasn't finished, then deletes it from GitHub. */
 export async function purgeRunById(repo: string, runId: number): Promise<ActionResult> {
-  return runAction(repo, runId, purgeAt);
+  return runAction(repo, runId, purgeAt, 'Purged from the page');
 }
 
 /** Purges each run of the list, 5 at a time. */
@@ -58,10 +64,17 @@ export async function purgeAllRuns(runs: { repo: string; runId: number }[]): Pro
   try {
     const failures = await purgeRuns(runs, (run) => purgeAt(runPath(run.repo, run.runId)));
     const first = failures[0];
+    const failedIds = new Set(failures.map((failure) => failure.run.runId));
+    // Only the runs that truly went get a reason, so a refused one keeps its old story.
+    await Promise.all(
+      runs
+        .filter((run) => !failedIds.has(run.runId))
+        .map((run) => recordCancel(run.repo, run.runId, 'Purged from the page')),
+    );
     return {
       purged: runs.length - failures.length,
       failed: failures.length,
-      failedIds: failures.map((failure) => failure.run.runId),
+      failedIds: [...failedIds],
       error: first ? `${first.run.repo}: ${first.error}` : null,
     };
   } finally {
@@ -97,10 +110,17 @@ function runPath(repo: string, runId: number): string {
   return `/repos/${orgName}/${repo}/actions/runs/${runId}`;
 }
 
-async function runAction(repo: string, runId: number, act: (path: string) => Promise<void>): Promise<ActionResult> {
+async function runAction(
+  repo: string,
+  runId: number,
+  act: (path: string) => Promise<void>,
+  words: string,
+): Promise<ActionResult> {
   if (!isRun(repo, runId)) return { ok: false, error: 'Unknown run.' };
   try {
     await act(runPath(repo, runId));
+    // The reason reaches the Releases tab, so a stopped release says who stopped it.
+    await recordCancel(repo, runId, words);
     return { ok: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

@@ -1,3 +1,4 @@
+import { recordCancel } from './cancel-log.ts';
 import { callGitHub, fetchOrgStatus, forgetOrgStatus, githubStatus, type WorkflowRun } from './org-status.ts';
 import { orgName } from './settings.ts';
 import { type OpenPrBranches, prListsToRead, reposWithPrRuns, supersededRuns } from './superseded.ts';
@@ -44,8 +45,13 @@ async function cancelSuperseded(): Promise<void> {
     const run = doomed[index];
     const what = `${run.repo} ${run.workflow} on ${run.branch}, run ${run.id}`;
     // GitHub answers 409 to a run that finished meanwhile, so that one needs no line.
-    if (result.status === 'fulfilled') console.log(`${stamp()} Cancelled ${what}: ${why(run)}.`);
-    else if (githubStatus(result.reason) !== 409) console.error(`${stamp()} Couldn't cancel ${what}: ${result.reason}`);
+    if (result.status === 'fulfilled') {
+      console.log(`${stamp()} Cancelled ${what}: ${why(run)}.`);
+      // The reason reaches the Releases tab, so a release the sweep stopped says why.
+      void recordCancel(run.repo, run.id, why(run));
+    } else if (githubStatus(result.reason) !== 409) {
+      console.error(`${stamp()} Couldn't cancel ${what}: ${result.reason}`);
+    }
   });
   forgetOrgStatus();
 }

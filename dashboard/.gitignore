@@ -6,4 +6,5 @@ next-env.d.ts
 start.cmd
 *.tsbuildinfo
 .built-commit
+cancel-reasons.jsonl
 cloud-usage.json

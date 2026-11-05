@@ -2,3 +2,10 @@
 *.sh text eol=lf
 # cmd reads batch files line by line and can misread LF endings.
 *.cmd text eol=crlf
+# Several agent sessions ship at once. The shared docs and the specs keep both sides of a merge.
+CHANGELOG.md merge=union
+TODO.md merge=union
+README.md merge=union
+docs/features.md merge=union
+docs/user-flows.md merge=union
+specs/*.md merge=union

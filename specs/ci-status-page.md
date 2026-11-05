@@ -85,14 +85,15 @@ browser at each logon.
 - **Release states** `status/latest-releases.ts` gives each app the state of
   its release pipeline. The pipeline is the workflow that owns the app's
   latest release, known from the run `status/releases.ts` pairs it with, and
-  the runs of the repo on `main` newer than it. The newest run of the
-  pipeline decides: unfinished means building or queued, a failure means
-  errored, a cancelled run means cancelled with the reason, a skipped Release
-  run means the gate held it while a PR was open, a success means released.
-  With the pipeline idle, the newest run of the repo on `main` newer than the
-  last release decides the same way, so a failed Checks run shows as errored.
-  The app list comes from the org repos with runs, so an app shows before its
-  first release.
+  the runs of the repo on `main` newer than it. Runs of another app's
+  release pipeline in the same repo stay out, so a desktop release doesn't
+  read as a phone release. The newest run of the pipeline decides: unfinished
+  means building or queued, a failure means errored, a cancelled run means
+  cancelled with the reason, a skipped Release run means the gate held it
+  while a PR was open, a success means released. A skipped Release run over a
+  failed Checks run means errored. The app list comes from the org repos with
+  a run of one workflow after another, so an app shows before its first
+  release.
 - **Cancel reasons** `status/cancel-log.ts` appends each force cancel, from
   the sweep or from Stop and Purge, to `dashboard/cancel-reasons.jsonl`:
   repo, run id, the words and the time. The card reads the file and pairs the
@@ -739,8 +740,9 @@ browser at each logon.
   - **`status/latest-releases.ts`** per app the state of its release
     pipeline: released, building, queued, errored, cancelled with the reason,
     gate-held, or no release yet. A building or queued run carries the time
-    since it started and, when a past run of its jobs gives the usual time,
-    the time left until the release.
+    since it was created, its queue wait included, and, when the finished
+    runs of its workflow give the usual time, the time left until the
+    release.
   - **`cards/releases-card.tsx`** a row per app: the state as a colored
     chip, the wait under it, the cancel reason on a cancelled row, the
     release link with its age, and the notes under Changes. The tick and
@@ -756,6 +758,6 @@ browser at each logon.
   `docs/architecture.md`, `CHANGELOG.md`.
 - **Limits** the reason of a cancel older than the file's last 200 lines is
   gone. A run the page cancels by hand names the button, the sweep names its
-  cause. An app with no release yet reads every run of its repo on `main`,
-  whatever workflow, since nothing pairs its release workflow yet. A restart
+  cause. An app with no release yet shows once a workflow of its repo runs
+  after another, which is how every release workflow here starts. A restart
   of the page keeps the reasons, they sit in the file.
