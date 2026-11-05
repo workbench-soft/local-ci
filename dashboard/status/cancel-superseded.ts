@@ -55,6 +55,8 @@ async function cancelSuperseded(): Promise<void> {
       cause: cancelCause('checks-failed', replacement),
     });
   }
+  const recorded = await readCancels();
+  for (const [id] of decisions) if (recorded.get(id)?.outcome === 'accepted') decisions.delete(id);
   const results = await Promise.allSettled(
     [...decisions].map(async ([id, { repo, words, cause }]) => {
       try {

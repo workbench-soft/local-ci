@@ -79,7 +79,12 @@ export async function readCancels(): Promise<Map<number, CancelEntry>> {
     if (!line) continue;
     try {
       const entry = JSON.parse(line) as CancelEntry;
-      if (typeof entry.runId === 'number' && typeof entry.words === 'string') cancels.set(entry.runId, entry);
+      if (
+        typeof entry.runId === 'number' &&
+        typeof entry.words === 'string' &&
+        cancels.get(entry.runId)?.outcome !== 'accepted'
+      )
+        cancels.set(entry.runId, entry);
     } catch {
       // A line cut short by a crash goes, the rest still read.
     }
