@@ -18,9 +18,12 @@ browser at each logon.
    force cancel it and delete it from GitHub with its logs and artifacts.
 6. A run that published a release shows it in the Release column. The person
    opens the release, or presses Install to put its APK on the phone plugged
-   in over USB. The Releases tab lists the newest release of each app with
-   its notes and its build on `main`. The person ticks several apps and
-   presses Install to put them all on the phone.
+   in over USB. The Releases tab, open by default, lists each app with the
+   state of its release pipeline: released, building, queued, errored,
+   cancelled with the reason, or held while a PR is open. A row says how long
+   the current run took so far and, when a past run gives the usual time, how
+   long until the release. The person ticks several apps and presses Install
+   to put them all on the phone.
 7. A failed run names its failed job and step under the result, with a link
    to that job's log. A failed install shows adb's error under the button.
 8. The branch of a run opens on GitHub, and so does its PR.
@@ -79,6 +82,23 @@ browser at each logon.
   first failed job and step.
 - **PR and branch** `pull_requests` of a run gives its PR numbers. GitHub
   leaves out PRs from forks and pushes to the default branch.
+- **Release states** `status/latest-releases.ts` gives each app the state of
+  its release pipeline. The pipeline is the workflow that owns the app's
+  latest release, known from the run `status/releases.ts` pairs it with, and
+  the runs of the repo on `main` newer than it. Runs of another app's
+  release pipeline in the same repo stay out, so a desktop release doesn't
+  read as a phone release. The newest run of the pipeline decides: unfinished
+  means building or queued, a failure means errored, a cancelled run means
+  cancelled with the reason, a skipped Release run means the gate held it
+  while a PR was open, a success means released. A skipped Release run over a
+  failed Checks run means errored. The app list comes from the org repos with
+  a run of one workflow after another, so an app shows before its first
+  release.
+- **Cancel reasons** `status/cancel-log.ts` appends each force cancel, from
+  the sweep or from Stop and Purge, to `dashboard/cancel-reasons.jsonl`:
+  repo, run id, the words and the time. The card reads the file and pairs the
+  lines with runs by id. `CANCEL_REASONS_FILE` in `.env.local` picks another
+  file. The file keeps its last 200 lines.
 
 ## Limits
 
@@ -701,3 +721,43 @@ browser at each logon.
   `dashboard/app/icon.svg` for the tab, all 10 drafts in
   `design/icons/2026-11-01`.
 - **Docs** `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-11-05 The Releases tab opens first, with each app's pipeline state, its wait and the cancel reason
+
+- **Why** the person opened the page to see whether a release was on its way
+  and had to read the runs table to tell. The Releases tab showed the newest
+  release of each app but not what the next one did, how long it still took,
+  nor why a release stopped.
+- **Changes**
+  - **`app/page.tsx`** the Releases tab opens by default at `/`. Status
+    moves to `/?tab=status`. The Releases tab names how many apps build and
+    how many errored.
+  - **`status/cancel-log.ts`** each force cancel appends its reason to
+    `dashboard/cancel-reasons.jsonl`: repo, run id, the words and the time.
+    Stop and Purge write theirs too, so a release stopped by hand says so.
+  - **`status/cancel-superseded.ts`**, **`status/run-actions.ts`** record the
+    reason of each cancel they make.
+  - **`status/latest-releases.ts`** per app the state of its release
+    pipeline: released, building, queued, errored, cancelled with the reason,
+    gate-held, or no release yet. A building or queued run carries the time
+    since it was created, its queue wait included, and, when the finished
+    runs of its workflow give the usual time, the time left until the
+    release.
+  - **`cards/releases-card.tsx`** a row per app: the state as a colored
+    chip, the wait under it, the cancel reason on a cancelled row, the
+    release link with its age, and the notes under Changes. The tick and
+    Install flow stays.
+  - **`demo/fake-github.ts`** made up runs for every state, so
+    `mise run demo` shoots them all.
+- **Steps**
+  1. This spec.
+  2. The cancel log and the release state machine, with tests.
+  3. The card, the default tab and the demo data.
+  4. Docs and changelog.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`,
+  `docs/architecture.md`, `CHANGELOG.md`.
+- **Limits** the reason of a cancel older than the file's last 200 lines is
+  gone. A run the page cancels by hand names the button, the sweep names its
+  cause. An app with no release yet shows once a workflow of its repo runs
+  after another, which is how every release workflow here starts. A restart
+  of the page keeps the reasons, they sit in the file.

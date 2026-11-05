@@ -3,18 +3,30 @@
 import { useState } from 'react';
 import { formatAge } from '@/status/headline';
 import { installRelease } from '@/status/install-apk';
-import type { AppRelease } from '@/status/latest-releases';
-import { Icon, placeIcons } from './icons';
+import { formatDuration } from '@/status/durations';
+import type { AppRelease, ReleaseState, RunView } from '@/status/latest-releases';
+import { Icon, placeIcons, type IconName } from './icons';
 
 type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
 
-/** The newest release of each app, with its notes. The ticked APKs go on the phone over adb one by one. */
+/** The look and the words of each release state. */
+const chipOf: Record<ReleaseState, { icon: IconName; text: string; tone: 'ok' | 'busy' | 'warn' | 'bad' | 'muted' }> = {
+  released: { icon: 'success', text: 'Released', tone: 'ok' },
+  building: { icon: 'running', text: 'Building', tone: 'busy' },
+  queued: { icon: 'queued', text: 'Queued', tone: 'warn' },
+  errored: { icon: 'failure', text: 'Errored', tone: 'bad' },
+  cancelled: { icon: 'cancelled', text: 'Cancelled', tone: 'bad' },
+  'gate-held': { icon: 'queued', text: 'Held', tone: 'warn' },
+  'no-release': { icon: 'package', text: 'No release yet', tone: 'muted' },
+};
+
+/** Each app, its newest release and what its release pipeline does. The ticked APKs go on the phone over adb one by one. */
 export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number }) {
   // Apps stay ticked across refreshes, and Install takes the release that is newest at the click.
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [running, setRunning] = useState(false);
-  const withApk = apps.filter((app) => app.release.apk);
+  const withApk = apps.filter((app) => app.release?.apk);
   const chosen = withApk.filter((app) => ticked.has(app.app));
   const allTicked = withApk.length > 0 && chosen.length === withApk.length;
 
@@ -24,11 +36,12 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
 
   const installChosen = async () => {
     setRunning(true);
-    for (const { app } of chosen) setOutcome(app, 'queued');
+    const chosenTags = chosen.flatMap((app) => (app.release ? [{ app: app.app, tag: app.release.tag }] : []));
+    for (const { app } of chosenTags) setOutcome(app, 'queued');
     // adb installs on one phone, so the APKs go one after another.
-    for (const { app, release } of chosen) {
+    for (const { app, tag } of chosenTags) {
       setOutcome(app, 'installing');
-      const answer = await installRelease(release.tag).catch((error: Error) => ({
+      const answer = await installRelease(tag).catch((error: Error) => ({
         ok: false as const,
         error: error.message,
       }));
@@ -42,9 +55,10 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
 
   return (
     <section className="card wide">
-      <h2>Latest releases</h2>
+      <h2>Releases</h2>
       <p className="muted small">
-        The newest release of each app. Tick the apps to put on the phone plugged in over USB, then press Install.
+        Each app, its newest release, and what the next one does. Tick the apps to put on the phone plugged in over USB,
+        then press Install.
       </p>
       <div className="toolbar">
         <label className="tick">
@@ -74,7 +88,7 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
           />
         ))}
       </ul>
-      {!apps.length && <p className="muted small">No release in the public repo yet.</p>}
+      {!apps.length && <p className="muted small">No app with a release yet.</p>}
     </section>
   );
 }
@@ -88,7 +102,16 @@ type ItemProps = {
   onToggle: () => void;
 };
 
-function AppItem({ app: { app, repo, release, build }, now, ticked, disabled, outcome, onToggle }: ItemProps) {
+function AppItem({
+  app: { app, repo, release, state, run, wait, why },
+  now,
+  ticked,
+  disabled,
+  outcome,
+  onToggle,
+}: ItemProps) {
+  const chip = chipOf[state];
+  const hint = run && run.place !== 'done' && state === 'building' ? placeIcons[run.place].hint : undefined;
   return (
     <li>
       <div className="release-head">
@@ -96,21 +119,34 @@ function AppItem({ app: { app, repo, release, build }, now, ticked, disabled, ou
           type="checkbox"
           aria-label={`Install ${app}`}
           checked={ticked}
-          disabled={disabled || !release.apk}
+          disabled={disabled || !release?.apk}
           onChange={onToggle}
-          title={release.apk ? undefined : 'This release has no APK'}
+          title={release?.apk ? undefined : 'This release has no APK'}
         />
         <strong>{app}</strong>
-        <a className="release-link" href={release.url} target="_blank" rel="noreferrer">
-          <Icon name="package" />
-          {release.name}
-        </a>
-        <span className="muted small nowrap">{formatAge(release.createdAt, now)}</span>
+        {run ? (
+          <a className={`state ${chip.tone}`} href={run.url} target="_blank" rel="noreferrer" title={hint}>
+            <Icon name={chip.icon} />
+            {chip.text}
+          </a>
+        ) : (
+          <span className={`state ${chip.tone}`}>
+            <Icon name={chip.icon} />
+            {chip.text}
+          </span>
+        )}
+        {release && (
+          <a className="release-link" href={release.url} target="_blank" rel="noreferrer">
+            <Icon name="package" />
+            {release.name}
+          </a>
+        )}
+        {release && <span className="muted small nowrap">{formatAge(release.createdAt, now)}</span>}
         {repo !== app && <span className="muted small">from {repo}</span>}
-        <BuildState build={build} />
         <OutcomeText outcome={outcome} />
       </div>
-      {release.notesHtml && (
+      <Detail state={state} run={run} wait={wait} why={why} now={now} />
+      {release?.notesHtml && (
         <details className="notes">
           <summary>Changes</summary>
           {/* GitHub renders the notes and strips scripts from them. */}
@@ -121,23 +157,56 @@ function AppItem({ app: { app, repo, release, build }, now, ticked, disabled, ou
   );
 }
 
-function BuildState({ build }: { build: AppRelease['build'] }) {
-  if (!build) return <span className="result ok small">Latest</span>;
-  const place = build.place === 'done' ? null : placeIcons[build.place];
-  return (
-    <a
-      className={`result ${build.state === 'building' ? 'busy' : 'bad'} small`}
-      href={build.url}
-      target="_blank"
-      rel="noreferrer"
-      title={place?.hint}
-    >
-      <Icon name={build.state === 'building' ? 'running' : 'failure'} />
-      {build.state === 'building'
-        ? `Newer ${build.workflow}: ${place?.text ?? 'Building'}`
-        : `${build.workflow} on main failed after it`}
-    </a>
-  );
+/** The line under the head: the wait, the reason a release stopped, or what a failure broke. */
+function Detail({
+  state,
+  run,
+  wait,
+  why,
+  now,
+}: {
+  state: ReleaseState;
+  run: RunView | null;
+  wait: AppRelease['wait'];
+  why: AppRelease['why'];
+  now: number;
+}) {
+  if (state === 'building' || state === 'queued') {
+    if (!wait) return null;
+    const elapsed = `for ${formatDuration(wait.elapsedMs)}`;
+    const where = state === 'building' && run && run.place !== 'done' ? placeIcons[run.place].text.toLowerCase() : null;
+    const left =
+      wait.usualMs === null
+        ? null
+        : wait.usualMs - wait.elapsedMs >= 0
+          ? `about ${formatDuration(wait.usualMs - wait.elapsedMs)} left`
+          : `${formatDuration(wait.elapsedMs - wait.usualMs)} over the usual ${formatDuration(wait.usualMs)}`;
+    return (
+      <p className="release-detail muted small">
+        {where ? `${elapsed} ${where}` : elapsed}
+        {left && `, ${left}`}
+      </p>
+    );
+  }
+  if (state === 'errored' && run) {
+    return (
+      <p className="release-detail bad small">
+        {run.workflow} failed{run.failedStep ? ` at ${run.failedStep}` : ''}
+        {run.failedJob && !run.failedStep ? ` in ${run.failedJob}` : ''}
+      </p>
+    );
+  }
+  if (state === 'cancelled') {
+    return (
+      <p className="release-detail bad small">
+        {why ? `${why.words}, ${formatAge(why.at, now)}` : 'The reason sits before the cancel log began.'}
+      </p>
+    );
+  }
+  if (state === 'gate-held') {
+    return <p className="release-detail muted small">The release waits while a PR of this batch is still open.</p>;
+  }
+  return null;
 }
 
 function OutcomeText({ outcome }: { outcome: Outcome | undefined }) {

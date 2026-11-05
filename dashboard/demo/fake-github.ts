@@ -13,6 +13,15 @@ process.env.GITHUB_TOKEN = 'demo';
 const now = Date.now();
 const ago = (minutes: number) => new Date(now - minutes * 60_000).toISOString();
 
+// The Releases tab reads the reasons of cancelled runs from a JSONL file, so the demo points that
+// read at a file of its own and writes the story of run 301 into it.
+const cancelFile = join(tmpdir(), 'local-ci-demo-cancel-reasons.jsonl');
+process.env.CANCEL_REASONS_FILE = cancelFile;
+writeFileSync(
+  cancelFile,
+  `${JSON.stringify({ repo: 'servohop', runId: 301, words: 'a newer run replaced it', at: ago(22) })}\n`,
+);
+
 // Four runners on this PC, in a home folder of their own.
 const home = join(tmpdir(), 'local-ci-demo-home');
 const runners = ['BUILD-PC', 'BUILD-PC-2', 'BUILD-PC-3', 'BUILD-PC-4'];
@@ -67,6 +76,7 @@ type Run = {
   title: string;
   status: string;
   conclusion: string | null;
+  event: string;
   minutes: number;
   took: number;
   runner: string | null;
@@ -95,6 +105,8 @@ const run = (
     title,
     status,
     conclusion,
+    // A Release workflow starts from another one, so its runs come as workflow_run.
+    event: name === 'Release' ? 'workflow_run' : 'push',
     minutes,
     took,
     runner,
@@ -105,8 +117,9 @@ const run = (
 };
 const heavy = ['self-hosted', 'heavy'];
 const local = ['self-hosted', 'local'];
-const cloud = ['blacksmith-2vcpu-ubuntu-2404'];
+const cloud = ['blacksmith-2vcpu-ubuntu-2404-x64-4fd2'];
 const runs: Run[] = [
+  // tickalot: the Release run builds on this PC, with run 103 as the usual length.
   run(101, 'tickalot', 'Release', 'feat: sort the weekly shop by aisle', 'in_progress', 7, 0, 'BUILD-PC', heavy, 6),
   run(
     102,
@@ -120,46 +133,31 @@ const runs: Run[] = [
     local,
     10,
   ),
+  run(103, 'tickalot', 'Release', 'feat: the weekly shop list', 'completed:success', 130, 12, 'BUILD-PC', heavy, 11),
+  // keeppad: Checks failed at Unit tests after the last release.
   run(
     201,
     'keeppad',
     'Checks',
     'fix: keep the topic when a note moves',
-    'in_progress',
-    2,
-    0,
-    'blacksmith-2vcpu-ubuntu-2404-x64-4fd2',
-    cloud,
-    4,
-  ),
-  run(202, 'keeppad', 'Release', 'feat: share a note by link', 'completed:success', 52, 11, 'BUILD-PC-3', heavy, 11),
-  run(
-    301,
-    'servohop',
-    'Checks',
-    'feat: 90 day price chart',
     'completed:failure',
-    34,
-    4,
-    'blacksmith-2vcpu-ubuntu-2404-x64-77a1',
-    cloud,
+    12,
+    8,
+    cloud[0],
+    ['blacksmith-2vcpu-ubuntu-2404'],
     10,
     6,
   ),
-  run(
-    302,
-    'servohop',
-    'Checks',
-    'docs: link each feature to its spec',
-    'completed:success',
-    70,
-    5,
-    'BUILD-PC-4',
-    local,
-    10,
-  ),
-  run(401, 'memoire', 'Checks', 'feat: word pictures for own words', 'queued', 1, 0, null, heavy, -1),
-  run(402, 'memoire', 'Release', 'feat: a level test in 2 minutes', 'completed:success', 95, 12, 'BUILD-PC', heavy, 11),
+  run(202, 'keeppad', 'Release', 'feat: share a note by link', 'completed:success', 52, 11, 'BUILD-PC-3', heavy, 11),
+  // servohop: the Release run was cancelled, and the reason sits in the cancel log.
+  run(301, 'servohop', 'Release', 'feat: 90 day price chart', 'completed:cancelled', 26, 4, 'BUILD-PC-4', heavy, 4),
+  run(302, 'servohop', 'Checks', 'feat: 90 day price chart', 'completed:success', 34, 5, 'BUILD-PC-4', local, 10),
+  run(303, 'servohop', 'Release', 'feat: the price chart', 'completed:success', 310, 40, 'BUILD-PC', heavy, 11),
+  // memoire: the Release run waits for a heavy runner.
+  run(401, 'memoire', 'Release', 'feat: word pictures for own words', 'queued', 1, 0, null, heavy, -1),
+  run(402, 'memoire', 'Checks', 'feat: word pictures for own words', 'completed:success', 18, 6, 'BUILD-PC', local, 10),
+  run(403, 'memoire', 'Release', 'feat: a level test in 2 minutes', 'completed:success', 90, 10, 'BUILD-PC', heavy, 11),
+  // tripforge: the Release workflow skipped, so the gate holds it for an open PR.
   run(
     501,
     'tripforge',
@@ -167,11 +165,28 @@ const runs: Run[] = [
     'feat: cheaper dates in the calendar',
     'completed:success',
     41,
-    3,
-    'GitHub Actions 1000000412',
-    ['ubuntu-latest'],
+    6,
+    'BUILD-PC-3',
+    local,
     10,
   ),
+  run(502, 'tripforge', 'Release', 'feat: cheaper dates in the calendar', 'completed:skipped', 40, 0, null, heavy, -1),
+  run(503, 'tripforge', 'Release', 'feat: spots near the route', 'completed:success', 210, 40, 'BUILD-PC', heavy, 11),
+  // spotthecam: a new repo, its first release queued behind its first checks.
+  run(
+    601,
+    'spotthecam',
+    'Checks',
+    'feat: warn about the next camera',
+    'in_progress',
+    2,
+    0,
+    'GitHub Actions 1000000412',
+    ['ubuntu-latest'],
+    4,
+  ),
+  run(602, 'spotthecam', 'Release', 'feat: warn about the next camera', 'queued', 1, 0, null, heavy, -1),
+  run(603, 'spotthecam', 'Release', 'chore: the first build', 'completed:success', 20, 11, 'BUILD-PC', heavy, 11),
 ];
 
 const apiRun = (r: Run) => ({
@@ -180,7 +195,7 @@ const apiRun = (r: Run) => ({
   name: r.name,
   display_title: r.title,
   head_branch: 'main',
-  event: 'push',
+  event: r.event,
   status: r.status,
   conclusion: r.conclusion,
   created_at: ago(r.minutes),
@@ -243,6 +258,7 @@ function answer(path: string): unknown {
       release('keeppad', 'KeepPad', 45),
       release('memoire', 'Memoire', 80),
       release('servohop', 'ServoHop', 300),
+      release('tripforge', 'TripForge', 200),
     ];
   }
   if (url.pathname.endsWith('/jobs')) {

@@ -17,7 +17,8 @@ async function shot(page: Page, name: string, url: string, scrollTo?: string) {
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, locale: 'en-US', colorScheme: 'light' });
-await shot(page, '01-status', site);
-await shot(page, '02-latest-runs', site, 'Latest runs');
-await shot(page, '03-releases', `${site}?tab=releases`);
+// Releases is the tab the page opens on; the status card sits one click away.
+await shot(page, '01-status', `${site}?tab=status`);
+await shot(page, '02-latest-runs', `${site}?tab=status`, 'Latest runs');
+await shot(page, '03-releases', site);
 await browser.close();

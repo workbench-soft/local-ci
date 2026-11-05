@@ -186,9 +186,15 @@ once, from the main checkout:
   Release column. Install puts its APK on the phone plugged in over USB,
   through `adb install -r`. adb comes from `ADB_PATH`, `PATH` or the
   Android SDK.
-- **Releases tab** `http://localhost:4280/?tab=releases` lists the newest
-  release of each app with its notes under Changes. It marks the app whose
-  newer build still runs on `main`, or failed there. Tick several apps and
+- **Releases tab** opens by default at `http://localhost:4280`, with Status
+  one click away at `/?tab=status`. Each app shows the state of its release:
+  released, building, queued, errored, cancelled, held while a session PR is
+  open, or no release yet. A building or queued row says how long the run
+  took so far and, when past runs give the usual time, how long until the
+  release. A cancelled row says why: each force cancel, from the page or from
+  the sweep that kills replaced runs, writes its reason to
+  `dashboard\cancel-reasons.jsonl`. The newest release of each app sits
+  beside its state with its notes under Changes. Tick several apps and
   press Install to put their APKs on the phone one after another.
 - **Errors** a failed run names its failed job and step, linked to the log. A
   failed install shows adb's error in a red box under the button.
