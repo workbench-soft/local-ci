@@ -48,6 +48,21 @@ export function failedCheckReleases(
       run.status === 'completed' &&
       run.conclusion === 'failure' &&
       run.jobs.some((job) => /^Wait for matching checks before publication$/i.test(job.failedStep ?? ''));
+    const integrated = (
+      {
+        consdr: { workflow: 'Deploy', job: /^checks$/ },
+        'guitar-upscale': { workflow: 'CI', job: /^checks$/ },
+        spotthecam: { workflow: 'Deploy', job: /^check \/ / },
+        'workbench-soft.github.io': { workflow: 'Pages', job: /^checks$/ },
+      } as Record<string, { workflow: string; job: RegExp }>
+    )[run.repo];
+    if (integrated?.workflow === run.workflow && (blocked ? stoppedAtGuard : activeStatuses.has(run.status))) {
+      const job = run.jobs.find(
+        (item) =>
+          integrated.job.test(item.name) && ['failure', 'timed_out', 'startup_failure'].includes(item.conclusion ?? ''),
+      );
+      if (job && run.headSha) return [{ run, replacement: { ...run, url: job.url } }];
+    }
     if (
       !(blocked ? stoppedAtGuard : activeStatuses.has(run.status)) ||
       !run.headSha ||
