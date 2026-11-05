@@ -95,3 +95,16 @@ test('a new check attempt supersedes an earlier failure of the same commit', () 
   const release = run(3, { workflow: 'Release', headSha: old.headSha });
   assert.deepEqual(failedCheckReleases([old, latest, release]), []);
 });
+
+test('a release blocked by its publication guard records the matching failed check without another stop', () => {
+  const checks = run(1, { conclusion: 'failure' });
+  const release = run(2, {
+    workflow: 'Release',
+    headSha: checks.headSha,
+    status: 'completed',
+    conclusion: 'failure',
+    jobs: [{ failedStep: 'Wait for matching checks before publication' } as WorkflowRun['jobs'][number]],
+  });
+  assert.deepEqual(failedCheckReleases([checks, release]), []);
+  assert.deepEqual(failedCheckReleases([checks, release], true), [{ run: release, replacement: checks }]);
+});

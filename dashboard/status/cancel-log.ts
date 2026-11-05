@@ -16,7 +16,7 @@ export type CancelEntry = {
   words: string;
   at: string;
   cause?: CancelCause;
-  outcome?: 'requested' | 'accepted' | 'failed';
+  outcome?: 'requested' | 'accepted' | 'failed' | 'blocked';
 };
 
 // The sweep and the server actions land in this one process, so one queue keeps their lines whole.

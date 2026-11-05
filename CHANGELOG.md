@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Cancellation evidence in busy repos** active builds retain their matching
+  checks and replacement runs beyond the recent-run display limit. A release
+  stopped by its publication guard links the failed checks in cancellation history.
+
 - **Build cancellation** only a different commit building in the same repo,
   workflow and branch replaces an active run. Closing a PR keeps its build.
   Failed Checks stop releases of the same commit. Both tabs show saved

@@ -26,7 +26,10 @@ export function replacementRuns<T extends RunKey>(runs: T[]): { run: T; replacem
 }
 
 /** Failed Checks stop only releases building that repo, branch and commit. */
-export function failedCheckReleases(runs: WorkflowRun[]): { run: WorkflowRun; replacement: WorkflowRun }[] {
+export function failedCheckReleases(
+  runs: WorkflowRun[],
+  blocked = false,
+): { run: WorkflowRun; replacement: WorkflowRun }[] {
   const newest = new Map<string, WorkflowRun>();
   for (const run of runs) {
     if (!run.headSha) continue;
@@ -41,7 +44,16 @@ export function failedCheckReleases(runs: WorkflowRun[]): { run: WorkflowRun; re
         run.jobs.some((job) => ['failure', 'timed_out', 'startup_failure'].includes(job.conclusion ?? ''))),
   );
   return runs.flatMap((run) => {
-    if (!activeStatuses.has(run.status) || !run.headSha || !/release|deploy/i.test(run.workflow)) return [];
+    const stoppedAtGuard =
+      run.status === 'completed' &&
+      run.conclusion === 'failure' &&
+      run.jobs.some((job) => /^Wait for matching checks before publication$/i.test(job.failedStep ?? ''));
+    if (
+      !(blocked ? stoppedAtGuard : activeStatuses.has(run.status)) ||
+      !run.headSha ||
+      !/release|deploy/i.test(run.workflow)
+    )
+      return [];
     const checkName =
       run.repo === 'memories' && run.workflow === 'Desktop release'
         ? 'Desktop checks'

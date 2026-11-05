@@ -219,8 +219,28 @@ async function listLatestRuns(): Promise<WorkflowRun[]> {
  * The latest runs of a repo, plus every unfinished run among the runs read.
  * A busy repo queues newer runs on top of the one that builds, so the latest 5 alone hide it.
  */
-export function pickRuns<T extends Pick<ApiRun, 'status'>>(runs: T[]): T[] {
-  return runs.filter((run, index) => index < runsPerRepo || activeStatuses.has(run.status));
+export function pickRuns<
+  T extends Pick<ApiRun, 'status'> & Partial<Pick<ApiRun, 'head_sha' | 'workflow_id' | 'head_branch' | 'event'>>,
+>(runs: T[]): T[] {
+  const key = (run: T) =>
+    run.workflow_id && run.head_branch && run.event
+      ? JSON.stringify([run.workflow_id, run.head_branch, run.event])
+      : null;
+  const active = runs.filter((run) => activeStatuses.has(run.status));
+  const activeShas = new Set(active.map((run) => run.head_sha).filter(Boolean));
+  const activeKeys = new Set(active.map(key).filter(Boolean));
+  const newest = new Map<string, T>();
+  for (const run of runs) {
+    const group = key(run);
+    if (group && activeKeys.has(group) && !newest.has(group)) newest.set(group, run);
+  }
+  return runs.filter(
+    (run, index) =>
+      index < runsPerRepo ||
+      activeStatuses.has(run.status) ||
+      (run.head_sha && activeShas.has(run.head_sha)) ||
+      (key(run) && newest.get(key(run)!) === run),
+  );
 }
 
 async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
