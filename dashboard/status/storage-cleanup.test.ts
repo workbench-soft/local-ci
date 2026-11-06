@@ -68,5 +68,8 @@ test('uses publication time rather than tag creation time and a stable id tie-br
     release(2, 'updater-v1.1', '2026-11-05T10:00:00Z'),
     release(3, 'updater-v1.2', '2026-11-05T10:00:00Z'),
   ];
-  assert.deepEqual(obsoleteApkReleases(items).obsolete.map((x) => x.id), [2, 1]);
+  assert.deepEqual(
+    obsoleteApkReleases(items).obsolete.map((x) => x.id),
+    [2, 1],
+  );
 });

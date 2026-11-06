@@ -39,9 +39,7 @@ export function StorageCleanupButton() {
           `${preview.releases} outdated APK releases.\n\n` +
           `Keep the latest published APK release for each of ${preview.keptApps} apps. ` +
           `Protect ${preview.protectedArtifacts} artifacts from unfinished workflow runs.\n` +
-          (preview.skippedArchivedRepos
-            ? `Skip ${preview.skippedArchivedRepos} archived repositories.\n`
-            : '') +
+          (preview.skippedArchivedRepos ? `Skip ${preview.skippedArchivedRepos} archived repositories.\n` : '') +
           `This cannot be undone. No current build will be cancelled.`,
       );
       if (!confirmed) return;
@@ -91,7 +89,10 @@ export function StorageCleanupButton() {
         </span>
       )}
       {result && (
-        <span role={result.error ? 'alert' : 'status'} className={result.error ? 'action-error small' : 'install-ok small'}>
+        <span
+          role={result.error ? 'alert' : 'status'}
+          className={result.error ? 'action-error small' : 'install-ok small'}
+        >
           {result.text}
         </span>
       )}

@@ -5,12 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { callGitHub, forgetOrgStatus, githubStatus } from './org-status.ts';
 import { releasesRepo } from './releases.ts';
 import { orgName } from './settings.ts';
-import {
-  obsoleteApkReleases,
-  oldArtifacts,
-  type StoredArtifact,
-  type StoredRelease,
-} from './storage-cleanup.ts';
+import { obsoleteApkReleases, oldArtifacts, type StoredArtifact, type StoredRelease } from './storage-cleanup.ts';
 
 type RepoInfo = { name: string; archived: boolean };
 type ActionRun = { id: number };
@@ -101,9 +96,7 @@ async function collectArtifacts(repos: RepoInfo[]): Promise<{
       }
       if (!artifacts.length) continue;
       const active = await Promise.all(
-        ['in_progress', 'queued'].map((status) =>
-          listAll<ActionRun>(`${base}/runs?status=${status}`, 'workflow_runs'),
-        ),
+        ['in_progress', 'queued'].map((status) => listAll<ActionRun>(`${base}/runs?status=${status}`, 'workflow_runs')),
       );
       const activeIds = new Set(active.flat().map((run) => run.id));
       const eligible = oldArtifacts(artifacts, activeIds);
