@@ -9,32 +9,31 @@ export function DevKeyNotice({ configured }: { configured: boolean }) {
         </span>
       </div>
       <p>
-        <strong>Install Dev</strong> installs the normal signed APK, then enables the app&apos;s existing developer
-        controls on your ADB-connected phone. To unlock ads and paid-feature switches, this computer needs the original
-        64-character hexadecimal <code>WORKBENCH_DEV_KEY</code>.
+        <strong>Install Dev</strong> installs the usual signed APK and unlocks existing developer controls via ADB.
+        The dashboard needs your original 64-character hex <code>WORKBENCH_DEV_KEY</code>.
       </p>
       <ol>
         <li>
-          <strong>Where to get it:</strong> look in your password manager for <code>WORKBENCH_DEV_KEY</code>. The original
-          Workbench Soft PC also has it as a Windows <em>user environment variable</em>. If you are on that PC, open
-          PowerShell and run <code>[Environment]::GetEnvironmentVariable('WORKBENCH_DEV_KEY', 'User')</code> to retrieve
-          it privately. This prints a secret: do not share the terminal output.
+          <strong>Find the existing key:</strong> search your password manager for <code>WORKBENCH_DEV_KEY</code>.
+          It is also saved as a Windows user environment variable on your original Workbench Soft PC.
+          On that PC, open PowerShell and run{' '}
+          <code>[Environment]::GetEnvironmentVariable('WORKBENCH_DEV_KEY', 'User')</code>.
+          This displays a secret; keep the output private.
         </li>
         <li>
-          <strong>Set it on this PC:</strong> press <kbd>Win</kbd> + <kbd>R</kbd>, run{' '}
-          <code>SystemPropertiesAdvanced</code>, select <strong>Environment Variables</strong>, and under{' '}
-          <strong>User variables</strong> choose <strong>New</strong>. Name: <code>WORKBENCH_DEV_KEY</code>. Value: the
-          same original 64-character hex key (not a newly generated one).
+          <strong>Set it on this Windows PC:</strong> press <kbd>Win</kbd> + <kbd>R</kbd>, run{' '}
+          <code>SystemPropertiesAdvanced</code> and choose <strong>Environment Variables</strong>.
+          Under <strong>User variables</strong>, click <strong>New</strong>.
+          Name: <code>WORKBENCH_DEV_KEY</code>. Value: your original 64-character hex key.
+          A newly generated key will not unlock the published apps.
         </li>
         <li>
-          <strong>Apply:</strong> restart Local CI&apos;s dashboard from the <code>local-ci</code> checkout in PowerShell
-          with <code>.\dashboard\install.ps1</code>, then reload this page. The status above will update without
-          showing the key.
+          <strong>Restart dashboard:</strong> in PowerShell from your <code>local-ci</code> checkout, run{' '}
+          <code>.\\dashboard\\install.ps1</code> and reload this page. The status above then updates.
         </li>
       </ol>
       <p className="dev-key-notice-foot">
-        The GitHub repositories contain only the key&apos;s hash, not the key itself. Never paste the secret into this
-        site, a GitHub issue or a chat.
+        GitHub contains only the key&apos;s hash. Never paste the actual key into this site, an issue or a chat.
       </p>
     </aside>
   );
