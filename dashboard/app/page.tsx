@@ -8,6 +8,7 @@ import { ReleasesCard } from '@/cards/releases-card';
 import { RunnersCard } from '@/cards/runners-card';
 import { StatusDot } from '@/cards/status-dot';
 import { readCancels } from '@/status/cancel-log';
+import { isDevKeyConfigured } from '@/status/dev-key';
 import { routerState } from '@/status/cloud-router';
 import { runDuration } from '@/status/durations';
 import { summarizeCi } from '@/status/headline';
@@ -98,7 +99,16 @@ export default async function StatusPage({
       </nav>
       {tab === 'releases' ? (
         <div className="grid">
-          {org.ok ? <ReleasesCard apps={apps} jobs={live} now={now} /> : <p className="error">{org.error}</p>}
+          {org.ok ? (
+            <ReleasesCard
+              apps={apps}
+              jobs={live}
+              now={now}
+              devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}
+            />
+          ) : (
+            <p className="error">{org.error}</p>
+          )}
         </div>
       ) : (
         <div className="grid">

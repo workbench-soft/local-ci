@@ -1,3 +1,54 @@
+/* Setup guide for the server-side developer key. The key itself never reaches the browser. */
+.dev-key-notice {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 12px 0 16px;
+  font-size: 13px;
+}
+
+.dev-key-notice-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 16px;
+}
+
+.dev-key-notice h3 {
+  margin: 0;
+}
+
+.dev-key-ready {
+  color: var(--ok);
+}
+
+.dev-key-missing {
+  color: var(--warn);
+}
+
+.dev-key-notice p {
+  margin: 8px 0;
+}
+
+.dev-key-notice ol {
+  padding-left: 22px;
+  margin: 8px 0;
+}
+
+.dev-key-notice li + li {
+  margin-top: 5px;
+}
+
+.dev-key-notice code,
+.dev-key-notice kbd {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.dev-key-notice-foot {
+  color: var(--muted);
+}
+
 /* The tabs under the heading and the Releases card. */
 .tabs {
   display: flex;

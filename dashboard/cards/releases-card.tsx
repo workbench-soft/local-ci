@@ -12,6 +12,7 @@ import { dispatchRelease } from '@/status/release-actions';
 import { releaseTargetFor } from '@/status/release-config';
 import { Icon, placeIcons, type IconName } from './icons';
 import { InstallButton } from './install-button';
+import { DevKeyNotice } from './dev-key-notice';
 import { ReleaseProgress } from './release-progress';
 
 type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
@@ -34,7 +35,17 @@ const chipOf: Record<ReleaseState, { icon: IconName; text: string; tone: 'ok' | 
 };
 
 /** Each app, its newest release and what its release pipeline does. The ticked APKs go on the phone over adb one by one. */
-export function ReleasesCard({ apps, jobs, now }: { apps: AppRelease[]; jobs: LiveJob[]; now: number }) {
+export function ReleasesCard({
+  apps,
+  jobs,
+  now,
+  devKeyConfigured,
+}: {
+  apps: AppRelease[];
+  jobs: LiveJob[];
+  now: number;
+  devKeyConfigured: boolean;
+}) {
   // Apps stay ticked across refreshes, and Install takes the release that is newest at the click.
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
@@ -114,6 +125,7 @@ export function ReleasesCard({ apps, jobs, now }: { apps: AppRelease[]; jobs: Li
         Each app, its newest release, and what the next one does. Install Release puts the latest APK on your USB phone;
         Install Dev also unlocks the existing developer controls. Tick apps above to install several releases.
       </p>
+      <DevKeyNotice configured={devKeyConfigured} />
       <div className="toolbar">
         <label className="tick">
           <input
