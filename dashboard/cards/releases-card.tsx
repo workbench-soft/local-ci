@@ -10,6 +10,7 @@ import type { AppRelease, ReleaseState, RunView } from '@/status/latest-releases
 import { dispatchRelease } from '@/status/release-actions';
 import { releaseTargetFor } from '@/status/release-config';
 import { Icon, placeIcons, type IconName } from './icons';
+import { InstallButton } from './install-button';
 
 type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
 type LocalAction = {
@@ -108,8 +109,8 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
     <section className="card wide">
       <h2>Releases</h2>
       <p className="muted small">
-        Each app, its newest release, and what the next one does. Tick the apps to put on the phone plugged in over USB,
-        then press Install.
+        Each app, its newest release, and what the next one does. Install Release puts the latest APK on your USB phone;
+        Install Dev also unlocks the existing developer controls. Tick apps above to install several releases.
       </p>
       <div className="toolbar">
         <label className="tick">
@@ -209,8 +210,9 @@ function AppItem({
         <OutcomeText outcome={outcome} />
       </div>
       <Detail state={state} run={run} wait={wait} why={why} now={now} />
-      {(hasReleaseWorkflow || canBuildLocally) && (
+      {(release?.apk || hasReleaseWorkflow || canBuildLocally) && (
         <div className="release-actions">
+          {release?.apk && <InstallButton tag={release.tag} name={app} />}
           {hasReleaseWorkflow && (
             <button type="button" className="action" disabled={!!actions.busy} onClick={() => onAction('dispatch')}>
               {actions.busy === 'dispatch' ? 'Queueing' : 'Release on CI'}
