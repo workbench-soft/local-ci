@@ -20,7 +20,8 @@ export function ReleaseProgress({
   wait: RunWait | null;
   now: number;
 }) {
-  if (state === 'queued') return <p className="release-detail muted small">Waiting for a runner; progress starts when building.</p>;
+  if (state === 'queued')
+    return <p className="release-detail muted small">Waiting for a runner; progress starts when building.</p>;
 
   const running = jobs.filter((job) => job.place !== 'waiting');
   const typical = wait?.usualMs;
