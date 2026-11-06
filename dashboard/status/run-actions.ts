@@ -6,10 +6,45 @@ import type { JobTiming } from './durations.ts';
 import { callGitHub, forgetOrgStatus, githubStatus, readJobTimings } from './org-status.ts';
 import { purgeRun, purgeRuns } from './purge.ts';
 import { orgName } from './settings.ts';
+import { canRetryRun } from './retry-policy.ts';
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 export type PurgeAllResult = { purged: number; failed: number; failedIds: number[]; error: string | null };
+
+/** Retry a failed GitHub Actions workflow, either failed jobs alone or every job. */
+export async function retryRun(repo: string, runId: number, failedOnly: boolean): Promise<ActionResult> {
+  if (!isRun(repo, runId) || typeof failedOnly !== 'boolean') return { ok: false, error: 'Unknown run.' };
+  try {
+    const path = runPath(repo, runId);
+    const { status, conclusion } = (await (await callGitHub(path)).json()) as {
+      status: string;
+      conclusion: string | null;
+    };
+    if (!canRetryRun(status, conclusion)) return { ok: false, error: 'Only completed failed runs can be retried.' };
+    await callGitHub(`${path}/${failedOnly ? 'rerun-failed-jobs' : 'rerun'}`, 'POST');
+    return { ok: true };
+  } catch (error) {
+    const status = githubStatus(error);
+    return {
+      ok: false,
+      error:
+        status === 403
+          ? 'GitHub refused the retry. The configured token needs Actions: write permission for this repository.'
+          : status === 404
+            ? 'The run no longer exists or is not accessible.'
+            : status === 409 || status === 422
+              ? 'GitHub cannot retry this run now. Refresh and try again.'
+              : error instanceof Error
+                ? error.message
+                : String(error),
+    };
+  } finally {
+    forgetOrgStatus();
+    revalidatePath('/');
+  }
+}
+
 
 /** Force cancels a run. It also skips steps with if: always(), so the runner takes the next job at once. */
 export async function stopRun(repo: string, runId: number): Promise<ActionResult> {
