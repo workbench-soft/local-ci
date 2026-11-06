@@ -49,6 +49,15 @@
   color: var(--muted);
 }
 
+/* Storage cleanup is separate from the install buttons and always explains what it keeps. */
+.storage-cleanup {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 10px 0 16px;
+}
+
 /* The tabs under the heading and the Releases card. */
 .tabs {
   display: flex;
