@@ -442,3 +442,33 @@ test('names within a status sort case-insensitively with natural numbers regardl
     ['alpha', 'app2', 'app10', 'Beta', 'zulu'],
   );
 });
+
+test('release ETA prefers the shared last-ten sliding-window estimate', () => {
+  const [app] = latestReleases(
+    [tickalotRelease],
+    [
+      madeIt(1, '2026-11-05T08:55:00Z'),
+      run({
+        id: 2,
+        workflow: 'Release',
+        event: 'workflow_run',
+        status: 'in_progress',
+        conclusion: null,
+        typicalMs: 14 * 60_000,
+        createdAt: '2026-11-05T11:00:00Z',
+        place: 'local',
+      }),
+      run({
+        id: 3,
+        workflow: 'Release',
+        event: 'workflow_run',
+        createdAt: '2026-11-04T09:00:00Z',
+        updatedAt: '2026-11-04T09:05:00Z',
+      }),
+    ],
+    noCancels,
+    now,
+  );
+  assert.equal(app.run?.id, 2);
+  assert.equal(app.wait?.usualMs, 14 * 60_000);
+});

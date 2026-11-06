@@ -18,7 +18,7 @@ export function JobProgress({ job, now }: { job: LiveJob; now: number }) {
       >
         <span style={{ width: `${percent}%` }} />
       </div>
-      <div className="muted">{[step, time].filter(Boolean).join(', ')}</div>
+      <div className="muted">{[`${percent}%`, step, time].filter(Boolean).join(' · ')}</div>
     </div>
   );
 }

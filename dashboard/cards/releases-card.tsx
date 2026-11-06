@@ -7,10 +7,12 @@ import { installRelease } from '@/status/install-apk';
 import { formatDuration } from '@/status/durations';
 import { buildLatestMain, installLocalBuild } from '@/status/local-build';
 import type { AppRelease, ReleaseState, RunView } from '@/status/latest-releases';
+import type { LiveJob } from '@/status/placement';
 import { dispatchRelease } from '@/status/release-actions';
 import { releaseTargetFor } from '@/status/release-config';
 import { Icon, placeIcons, type IconName } from './icons';
 import { InstallButton } from './install-button';
+import { ReleaseProgress } from './release-progress';
 
 type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
 type LocalAction = {
@@ -32,7 +34,7 @@ const chipOf: Record<ReleaseState, { icon: IconName; text: string; tone: 'ok' | 
 };
 
 /** Each app, its newest release and what its release pipeline does. The ticked APKs go on the phone over adb one by one. */
-export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number }) {
+export function ReleasesCard({ apps, jobs, now }: { apps: AppRelease[]; jobs: LiveJob[]; now: number }) {
   // Apps stay ticked across refreshes, and Install takes the release that is newest at the click.
   const [ticked, setTicked] = useState<ReadonlySet<string>>(new Set());
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
@@ -133,6 +135,7 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
             key={app.app}
             app={app}
             now={now}
+            jobs={app.run ? jobs.filter((job) => job.runId === app.run?.id) : []}
             ticked={ticked.has(app.app)}
             disabled={running}
             outcome={outcomes[app.app]}
@@ -152,6 +155,7 @@ export function ReleasesCard({ apps, now }: { apps: AppRelease[]; now: number })
 type ItemProps = {
   app: AppRelease;
   now: number;
+  jobs: LiveJob[];
   ticked: boolean;
   disabled: boolean;
   outcome: Outcome | undefined;
@@ -165,6 +169,7 @@ type ItemProps = {
 function AppItem({
   app: { app, repo, release, state, run, wait, why },
   now,
+  jobs,
   ticked,
   disabled,
   outcome,
@@ -210,6 +215,9 @@ function AppItem({
         <OutcomeText outcome={outcome} />
       </div>
       <Detail state={state} run={run} wait={wait} why={why} now={now} />
+      {(state === 'building' || state === 'queued') && (
+        <ReleaseProgress app={app} state={state} jobs={jobs} wait={wait} now={now} />
+      )}
       {(release?.apk || hasReleaseWorkflow || canBuildLocally) && (
         <div className="release-actions">
           {release?.apk && <InstallButton tag={release.tag} name={app} />}

@@ -61,6 +61,7 @@ export default async function StatusPage({
     id: run.id,
     repo: run.repo,
     workflow: run.workflow,
+    typicalMs: run.typicalMs,
     title: run.title,
     branch: run.branch,
     event: run.event,
@@ -97,7 +98,7 @@ export default async function StatusPage({
       </nav>
       {tab === 'releases' ? (
         <div className="grid">
-          {org.ok ? <ReleasesCard apps={apps} now={now} /> : <p className="error">{org.error}</p>}
+          {org.ok ? <ReleasesCard apps={apps} jobs={live} now={now} /> : <p className="error">{org.error}</p>}
         </div>
       ) : (
         <div className="grid">

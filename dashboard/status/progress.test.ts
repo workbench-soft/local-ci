@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { countSteps, jobProgress, typicalDuration } from './progress.ts';
+import { countSteps, durationProgress, jobProgress, typicalDuration } from './progress.ts';
 
 const start = '2025-10-29T12:00:00Z';
 const at = (minutes: number) => Date.parse(start) + minutes * 60_000;
@@ -69,4 +69,23 @@ test('without a usual time the bar fills by steps', () => {
   assert.equal(progress.fraction, 0.25);
   assert.equal(progress.step, 'step 3 of 8');
   assert.equal(progress.time, null);
+});
+
+test('release duration estimates use the rolling median and never claim completion early', () => {
+  assert.deepEqual(durationProgress(4 * 60_000, 10 * 60_000), {
+    fraction: 0.4,
+    time: 'about 6 min left',
+    over: false,
+  });
+  assert.deepEqual(durationProgress(12 * 60_000, 10 * 60_000), {
+    fraction: 0.99,
+    time: '2 min over the usual 10 min',
+    over: true,
+  });
+  assert.equal(durationProgress(500, 0).fraction, 0);
+  assert.equal(durationProgress(-100, 10_000).fraction, 0);
+});
+
+test('completed steps do not show 100% while the job is still finishing', () => {
+  assert.equal(jobProgress({ done: 3, total: 3, current: null }, null, start, at(4)).fraction, 0.99);
 });
