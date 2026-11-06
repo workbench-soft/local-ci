@@ -3,6 +3,8 @@
 import { useEffect, useState, useTransition } from 'react';
 import { purgeRunById, runFinished, stopRun } from '@/status/run-actions';
 import { Icon } from './icons';
+import { canRetryRun } from '@/status/retry-policy';
+import { RetryRunButtons } from './retry-run-buttons';
 
 const finishCheckMs = 2_000;
 
@@ -11,12 +13,16 @@ export function RunControls({
   repo,
   runId,
   active,
+  status,
+  conclusion,
   label,
   onPurging,
 }: {
   repo: string;
   runId: number;
   active: boolean;
+  status: string;
+  conclusion: string | null;
   label: string;
   onPurging?: (purging: boolean) => void;
 }) {
@@ -58,6 +64,9 @@ export function RunControls({
 
   return (
     <div className="run-controls">
+      {canRetryRun(status, conclusion) && (
+        <RetryRunButtons repo={repo} runId={runId} label={label} includeFailedJobs />
+      )}
       {(active || stop !== 'idle') && (
         <button
           type="button"
