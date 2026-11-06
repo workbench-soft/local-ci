@@ -64,9 +64,7 @@ export function RunControls({
 
   return (
     <div className="run-controls">
-      {canRetryRun(status, conclusion) && (
-        <RetryRunButtons repo={repo} runId={runId} label={label} includeFailedJobs />
-      )}
+      {canRetryRun(status, conclusion) && <RetryRunButtons repo={repo} runId={runId} label={label} includeFailedJobs />}
       {(active || stop !== 'idle') && (
         <button
           type="button"

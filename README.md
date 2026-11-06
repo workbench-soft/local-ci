@@ -176,6 +176,8 @@ once, from the main checkout:
 - **Stop and Purge** each run gets a Stop button to force cancel it, so its
   runner is free at once. The button reads Stopping, then Stopped. A Purge
   button force cancels a run and deletes it from GitHub with its logs.
+  Purge all, after a confirm, purges every run the filter and search match,
+  older runs included, until none match.
 - **Rerun failed builds** the Status tab offers `Rerun build` to rerun the full
   workflow, or `Retry failed jobs` to rerun only the failed jobs. The Releases
   tab also has `Rerun build` for errored releases. The existing server-side
@@ -238,6 +240,17 @@ set up on this PC. **Install local** sends that APK to the connected phone.
 Tick a published APK and press **Install** to install a CI release instead.
 ADB needs one authorized phone; local builds also need the app clone and its
 Android SDK.
+
+**Clean old APK releases & artifacts** on the Releases tab previews storage use across
+all non-archived organization repositories, then asks for confirmation. It
+removes completed GitHub Actions artifacts without deleting workflow runs or
+logs, and old APK-bearing releases from the shared releases repo. The newest
+published APK release for **each** app stays available; non-APK releases,
+prereleases and drafts stay unchanged. Active run artifacts are protected.
+The page shows deletion progress and reports permission or quota errors.
+The local dashboard uses its server-side GitHub token; it must have Actions
+write access on the app repositories and Contents write access on the shared
+releases repository. The quota display may lag after cleanup.
 
 ## Updates by themselves
 

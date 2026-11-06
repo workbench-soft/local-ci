@@ -140,10 +140,14 @@ flowchart TD
    latest `main` for a supported Android app, then **Install local** to send
    its APK to the phone. A local build uses the app's local release key when
    available and leaves the source checkout unchanged.
-9. Click the branch or the PR link to open it on GitHub.
+9. To free GitHub Actions storage, on Releases press **Clean old APK releases & artifacts**.
+   The page counts the eligible artifacts and older APK releases, explains what will remain,
+   and asks for confirmation. Cleanup then runs in small batches. Active workflow artifacts
+   and the newest published APK for every app stay available; run history is preserved.
+10. Click the branch or the PR link to open it on GitHub.
    Open Cancellation history on either tab to read a saved stop reason.
    Follow its links to the replacement build, failed Checks, commit or PR.
-10. To change the number of runners, type it in Runners on this PC, or press
+11. To change the number of runners, type it in Runners on this PC, or press
     Use with the suggested count. Press Apply, and watch
     `runner\install.ps1` add or remove runners in its window.
 

@@ -6,7 +6,7 @@
 - **Fix** the Releases page dispatches supported CI releases, builds locally in an isolated worktree and installs either APK through ADB.
 - **How** CI runs target `main`; local builds use each supported app's build script and the latest fetched `main`.
 - **Risks** a local build needs its app clone, build script and signing or build secrets on this PC. ADB needs one authorized phone.
-- **Next** add release actions and local build support to the Releases page.
+- **Next** add release actions and local build support to the Releases page, plus a confirmed GitHub storage cleanup control.
 
 ## What it does for the person
 
@@ -59,6 +59,14 @@ APK from the latest `main` in a separate worktree and install that build.
 - **Failed check** a red `Checks` run or a PR run starts no release.
 
 ## Changes
+
+### 2026-11-07 clean up GitHub Actions storage
+
+- **Why** GitHub can block APK artifact uploads after the shared Actions storage quota fills.
+- **Changes** Releases offers a preview and confirmation before deleting completed-run artifacts in all unarchived org repos and all but the latest published APK-bearing release per app. The shared release repo also holds desktop and web assets, which remain untouched. Drafts and prereleases are excluded.
+- **Protection** active workflow artifacts are skipped; the dashboard does not cancel or delete runs. Inventory is paginated fully before any deletion; errors and counts are shown. Each delete request uses the server-side GitHub token.
+- **Permissions** GitHub token needs Actions write for artifact deletion and Contents write in the shared release repo for release deletion. GitHub can take time to refresh its quota accounting.
+- **Files** `dashboard/status/storage-cleanup*.ts` and `dashboard/cards/storage-cleanup-button.tsx`.
 
 ### 2026-11-05 build releases alongside Checks
 

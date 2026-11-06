@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- **GitHub storage cleanup** the Releases tab can preview and confirm removal
+  of completed Actions artifacts across the org and older APK releases in the
+  shared releases repository. The newest published APK per app stays; active
+  build artifacts, run logs, non-APK releases, drafts and prereleases stay.
+  Deletion runs in small batches with progress and error reporting.
+
 - **Local APK installation** build tokens accept UUID digits, so a newly built
   APK can be installed instead of showing an expired-build error.
 

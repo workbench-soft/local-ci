@@ -15,6 +15,7 @@ import { InstallButton } from './install-button';
 import { DevKeyNotice } from './dev-key-notice';
 import { ReleaseProgress } from './release-progress';
 import { RetryRunButtons } from './retry-run-buttons';
+import { StorageCleanupButton } from './storage-cleanup-button';
 
 type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
 type LocalAction = {
@@ -142,6 +143,7 @@ export function ReleasesCard({
           {running ? 'Installing' : `Install ${chosen.length || ''}`.trim()}
         </button>
       </div>
+      <StorageCleanupButton />
       <ul className="releases">
         {apps.map((app) => (
           <AppItem

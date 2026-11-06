@@ -21,8 +21,7 @@ export async function retryRun(repo: string, runId: number, failedOnly: boolean)
       status: string;
       conclusion: string | null;
     };
-    if (!canRetryRun(status, conclusion))
-      return { ok: false, error: 'Only completed failed runs can be retried.' };
+    if (!canRetryRun(status, conclusion)) return { ok: false, error: 'Only completed failed runs can be retried.' };
     await callGitHub(`${path}/${failedOnly ? 'rerun-failed-jobs' : 'rerun'}`, 'POST');
     return { ok: true };
   } catch (error) {
