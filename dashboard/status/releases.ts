@@ -19,6 +19,7 @@ export const releasesRepo = process.env.RELEASES_REPO || `${orgName}/${orgName}.
 export const releasePrefixes: Record<string, string[]> = {
   memories: ['memories-mobile', 'media-organizer'],
   'lumiere-player': ['lumiere'],
+  spotthecam: ['spotthecam', 'speed-camera-map'],
 };
 
 // An upload can land a little after GitHub last updates the run.
@@ -68,7 +69,8 @@ function ranDuring(run: RunWindow, release: Release): boolean {
  */
 export function releasesByRun(runs: RunWindow[], releases: Release[]): Map<number, Release> {
   const byRun = new Map<number, Release>();
-  for (const release of releases) {
+  // Prefer the last published release when a run uploaded both canonical and legacy tags.
+  for (const release of releases.toSorted((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))) {
     const at = Date.parse(release.createdAt);
     const gap = (run: RunWindow) => Math.abs(Date.parse(run.updatedAt) - at);
     const owner = runs.filter((run) => ranDuring(run, release)).sort((a, b) => gap(a) - gap(b))[0];

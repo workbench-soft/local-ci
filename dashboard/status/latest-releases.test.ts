@@ -45,7 +45,31 @@ const cancelOf = (runId: number, words: string): Map<number, CancelEntry> =>
 test('the app of a tag drops the version', () => {
   assert.equal(appOfTag('memories-mobile-v2026.10.31.1'), 'memories-mobile');
   assert.equal(appOfTag('media-organizer-v0.0.17'), 'media-organizer');
+  assert.equal(appOfTag('speed-camera-map-v2026.11.07.1'), 'spotthecam');
+  assert.equal(appOfTag('spotthecam-v2026.11.07.1'), 'spotthecam');
   assert.equal(appOfTag('v2026.10.31.1'), null);
+});
+
+test('old and new SpotTheCam tags share one app and the real repository', () => {
+  const published = [
+    release('speed-camera-map-v2026.11.05.1', '2026-11-05T09:00:00Z'),
+    release('spotthecam-v2026.11.05.1', '2026-11-05T09:01:00Z'),
+  ];
+  const runs = [
+    run({
+      id: 17,
+      repo: 'spotthecam',
+      workflow: 'Deploy',
+      createdAt: '2026-11-05T08:55:00Z',
+      updatedAt: '2026-11-05T09:02:00Z',
+    }),
+  ];
+  const apps = latestReleases(published, runs, noCancels, now);
+  assert.equal(apps.length, 1);
+  assert.equal(apps[0].app, 'spotthecam');
+  assert.equal(apps[0].repo, 'spotthecam');
+  assert.equal(apps[0].release?.tag, 'spotthecam-v2026.11.05.1');
+  assert.equal(apps[0].pipeline, 'Deploy');
 });
 
 test('nothing after the release leaves it released', () => {

@@ -81,7 +81,8 @@ const stateOrder: Record<ReleaseState, number> = {
 
 /** The app of a release tag such as memories-mobile-v2026.10.31.1, or null for another tag. */
 export function appOfTag(tag: string): string | null {
-  return /^(.+)-v\d[\w.]*$/.exec(tag)?.[1] ?? null;
+  const prefix = /^(.+)-v\d[\w.]*$/.exec(tag)?.[1] ?? null;
+  return prefix === 'speed-camera-map' ? 'spotthecam' : prefix;
 }
 
 function repoOfApp(app: string): string {
