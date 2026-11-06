@@ -22,6 +22,16 @@ test('a run owns the release of its repo created while it ran', () => {
   assert.equal(releaseOfRun(run, releases)?.tag, 'tickalot-v2025.10.29.2');
 });
 
+test('SpotTheCam owns both old and renamed release prefixes', () => {
+  const appRun = { ...run, repo: 'spotthecam' };
+  const legacy = release('speed-camera-map-v2025.10.29.2', '2025-10-29T12:07:00Z');
+  const renamed = release('spotthecam-v2025.10.29.2', '2025-10-29T12:09:00Z');
+  assert.equal(releaseOfRun(appRun, [legacy])?.tag, legacy.tag);
+  assert.equal(releaseOfRun(appRun, [renamed])?.tag, renamed.tag);
+  // Even if the API supplies the old tag first, link this run to its canonical release.
+  assert.equal(releaseOfRun(appRun, [legacy, renamed])?.tag, renamed.tag);
+});
+
 test('a release of another repo or outside the run stays off it', () => {
   const releases = [
     release('keeppad-v1.0.0', '2025-10-29T12:05:00Z'),
