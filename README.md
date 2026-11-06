@@ -178,6 +178,12 @@ once, from the main checkout:
   button force cancels a run and deletes it from GitHub with its logs.
   Purge all, after a confirm, purges every run the filter and search match,
   older runs included, until none match.
+- **Rerun failed builds** the Status tab offers `Rerun build` to rerun the full
+  workflow, or `Retry failed jobs` to rerun only the failed jobs. The Releases
+  tab also has `Rerun build` for errored releases. The existing server-side
+  GitHub token needs Actions write access; no token is sent to the browser.
+  Purge all, after a confirm, purges every run the filter and search match,
+  older runs included, until none match.
 - **Replaced builds** the server cancels an active build only when a newer
   push builds a different commit in the same repo, workflow, branch and event.
   Closing a PR alone keeps the build. Failed Checks stop releases of the same

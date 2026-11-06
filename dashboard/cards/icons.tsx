@@ -10,6 +10,7 @@ export type IconName =
   | 'cloud'
   | 'server'
   | 'stop'
+  | 'retry'
   | 'trash'
   | 'phone'
   | 'package';
@@ -25,6 +26,7 @@ const paths: Record<IconName, string[]> = {
   cloud: ['M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.3 12.5 3.5 3.5 0 0 0 6.5 19z'],
   server: ['M3 3h18v7H3z', 'M3 14h18v7H3z', 'M7 6.5h.01', 'M7 17.5h.01'],
   stop: ['M6 6h12v12H6z'],
+  retry: ['M3 12a9 9 0 1 0 3-6.7', 'M3 4v6h6'],
   phone: ['M7 2h10v20H7z', 'M11 18h2'],
   package: ['M21 8 12 3 3 8v8l9 5 9-5z', 'M3 8l9 5 9-5', 'M12 13v8'],
   trash: ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 14H6L5 6', 'M10 11v6', 'M14 11v6'],
