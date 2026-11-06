@@ -99,7 +99,16 @@ export default async function StatusPage({
       </nav>
       {tab === 'releases' ? (
         <div className="grid">
-          {org.ok ? <ReleasesCard apps={apps} jobs={live} now={now} devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)} /> : <p className="error">{org.error}</p>}
+          {org.ok ? (
+            <ReleasesCard
+              apps={apps}
+              jobs={live}
+              now={now}
+              devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}
+            />
+          ) : (
+            <p className="error">{org.error}</p>
+          )}
         </div>
       ) : (
         <div className="grid">
