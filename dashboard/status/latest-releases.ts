@@ -103,12 +103,8 @@ function newestFirst(a: PipelineRun, b: PipelineRun): number {
   return Date.parse(b.createdAt) - Date.parse(a.createdAt) || b.id - a.id;
 }
 
-// What a row sorts by: what the app does now, or when its release came out.
-function activityAt(app: AppRelease): string {
-  return app.run && app.state !== 'released' && app.state !== 'no-release'
-    ? app.run.createdAt
-    : (app.release?.createdAt ?? '');
-}
+// Match names case-insensitively and treat digits naturally (app2 before app10).
+const appNameOrder = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
 
 /** The state the newest run of a repo leaves the app in. */
 function stateOfRun(run: PipelineRun, pipeline: string | null, release: Release | null): ReleaseState {
@@ -228,8 +224,9 @@ export function latestReleases(
     });
   }
 
+  // Keep the state groups together, then list the apps alphabetically within each group.
   return apps.sort(
-    (a, b) => stateOrder[a.state] - stateOrder[b.state] || Date.parse(activityAt(b)) - Date.parse(activityAt(a)),
+    (a, b) => stateOrder[a.state] - stateOrder[b.state] || appNameOrder.compare(a.app, b.app) || a.app.localeCompare(b.app),
   );
 }
 
