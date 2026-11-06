@@ -235,6 +235,17 @@ Tick a published APK and press **Install** to install a CI release instead.
 ADB needs one authorized phone; local builds also need the app clone and its
 Android SDK.
 
+**Clean old APK releases & artifacts** on the Releases tab previews storage use across
+all non-archived organization repositories, then asks for confirmation. It
+removes completed GitHub Actions artifacts without deleting workflow runs or
+logs, and old APK-bearing releases from the shared releases repo. The newest
+published APK release for **each** app stays available; non-APK releases,
+prereleases and drafts stay unchanged. Active run artifacts are protected.
+The page shows deletion progress and reports permission or quota errors.
+The local dashboard uses its server-side GitHub token; it must have Actions
+write access on the app repositories and Contents write access on the shared
+releases repository. The quota display may lag after cleanup.
+
 ## Updates by themselves
 
 The Windows PC installs each new release on its own. The `local-ci update`
