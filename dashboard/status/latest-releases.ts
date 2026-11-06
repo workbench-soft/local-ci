@@ -225,9 +225,10 @@ export function latestReleases(
   }
 
   // Keep the state groups together, then list the apps alphabetically within each group.
-  return apps.sort(
-    (a, b) => stateOrder[a.state] - stateOrder[b.state] || appNameOrder.compare(a.app, b.app) || a.app.localeCompare(b.app),
-  );
+  return apps.sort((a, b) => {
+    const byState = stateOrder[a.state] - stateOrder[b.state];
+    return byState || appNameOrder.compare(a.app, b.app) || a.app.localeCompare(b.app);
+  });
 }
 
 // The wait counts the whole life of a run, its queue time included, since that is what the person waits through.
