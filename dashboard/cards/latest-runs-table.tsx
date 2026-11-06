@@ -268,6 +268,8 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
               repo={run.repo}
               runId={run.id}
               active={active}
+              status={run.status}
+              conclusion={run.conclusion}
               label={`the ${run.repo} / ${run.workflow} run`}
               onPurging={setPurgingSelf}
             />
