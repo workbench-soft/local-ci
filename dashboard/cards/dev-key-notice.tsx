@@ -8,32 +8,42 @@ export function DevKeyNotice({ configured }: { configured: boolean }) {
           {configured ? 'Key configured on this dashboard' : 'Key missing on this dashboard'}
         </span>
       </div>
-      <p>
-        <strong>Install Dev</strong> installs the usual signed APK and unlocks existing developer controls via ADB.
-        The dashboard needs your original 64-character hex <code>WORKBENCH_DEV_KEY</code>.
-      </p>
+      <p>Install Dev installs the normal signed APK and unlocks developer settings through ADB.</p>
+      <p>The dashboard needs your original 64-character hexadecimal WORKBENCH_DEV_KEY.</p>
       <ol>
         <li>
-          <strong>Find the existing key:</strong> search your password manager for <code>WORKBENCH_DEV_KEY</code>.
-          It is also saved as a Windows user environment variable on your original Workbench Soft PC.
-          On that PC, open PowerShell and run{' '}
-          <code>[Environment]::GetEnvironmentVariable('WORKBENCH_DEV_KEY', 'User')</code>.
-          This displays a secret; keep the output private.
+          <p>
+            <strong>Where to get it</strong>
+          </p>
+          <p>Find WORKBENCH_DEV_KEY in your password manager.</p>
+          <p>The original Workbench Soft PC also stores it as a Windows user environment variable.</p>
+          <p>On that PC, open PowerShell and run this command to retrieve the existing key privately:</p>
+          <code>[Environment]::GetEnvironmentVariable('WORKBENCH_DEV_KEY', 'User')</code>
+          <p>This prints the secret. Do not share or screenshot the output.</p>
         </li>
         <li>
-          <strong>Set it on this Windows PC:</strong> press <kbd>Win</kbd> + <kbd>R</kbd>, run{' '}
-          <code>SystemPropertiesAdvanced</code> and choose <strong>Environment Variables</strong>.
-          Under <strong>User variables</strong>, click <strong>New</strong>.
-          Name: <code>WORKBENCH_DEV_KEY</code>. Value: your original 64-character hex key.
-          A newly generated key will not unlock the published apps.
+          <p>
+            <strong>How to set it on Windows</strong>
+          </p>
+          <p>Press Win + R, run SystemPropertiesAdvanced, then click Environment Variables.</p>
+          <p>Under User variables, click New and enter:</p>
+          <p>
+            Name: <code>WORKBENCH_DEV_KEY</code>
+          </p>
+          <p>Value: the same original 64-character hex key from your password manager or PC.</p>
+          <p>Do not generate a different key: the published apps will not recognize it.</p>
         </li>
         <li>
-          <strong>Restart dashboard:</strong> in PowerShell from your <code>local-ci</code> checkout, run{' '}
-          <code>.\\dashboard\\install.ps1</code> and reload this page. The status above then updates.
+          <p>
+            <strong>Apply the setting</strong>
+          </p>
+          <p>In PowerShell from your local-ci checkout, restart the dashboard with:</p>
+          <code>.\\dashboard\\install.ps1</code>
+          <p>Reload this page and check the key status above.</p>
         </li>
       </ol>
       <p className="dev-key-notice-foot">
-        GitHub contains only the key&apos;s hash. Never paste the actual key into this site, an issue or a chat.
+        GitHub contains only the key&apos;s hash. Never paste the key into this site, an issue or a chat.
       </p>
     </aside>
   );
