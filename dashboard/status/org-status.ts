@@ -134,6 +134,12 @@ export function forgetOrgStatus(): void {
   store.refreshing = null;
 }
 
+/** A GitHub Actions rerun reuses its run ID but creates new job attempts. */
+export function forgetRunJobs(runId: number): void {
+  store.finishedJobs.delete(runId);
+  store.queuedJobs.delete(runId);
+}
+
 async function loadOrgStatus(): Promise<OrgStatus> {
   try {
     const [runners, runs, releases] = await Promise.allSettled([listRunners(), listLatestRuns(), listReleases()]);
