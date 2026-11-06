@@ -1,6 +1,6 @@
 'use server';
 
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -8,6 +8,7 @@ import { delimiter, join } from 'node:path';
 import { promisify } from 'node:util';
 import { callGitHub, githubStatus } from './org-status.ts';
 import { type ApiRelease, releasesRepo, toRelease } from './releases.ts';
+import { developerPackageForTag, developerUnlockCommand, launchActivity } from './dev-phone.ts';
 
 export type InstallResult = { ok: true; device: string } | { ok: false; error: string };
 
@@ -51,6 +52,71 @@ export async function installRelease(tag: string): Promise<InstallResult> {
   } catch (error) {
     return { ok: false, error: adbError(error) };
   }
+}
+
+/** Installs the latest published APK, then unlocks the existing developer settings on that phone.
+ * No differently signed debug APK is needed: every supported release accepts the developer key.
+ */
+export async function installDeveloperRelease(tag: string): Promise<InstallResult> {
+  const packageName = typeof tag === 'string' ? developerPackageForTag(tag) : null;
+  if (!packageName) return { ok: false, error: 'This app has no confirmed developer unlock handler.' };
+  // Never send an empty or malformed key: the unlock belongs to the local PC, not the browser.
+  const key = process.env.WORKBENCH_DEV_KEY;
+  if (!key || !/^[a-f0-9]{64}$/i.test(key)) {
+    return { ok: false, error: 'Set WORKBENCH_DEV_KEY (64 hex characters) on this PC and restart the CI dashboard.' };
+  }
+  const installed = await installRelease(tag);
+  if (!installed.ok) return installed;
+
+  try {
+    const adb = findAdb();
+    if (!adb) throw new Error('adb is no longer available.');
+    const { stdout } = await execFileAsync(
+      adb,
+      ['-s', installed.device, 'shell', 'cmd', 'package', 'resolve-activity', '--brief', packageName],
+      { timeout: 30_000 },
+    );
+    const activity = launchActivity(stdout, packageName);
+    if (!activity) throw new Error(`Could not find the launch activity for ${packageName}.`);
+    // Android's adb shell command line must not contain the developer key. Send it through stdin.
+    await sendDeveloperUnlock(adb, installed.device, developerUnlockCommand(activity, key));
+    return installed;
+  } catch (error) {
+    // Installation already succeeded, so don't imply that the APK failed.
+    // Never return adb shell output: it could contain the secret link.
+    return { ok: false, error: `Installed on ${installed.device}, but developer unlock was not confirmed. ${safeUnlockError(error)}` };
+  }
+}
+
+/** An adb shell without a command reads the URI from stdin rather than exposing the key in its process arguments. */
+function sendDeveloperUnlock(adb: string, device: string, command: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(adb, ['-s', device, 'shell'], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+    let output = '';
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill();
+    }, 30_000);
+    child.stdout.on('data', (chunk: Buffer) => { output = (output + chunk.toString()).slice(-4096); });
+    child.stderr.on('data', (chunk: Buffer) => { output = (output + chunk.toString()).slice(-4096); });
+    child.on('error', () => {
+      clearTimeout(timeout);
+      reject(new Error('Could not start adb shell.'));
+    });
+    child.on('close', (code) => {
+      clearTimeout(timeout);
+      // Some Android versions return zero for "Error: Activity not started", so inspect the result.
+      if (!timedOut && code === 0 && /Status:\s*ok/i.test(output) && !/Error:|Exception/i.test(output)) resolve();
+      else reject(new Error(timedOut ? 'adb shell timed out.' : 'Android did not confirm the unlock link was opened.'));
+    });
+    child.stdin.on('error', () => reject(new Error('Could not write to adb shell.')));
+    child.stdin.end(command);
+  });
+}
+
+function safeUnlockError(error: unknown): string {
+  return error instanceof Error ? error.message : 'Check the phone and retry the developer install.';
 }
 
 /** Installs a local APK on the one authorized phone connected over USB. */
