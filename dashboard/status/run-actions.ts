@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { recordCancel } from './cancel-log.ts';
 import type { JobTiming } from './durations.ts';
-import { callGitHub, forgetOrgStatus, githubStatus, readJobTimings } from './org-status.ts';
+import { callGitHub, forgetOrgStatus, forgetRunJobs, githubStatus, readJobTimings } from './org-status.ts';
 import { purgeRun, purgeRuns } from './purge.ts';
 import { orgName } from './settings.ts';
 import { canRetryRun } from './retry-policy.ts';
@@ -21,7 +21,8 @@ export async function retryRun(repo: string, runId: number, failedOnly: boolean)
       status: string;
       conclusion: string | null;
     };
-    if (!canRetryRun(status, conclusion)) return { ok: false, error: 'Only completed failed runs can be retried.' };
+    if (!canRetryRun(status, conclusion))
+      return { ok: false, error: 'Only completed failed runs can be retried.' };
     await callGitHub(`${path}/${failedOnly ? 'rerun-failed-jobs' : 'rerun'}`, 'POST');
     return { ok: true };
   } catch (error) {
@@ -40,11 +41,11 @@ export async function retryRun(repo: string, runId: number, failedOnly: boolean)
                 : String(error),
     };
   } finally {
+    forgetRunJobs(runId);
     forgetOrgStatus();
     revalidatePath('/');
   }
 }
-
 
 /** Force cancels a run. It also skips steps with if: always(), so the runner takes the next job at once. */
 export async function stopRun(repo: string, runId: number): Promise<ActionResult> {
