@@ -45,20 +45,25 @@ export function typicalDuration(name: string, past: PastJob[]): number | null {
 }
 
 /** Fills by time when a past run gives the usual length, else by finished steps. */
+/** Reuse the rolling historical duration for both running jobs and whole release workflows. */
+export function durationProgress(elapsedMs: number, typicalMs: number): Pick<JobProgress, 'fraction' | 'time' | 'over'> {
+  if (!Number.isFinite(typicalMs) || typicalMs <= 0) return { fraction: 0, time: null, over: false };
+  const elapsed = Math.max(0, elapsedMs);
+  const left = typicalMs - elapsed;
+  const over = left < 0;
+  const time = over
+    ? `${formatMinutes(-left)} over the usual ${formatMinutes(typicalMs)}`
+    : `about ${formatMinutes(left)} left`;
+  return { fraction: Math.min(elapsed / typicalMs, maxFraction), time, over };
+}
+
 export function jobProgress(steps: StepCount, typicalMs: number | null, startedAt: string, now: number): JobProgress {
   const step = steps.total
     ? `step ${Math.min(steps.done + 1, steps.total)} of ${steps.total}${steps.current ? `: ${steps.current}` : ''}`
     : null;
-  if (typicalMs) {
-    const elapsed = Math.max(0, now - Date.parse(startedAt));
-    const left = typicalMs - elapsed;
-    const over = left < 0;
-    const time = over
-      ? `${formatMinutes(-left)} over the usual ${formatMinutes(typicalMs)}`
-      : `about ${formatMinutes(left)} left`;
-    return { fraction: Math.min(elapsed / typicalMs, maxFraction), step, time, over };
-  }
-  return { fraction: steps.total ? steps.done / steps.total : 0, step, time: null, over: false };
+  if (typicalMs) return { ...durationProgress(now - Date.parse(startedAt), typicalMs), step };
+  // All steps can finish while GitHub still finalizes the job; never show 100% before it ends.
+  return { fraction: steps.total ? Math.min(steps.done / steps.total, maxFraction) : 0, step, time: null, over: false };
 }
 
 function formatMinutes(ms: number): string {
