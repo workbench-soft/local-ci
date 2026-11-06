@@ -395,3 +395,50 @@ test('waiting apps come first, released ones last', () => {
     ['building', 'released'],
   );
 });
+
+test('apps group by release status and then alphabetically instead of by run time', () => {
+  const apps = latestReleases(
+    [
+      release('zeta-v2026.11.05.1', '2026-11-05T09:00:00Z'),
+      release('beta-v2026.11.05.1', '2026-11-05T09:30:00Z'),
+      release('delta-v2026.11.05.1', '2026-11-05T09:10:00Z'),
+      release('alpha-v2026.11.05.1', '2026-11-05T09:20:00Z'),
+    ],
+    [
+      run({ id: 10, repo: 'zeta', conclusion: 'failure', createdAt: '2026-11-05T10:00:00Z' }),
+      run({ id: 11, repo: 'delta', conclusion: 'failure', createdAt: '2026-11-05T11:00:00Z' }),
+    ],
+    noCancels,
+    now,
+  );
+
+  assert.deepEqual(
+    apps.map((app) => [app.app, app.state]),
+    [
+      ['delta', 'errored'],
+      ['zeta', 'errored'],
+      ['alpha', 'released'],
+      ['beta', 'released'],
+    ],
+  );
+});
+
+test('names within a status sort case-insensitively with natural numbers regardless of release date', () => {
+  const apps = latestReleases(
+    [
+      release('zulu-v2026.11.05.1', '2026-11-05T09:50:00Z'),
+      release('app10-v2026.11.05.1', '2026-11-05T09:40:00Z'),
+      release('Beta-v2026.11.05.1', '2026-11-05T09:30:00Z'),
+      release('app2-v2026.11.05.1', '2026-11-05T09:20:00Z'),
+      release('alpha-v2026.11.05.1', '2026-11-05T09:10:00Z'),
+    ],
+    [],
+    noCancels,
+    now,
+  );
+
+  assert.deepEqual(
+    apps.map((app) => app.app),
+    ['alpha', 'app2', 'app10', 'Beta', 'zulu'],
+  );
+});
