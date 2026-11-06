@@ -45,7 +45,10 @@ export function typicalDuration(name: string, past: PastJob[]): number | null {
 }
 
 /** Reuse the rolling historical duration for both running jobs and whole release workflows. */
-export function durationProgress(elapsedMs: number, typicalMs: number): Pick<JobProgress, 'fraction' | 'time' | 'over'> {
+export function durationProgress(
+  elapsedMs: number,
+  typicalMs: number,
+): Pick<JobProgress, 'fraction' | 'time' | 'over'> {
   if (!Number.isFinite(typicalMs) || typicalMs <= 0) return { fraction: 0, time: null, over: false };
   const elapsed = Math.max(0, elapsedMs);
   const left = typicalMs - elapsed;
