@@ -8,6 +8,8 @@ export type PipelineRun = {
   id: number;
   repo: string;
   workflow: string;
+  /** Rolling estimate computed from the last ten completed workflow runs, if available. */
+  typicalMs?: number | null;
   title: string;
   branch: string;
   event: string;
@@ -33,6 +35,7 @@ export type ReleaseState =
 
 /** The run a state comes from, with what the row shows of it. */
 export type RunView = {
+  id: number;
   workflow: string;
   status: string;
   conclusion: string | null;
@@ -88,6 +91,7 @@ function repoOfApp(app: string): string {
 function viewOf(run: PipelineRun): RunView {
   const job = run.jobs.find((item) => failed.has(item.conclusion ?? ''));
   return {
+    id: run.id,
     workflow: run.workflow,
     status: run.status,
     conclusion: run.conclusion,
@@ -236,7 +240,7 @@ function waitOf(run: PipelineRun, ships: PipelineRun[], now: number): RunWait {
   const elapsedMs = Math.max(0, now - Date.parse(run.createdAt));
   // The usual life of this workflow comes from its finished runs of the same repo, with the same
   // survival count the job estimate uses: a cancelled run gives a lower bound, a success the full time.
-  const usualMs = typicalDuration(
+  const usualMs = run.typicalMs ?? typicalDuration(
     run.workflow,
     ships
       .filter((item) => item.workflow === run.workflow && item.status === 'completed' && item.id !== run.id)
