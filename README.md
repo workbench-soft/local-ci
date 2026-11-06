@@ -176,6 +176,10 @@ once, from the main checkout:
 - **Stop and Purge** each run gets a Stop button to force cancel it, so its
   runner is free at once. The button reads Stopping, then Stopped. A Purge
   button force cancels a run and deletes it from GitHub with its logs.
+- **Rerun failed builds** the Status tab offers `Rerun build` to rerun the full
+  workflow, or `Retry failed jobs` to rerun only the failed jobs. The Releases
+  tab also has `Rerun build` for errored releases. The existing server-side
+  GitHub token needs Actions write access; no token is sent to the browser.
   Purge all, after a confirm, purges every run the filter and search match,
   older runs included, until none match.
 - **Replaced builds** the server cancels an active build only when a newer
