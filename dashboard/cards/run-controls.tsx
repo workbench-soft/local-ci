@@ -13,16 +13,16 @@ export function RunControls({
   repo,
   runId,
   active,
-  status,
-  conclusion,
+  status = '',
+  conclusion = null,
   label,
   onPurging,
 }: {
   repo: string;
   runId: number;
   active: boolean;
-  status: string;
-  conclusion: string | null;
+  status?: string;
+  conclusion?: string | null;
   label: string;
   onPurging?: (purging: boolean) => void;
 }) {
