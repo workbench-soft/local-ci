@@ -14,6 +14,7 @@ import { Icon, placeIcons, type IconName } from './icons';
 import { InstallButton } from './install-button';
 import { DevKeyNotice } from './dev-key-notice';
 import { ReleaseProgress } from './release-progress';
+import { RetryRunButtons } from './retry-run-buttons';
 
 type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
 type LocalAction = {
@@ -230,8 +231,9 @@ function AppItem({
       {(state === 'building' || state === 'queued') && (
         <ReleaseProgress app={app} state={state} jobs={jobs} wait={wait} now={now} />
       )}
-      {(release?.apk || hasReleaseWorkflow || canBuildLocally) && (
+      {(release?.apk || hasReleaseWorkflow || canBuildLocally || (state === 'errored' && run)) && (
         <div className="release-actions">
+          {state === 'errored' && run && <RetryRunButtons repo={repo} runId={run.id} label={`${app} build`} />}
           {release?.apk && <InstallButton tag={release.tag} name={app} />}
           {hasReleaseWorkflow && (
             <button type="button" className="action" disabled={!!actions.busy} onClick={() => onAction('dispatch')}>
