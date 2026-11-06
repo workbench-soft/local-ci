@@ -84,7 +84,10 @@ export async function installDeveloperRelease(tag: string): Promise<InstallResul
   } catch (error) {
     // Installation already succeeded, so don't imply that the APK failed.
     // Never return adb shell output: it could contain the secret link.
-    return { ok: false, error: `Installed on ${installed.device}, but developer unlock was not confirmed. ${safeUnlockError(error)}` };
+    return {
+      ok: false,
+      error: `Installed on ${installed.device}, but developer unlock was not confirmed. ${safeUnlockError(error)}`,
+    };
   }
 }
 
@@ -98,8 +101,12 @@ function sendDeveloperUnlock(adb: string, device: string, command: string): Prom
       timedOut = true;
       child.kill();
     }, 30_000);
-    child.stdout.on('data', (chunk: Buffer) => { output = (output + chunk.toString()).slice(-4096); });
-    child.stderr.on('data', (chunk: Buffer) => { output = (output + chunk.toString()).slice(-4096); });
+    child.stdout.on('data', (chunk: Buffer) => {
+      output = (output + chunk.toString()).slice(-4096);
+    });
+    child.stderr.on('data', (chunk: Buffer) => {
+      output = (output + chunk.toString()).slice(-4096);
+    });
     child.on('error', () => {
       clearTimeout(timeout);
       reject(new Error('Could not start adb shell.'));
