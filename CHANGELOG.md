@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Local APK installation** build tokens accept UUID digits, so a newly built
+  APK can be installed instead of showing an expired-build error.
+
 - **Cancellation evidence in busy repos** active builds retain their matching
   checks and replacement runs beyond the recent-run display limit. A release
   stopped by its publication guard links the failed checks in cancellation history.

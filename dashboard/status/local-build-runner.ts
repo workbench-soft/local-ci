@@ -66,7 +66,7 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
 
 /** Returns the temporary APK for a token issued by this server process. */
 export async function localArtifact(token: string): Promise<{ app: string; file: string } | null> {
-  if (typeof token !== 'string' || !/^[da-f-]{36}$/i.test(token)) return null;
+  if (!isLocalArtifactToken(token)) return null;
   const artifact = artifacts.get(token);
   if (!artifact) return null;
   if (Date.now() - artifact.createdAt > artifactTtlMs || !(await fileExists(artifact.file))) {
@@ -75,6 +75,10 @@ export async function localArtifact(token: string): Promise<{ app: string; file:
     return null;
   }
   return artifact;
+}
+
+export function isLocalArtifactToken(token: unknown): token is string {
+  return typeof token === 'string' && /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i.test(token);
 }
 
 export async function forgetLocalArtifact(token: string): Promise<void> {
