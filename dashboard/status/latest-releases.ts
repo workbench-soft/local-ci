@@ -240,16 +240,18 @@ function waitOf(run: PipelineRun, ships: PipelineRun[], now: number): RunWait {
   const elapsedMs = Math.max(0, now - Date.parse(run.createdAt));
   // The usual life of this workflow comes from its finished runs of the same repo, with the same
   // survival count the job estimate uses: a cancelled run gives a lower bound, a success the full time.
-  const usualMs = run.typicalMs ?? typicalDuration(
-    run.workflow,
-    ships
-      .filter((item) => item.workflow === run.workflow && item.status === 'completed' && item.id !== run.id)
-      .map((item) => ({
-        name: item.workflow,
-        conclusion: item.conclusion,
-        startedAt: item.createdAt,
-        completedAt: item.updatedAt,
-      })),
-  );
+  const usualMs =
+    run.typicalMs ??
+    typicalDuration(
+      run.workflow,
+      ships
+        .filter((item) => item.workflow === run.workflow && item.status === 'completed' && item.id !== run.id)
+        .map((item) => ({
+          name: item.workflow,
+          conclusion: item.conclusion,
+          startedAt: item.createdAt,
+          completedAt: item.updatedAt,
+        })),
+    );
   return { elapsedMs, usualMs };
 }
