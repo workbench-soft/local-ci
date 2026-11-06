@@ -147,7 +147,7 @@ flowchart TD
 10. Click the branch or the PR link to open it on GitHub.
    Open Cancellation history on either tab to read a saved stop reason.
    Follow its links to the replacement build, failed Checks, commit or PR.
-10. To change the number of runners, type it in Runners on this PC, or press
+11. To change the number of runners, type it in Runners on this PC, or press
     Use with the suggested count. Press Apply, and watch
     `runner\install.ps1` add or remove runners in its window.
 
