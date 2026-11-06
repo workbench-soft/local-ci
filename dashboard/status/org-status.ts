@@ -30,6 +30,8 @@ export type WorkflowRun = {
   /** When the latest attempt of the run started. */
   startedAt: string | null;
   updatedAt: string;
+  /** Rolling median of the last 10 finished runs of this workflow, including queue time. */
+  typicalMs?: number | null;
   url: string;
   /** The branch on GitHub. */
   branchUrl: string;
@@ -279,32 +281,46 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
   return runs;
 }
 
-/** The 10 latest finished runs of a workflow give the usual length of each of its running jobs. */
+/** The 10 latest finished runs supply estimates for the workflow and each running job.
+ * Completed-but-unsuccessful runs are right-censored by typicalDuration, never counted as fast success.
+ * This is the same history request the live-jobs sliding window already makes, not a second tracker.
+ */
 async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<void> {
-  const running = runs.flatMap((run) =>
-    run.jobs.filter((job) => job.status === 'in_progress').map((job) => ({ run, job })),
-  );
-  if (!running.length) return;
-  const workflowIds = new Set(running.map(({ run }) => run.workflowId));
-  const pastByWorkflow = new Map<number, RunJob[]>();
+  const active = runs.filter((run) => activeStatuses.has(run.status) && run.workflowId > 0);
+  if (!active.length) return;
+  const workflowIds = new Set(active.map((run) => run.workflowId));
   await Promise.all(
     [...workflowIds].map(async (workflowId) => {
-      const ids = await latestFinishedRuns(fullName, workflowId);
-      const jobs = await Promise.all(ids.map((id) => finishedRunJobs(fullName, id)));
-      pastByWorkflow.set(workflowId, jobs.flat());
+      const past = await latestFinishedRuns(fullName, workflowId);
+      const related = active.filter((run) => run.workflowId === workflowId);
+      const historicalRuns = past.map((run) => ({
+        name: related[0].workflow,
+        conclusion: run.conclusion,
+        startedAt: run.created_at,
+        completedAt: run.updated_at,
+      }));
+      const typicalMs = typicalDuration(related[0].workflow, historicalRuns);
+      for (const run of related) run.typicalMs = typicalMs;
+
+      // Queued workflows have no running jobs yet; avoid fetching ten job lists for them.
+      if (!related.some((run) => run.jobs.some((job) => job.status === 'in_progress'))) return;
+      const jobs = (await Promise.all(past.map((run) => finishedRunJobs(fullName, run.id)))).flat();
+      for (const run of related)
+        for (const job of run.jobs.filter((item) => item.status === 'in_progress'))
+          job.typicalMs = typicalDuration(job.name, jobs);
     }),
   );
-  for (const { run, job } of running)
-    job.typicalMs = typicalDuration(job.name, pastByWorkflow.get(run.workflowId) ?? []);
 }
 
+type PreviousRun = { id: number; conclusion: string | null; created_at: string; updated_at: string };
+
 // The latest runs of a busy repo are often all queued, so the finished ones come from a call of their own.
-async function latestFinishedRuns(fullName: string, workflowId: number): Promise<number[]> {
+async function latestFinishedRuns(fullName: string, workflowId: number): Promise<PreviousRun[]> {
   try {
-    const { workflow_runs } = await getJson<{ workflow_runs: { id: number }[] }>(
+    const { workflow_runs } = await getJson<{ workflow_runs: PreviousRun[] }>(
       `/repos/${fullName}/actions/workflows/${workflowId}/runs?status=completed&per_page=10`,
     );
-    return workflow_runs.map((run) => run.id);
+    return workflow_runs;
   } catch {
     return [];
   }
