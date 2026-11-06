@@ -189,8 +189,7 @@ export async function runStorageCleanupBatch(planId: string): Promise<CleanupPro
         plan.firstError ??= error instanceof Error ? error.message : String(error);
         // Permission and rate-limit errors are not transient per item.
         if (status === 401 || status === 403 || status === 429) {
-          plan.next++;
-          return { ok: false, error: plan.firstError };
+          return { ok: false, error: plan.firstError ?? 'GitHub refused deletion.' };
         }
       } finally {
         plan.next++;
