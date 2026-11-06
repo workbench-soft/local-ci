@@ -44,7 +44,6 @@ export function typicalDuration(name: string, past: PastJob[]): number | null {
   return times[times.length - 1].ms;
 }
 
-/** Fills by time when a past run gives the usual length, else by finished steps. */
 /** Reuse the rolling historical duration for both running jobs and whole release workflows. */
 export function durationProgress(elapsedMs: number, typicalMs: number): Pick<JobProgress, 'fraction' | 'time' | 'over'> {
   if (!Number.isFinite(typicalMs) || typicalMs <= 0) return { fraction: 0, time: null, over: false };
@@ -57,13 +56,19 @@ export function durationProgress(elapsedMs: number, typicalMs: number): Pick<Job
   return { fraction: Math.min(elapsed / typicalMs, maxFraction), time, over };
 }
 
+/** Fills by time when a past run gives the usual length, else by finished steps. */
 export function jobProgress(steps: StepCount, typicalMs: number | null, startedAt: string, now: number): JobProgress {
   const step = steps.total
     ? `step ${Math.min(steps.done + 1, steps.total)} of ${steps.total}${steps.current ? `: ${steps.current}` : ''}`
     : null;
   if (typicalMs) return { ...durationProgress(now - Date.parse(startedAt), typicalMs), step };
   // All steps can finish while GitHub still finalizes the job; never show 100% before it ends.
-  return { fraction: steps.total ? Math.min(steps.done / steps.total, maxFraction) : 0, step, time: null, over: false };
+  return {
+    fraction: steps.total ? Math.min(steps.done / steps.total, maxFraction) : 0,
+    step,
+    time: null,
+    over: false,
+  };
 }
 
 function formatMinutes(ms: number): string {
