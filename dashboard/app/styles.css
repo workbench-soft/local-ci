@@ -604,6 +604,16 @@ td .run-controls {
   margin-top: 4px;
 }
 
+.install-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.release-actions .install {
+  margin-top: 0;
+}
+
 .install-ok {
   color: var(--ok);
 }
