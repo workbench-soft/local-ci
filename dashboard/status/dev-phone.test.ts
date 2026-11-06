@@ -18,7 +18,14 @@ test('developer install covers the released apps that support the phone key', ()
 });
 
 test('no developer button for unsupported or malformed releases', () => {
-  for (const tag of ['skyaltar-v1', 'lumiere-v2', 'memoire-v1', 'shuttrix-legacy-v1', 'shuttrix-main', '../shuttrix-v1']) {
+  for (const tag of [
+    'skyaltar-v1',
+    'lumiere-v2',
+    'memoire-v1',
+    'shuttrix-legacy-v1',
+    'shuttrix-main',
+    '../shuttrix-v1',
+  ]) {
     assert.equal(developerPackageForTag(tag), null);
   }
 });
@@ -36,5 +43,8 @@ test('unlock sends the key via adb shell stdin and explicitly hides ads', () => 
   assert.match(command, /workbenchsoft-dev:\/\/unlock\?key=a{64}&ads=0/);
   assert.match(command, /\nexit\n$/);
   assert.throws(() => developerUnlockCommand('com.example.other/.MainActivity', key), /Invalid Android/);
-  assert.throws(() => developerUnlockCommand('com.workbenchsoft.shuttrix/.MainActivity', "'; rm -rf /"), /64 hexadecimal/);
+  assert.throws(
+    () => developerUnlockCommand('com.workbenchsoft.shuttrix/.MainActivity', "'; rm -rf /"),
+    /64 hexadecimal/,
+  );
 });
