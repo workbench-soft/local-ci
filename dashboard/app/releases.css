@@ -8,14 +8,21 @@
 }
 
 .dev-key-notice-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px 16px;
+  cursor: pointer;
 }
 
-.dev-key-notice h3 {
-  margin: 0;
+.dev-key-notice-header strong {
+  margin-right: 12px;
+  font-size: 14px;
+}
+
+.dev-key-notice-header:focus-visible {
+  outline: 2px solid var(--busy);
+  outline-offset: 3px;
+}
+
+.dev-key-notice[open] > p:first-of-type {
+  margin-top: 14px;
 }
 
 .dev-key-ready {
