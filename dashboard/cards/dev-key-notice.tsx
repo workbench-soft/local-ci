@@ -1,13 +1,13 @@
 /** The developer key never leaves the dashboard server. This card receives only its configured state. */
 export function DevKeyNotice({ configured }: { configured: boolean }) {
   return (
-    <aside className="dev-key-notice" aria-labelledby="dev-key-title">
-      <div className="dev-key-notice-header">
-        <h3 id="dev-key-title">Install Dev: WORKBENCH_DEV_KEY</h3>
+    <details className="dev-key-notice">
+      <summary className="dev-key-notice-header">
+        <strong>Install Dev: WORKBENCH_DEV_KEY</strong>
         <span className={configured ? 'dev-key-ready' : 'dev-key-missing'} role="status">
           {configured ? 'Key configured on this dashboard' : 'Key missing on this dashboard'}
         </span>
-      </div>
+      </summary>
       <p>Install Dev installs the normal signed APK and unlocks developer settings through ADB.</p>
       <p>The dashboard needs your original 64-character hexadecimal WORKBENCH_DEV_KEY.</p>
       <ol>
@@ -45,6 +45,6 @@ export function DevKeyNotice({ configured }: { configured: boolean }) {
       <p className="dev-key-notice-foot">
         GitHub contains only the key&apos;s hash. Never paste the key into this site, an issue or a chat.
       </p>
-    </aside>
+    </details>
   );
 }
