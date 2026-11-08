@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { copyFile, mkdir, mkdtemp, readdir, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -11,7 +11,28 @@ const buildTimeoutMs = 30 * 60_000;
 const artifactTtlMs = 6 * 60 * 60_000;
 const buildRoot = join(tmpdir(), 'local-ci-releases');
 const artifacts = new Map<string, { app: string; file: string; createdAt: number }>();
-const running = new Set<string>();
+type BuildControl = { controller: AbortController; pid: number | null; cancelled: boolean };
+const running = new Map<string, BuildControl>();
+
+/** Local builds execute inside the dashboard server process. Stop only the tracked process tree. */
+export function activeLocalBuilds(): string[] {
+  return [...running.keys()];
+}
+
+export async function cancelLocalRelease(app: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!releaseTargetFor(app)?.build) return { ok: false, error: 'Unknown local build.' };
+  const control = running.get(app);
+  if (!control) return { ok: false, error: 'No local build of this app is running.' };
+  if (control.cancelled) return { ok: true };
+  control.cancelled = true;
+  const pid = control.pid;
+  if (pid !== null) {
+    // A process that just exited is harmless; abort covers a concurrently started next command.
+    await killProcessTree(pid).catch(() => undefined);
+  }
+  control.controller.abort();
+  return { ok: true };
+}
 
 export type LocalBuildResult =
   | { ok: true; token: string; fileName: string; commit: string }
@@ -22,7 +43,8 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
   const target = releaseTargetFor(app);
   if (!target?.build) return { ok: false, error: 'This app has no local Android build configured.' };
   if (running.has(app)) return { ok: false, error: 'A local build of this app is already running.' };
-  running.add(app);
+  const control: BuildControl = { controller: new AbortController(), pid: null, cancelled: false };
+  running.set(app, control);
   const workspaceRoot = process.env.WBS_ROOT || resolve(process.cwd(), '../..');
   const sourceRepo = resolve(workspaceRoot, target.repo);
   let buildDir: string | null = null;
@@ -30,14 +52,22 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
     await mkdir(buildRoot, { recursive: true });
     await pruneOldBuilds();
     buildDir = await mkdtemp(join(buildRoot, `${safeName(app)}-`));
-    await run('git', ['fetch', '--tags', 'origin', 'main'], sourceRepo);
-    const commit = (await run('git', ['rev-parse', 'FETCH_HEAD'], sourceRepo)).trim();
+    await run('git', ['fetch', '--tags', 'origin', 'main'], sourceRepo, undefined, 120_000, control);
+    const commit = (await run('git', ['rev-parse', 'FETCH_HEAD'], sourceRepo, undefined, 120_000, control)).trim();
     if (!/^[a-f0-9]{40}$/i.test(commit)) throw new Error('Git did not return a commit for main.');
-    await run('git', ['clone', '--shared', '--no-checkout', sourceRepo, join(buildDir, 'source')], workspaceRoot);
+    await run(
+      'git',
+      ['clone', '--shared', '--no-checkout', sourceRepo, join(buildDir, 'source')],
+      workspaceRoot,
+      undefined,
+      120_000,
+      control,
+    );
     const checkout = join(buildDir, 'source');
-    await run('git', ['checkout', '--detach', commit], checkout);
-    await run('mise', ['x', '--', 'pnpm', 'install', '--frozen-lockfile'], checkout);
-    await run('bash', [target.build.script], checkout, undefined, buildTimeoutMs);
+    await run('git', ['checkout', '--detach', commit], checkout, undefined, 120_000, control);
+    await run('mise', ['x', '--', 'pnpm', 'install', '--frozen-lockfile'], checkout, undefined, 120_000, control);
+    await run('bash', [target.build.script], checkout, undefined, buildTimeoutMs, control);
+    if (control.cancelled) throw new Error('Local build was cancelled.');
     const builtApk = resolve(checkout, target.build.apk);
     if (!(await fileExists(builtApk))) throw new Error(`The build finished without producing ${target.build.apk}.`);
 
@@ -47,13 +77,17 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
     await mkdir(artifactDir, { recursive: true });
     const file = join(artifactDir, fileName);
     await copyFile(builtApk, file);
+    if (control.cancelled) {
+      await rm(artifactDir, { recursive: true, force: true });
+      throw new Error('Local build was cancelled.');
+    }
     artifacts.set(token, { app, file, createdAt: Date.now() });
     return { ok: true, token, fileName, commit };
   } catch (error) {
-    return { ok: false, error: errorText(error) };
+    return { ok: false, error: control.cancelled ? 'Local build force-stopped.' : errorText(error) };
   } finally {
     const config = releaseTargetFor(app)?.build;
-    if (buildDir && config?.gradleDir) {
+    if (!control.cancelled && buildDir && config?.gradleDir) {
       const gradleDir = resolve(buildDir, 'source', config.gradleDir);
       if (await fileExists(join(gradleDir, 'gradlew'))) {
         await run('bash', ['-lc', './gradlew --stop'], gradleDir).catch(() => undefined);
@@ -105,27 +139,67 @@ async function pruneOldBuilds(): Promise<void> {
   }
 }
 
+async function killProcessTree(pid: number): Promise<void> {
+  if (process.platform === 'win32') {
+    // Windows taskkill /T stops bash, Gradle, Java and all other descendants.
+    await execFileAsync('taskkill', ['/PID', String(pid), '/T', '/F'], { timeout: 10_000, windowsHide: true });
+  } else {
+    // Each spawned command has its own process group on Unix.
+    process.kill(-pid, 'SIGKILL');
+  }
+}
+
 async function run(
   command: string,
   args: string[],
   cwd: string,
   env?: NodeJS.ProcessEnv,
   timeout = 120_000,
+  control?: BuildControl,
 ): Promise<string> {
-  try {
-    const { stdout, stderr } = await execFileAsync(command, args, {
+  if (control?.cancelled) throw new Error('Local build was cancelled.');
+  return new Promise<string>((resolve, reject) => {
+    const child = spawn(command, args, {
       cwd,
       env: { ...process.env, ...env },
-      timeout,
-      maxBuffer: 24 * 1024 * 1024,
       windowsHide: true,
+      detached: process.platform !== 'win32',
+      signal: control?.controller.signal,
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return `${stdout}${stderr}`;
-  } catch (error) {
-    const detail = error as { stdout?: string; stderr?: string; message?: string };
-    const output = `${detail.stdout ?? ''}\n${detail.stderr ?? ''}`.trim();
-    throw new Error(output.slice(-4000) || detail.message || String(error));
-  }
+    if (control) control.pid = child.pid ?? null;
+
+    let output = '';
+    let timedOut = false;
+    const append = (chunk: Buffer | string) => {
+      output += chunk.toString();
+      // Keep enough of the command log to report a useful failure without unbounded memory use.
+      if (output.length > 24 * 1024 * 1024) output = output.slice(-24 * 1024 * 1024);
+    };
+    child.stdout?.on('data', append);
+    child.stderr?.on('data', append);
+    const timer = setTimeout(() => {
+      timedOut = true;
+      if (child.pid) void killProcessTree(child.pid).catch(() => child.kill());
+      else child.kill();
+    }, timeout);
+    const finish = () => {
+      clearTimeout(timer);
+      if (control && control.pid === child.pid) control.pid = null;
+    };
+
+    child.on('error', (error) => {
+      finish();
+      reject(new Error(output.slice(-4000) || error.message));
+    });
+    child.on('close', (code) => {
+      finish();
+      if (control?.cancelled) reject(new Error('Local build was cancelled.'));
+      else if (timedOut) reject(new Error(`Build command timed out after ${timeout}ms. ${output.slice(-4000)}`));
+      else if (code !== 0) reject(new Error(output.slice(-4000) || `${command} exited with status ${code}`));
+      else resolve(output);
+    });
+  });
 }
 
 function safeName(value: string): string {

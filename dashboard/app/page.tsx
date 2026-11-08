@@ -13,6 +13,7 @@ import { routerState } from '@/status/cloud-router';
 import { runDuration } from '@/status/durations';
 import { summarizeCi } from '@/status/headline';
 import { latestReleases, type PipelineRun } from '@/status/latest-releases';
+import { activeLocalBuilds } from '@/status/local-build-runner';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { releasesByRun } from '@/status/releases';
@@ -104,6 +105,7 @@ export default async function StatusPage({
             <>
               <ReleasesCard
                 apps={apps}
+                localBuilds={activeLocalBuilds()}
                 jobs={live}
                 now={now}
                 devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}

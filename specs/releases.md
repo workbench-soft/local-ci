@@ -23,11 +23,16 @@ APK from the latest `main` in a separate worktree and install that build.
 2. `Checks` and Release start on the push. Release builds while Checks runs.
 3. Release tags the commit and publishes the notes on the Releases page.
 4. To release by hand, the person chooses an app and presses **Release on CI**.
-   Local CI dispatches its release workflow against `main`.
+   Local CI dispatches its release workflow against `main`. While it is queued
+   or running, the button is gray and disabled. A second dispatch is also
+   rejected server-side if the workflow is already active.
 5. After an APK release appears, the person presses **Install** to download
    that APK and install it on the single ADB device.
-6. To build on this PC, the person presses **Build locally**. Local CI fetches
-   `origin/main`, builds in an isolated worktree, then offers **Install local**.
+6. An active release or CI build exposes **Force stop**, which confirms and requests
+   GitHub's force-cancel. Local builds offer **Force stop local build**, which
+   terminates the spawned process tree and marks the build as cancelled.
+7. To build on this PC, the person presses **Build locally**. Local CI fetches
+    `origin/main`, builds in an isolated worktree, then offers **Install local**.
 
 ## How it works
 
