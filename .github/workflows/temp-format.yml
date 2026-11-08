@@ -1,0 +1,34 @@
+name: Temporary PR formatter
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: dashboard
+    steps:
+      - run: git config --global core.autocrlf false
+        working-directory: ${{ runner.temp }}
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
+      - run: mise x -- pnpm install --frozen-lockfile
+      - run: mise x -- pnpm format
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dashboard
+          if ! git diff --cached --quiet; then
+            git commit -m "style: apply dashboard formatter"
+            git push origin HEAD:refs/heads/${{ github.head_ref }}
+          fi
