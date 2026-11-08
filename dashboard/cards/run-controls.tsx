@@ -17,6 +17,8 @@ export function RunControls({
   conclusion = null,
   label,
   onPurging,
+  showPurge = true,
+  stopText = 'Stop',
 }: {
   repo: string;
   runId: number;
@@ -25,6 +27,8 @@ export function RunControls({
   conclusion?: string | null;
   label: string;
   onPurging?: (purging: boolean) => void;
+  showPurge?: boolean;
+  stopText?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState<'stop' | 'purge' | null>(null);
@@ -42,6 +46,8 @@ export function RunControls({
   }, [stop, busy, repo, runId]);
 
   const run = (kind: 'stop' | 'purge') => {
+    if (kind === 'stop' && !window.confirm(`Force-stop ${label}? Its current jobs and child processes will be cancelled.`))
+      return;
     if (
       kind === 'purge' &&
       !window.confirm(`Purge ${label}? GitHub stops the run and deletes it with its logs and artifacts.`)
@@ -75,20 +81,22 @@ export function RunControls({
           title="Force cancel the run on GitHub, so its runner takes the next job"
         >
           <Icon name="stop" />
-          {stop === 'stopping' ? 'Stopping' : stop === 'stopped' ? 'Stopped' : 'Stop'}
+          {stop === 'stopping' ? 'Stopping' : stop === 'stopped' ? 'Stopped' : stopText}
         </button>
       )}
-      <button
-        type="button"
-        className="action danger"
-        disabled={pending}
-        onClick={() => run('purge')}
-        aria-label={`Purge ${label}`}
-        title="Force cancel the run, then delete it with its logs and artifacts"
-      >
-        <Icon name="trash" />
-        {busy === 'purge' ? 'Purging' : 'Purge'}
-      </button>
+      {showPurge && (
+        <button
+          type="button"
+          className="action danger"
+          disabled={pending}
+          onClick={() => run('purge')}
+          aria-label={`Purge ${label}`}
+          title="Force cancel the run, then delete it with its logs and artifacts"
+        >
+          <Icon name="trash" />
+          {busy === 'purge' ? 'Purging' : 'Purge'}
+        </button>
+      )}
       {error && (
         <span className="action-error small" role="alert">
           {error}
