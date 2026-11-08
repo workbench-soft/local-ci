@@ -220,7 +220,13 @@ function AppItem({
 }: ItemProps) {
   const chip = chipOf[state];
   const releaseRunning = state === 'building' || state === 'queued';
-  const dispatchJustRequested = actions.requestedAt !== undefined && now - actions.requestedAt < 30_000;
+  const dispatchedAt = actions.requestedAt;
+  const dispatchAcknowledged =
+    dispatchedAt !== undefined &&
+    ((run && Date.parse(run.createdAt) >= dispatchedAt - 5_000) ||
+      (release && Date.parse(release.createdAt) >= dispatchedAt));
+  const dispatchJustRequested =
+    dispatchedAt !== undefined && now - dispatchedAt < 30_000 && !dispatchAcknowledged;
   const hint = run && run.place !== 'done' && state === 'building' ? placeIcons[run.place].hint : undefined;
   return (
     <li>
