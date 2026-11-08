@@ -46,7 +46,10 @@ export function RunControls({
   }, [stop, busy, repo, runId]);
 
   const run = (kind: 'stop' | 'purge') => {
-    if (kind === 'stop' && !window.confirm(`Force-stop ${label}? Its current jobs and child processes will be cancelled.`))
+    if (
+      kind === 'stop' &&
+      !window.confirm(`Force-stop ${label}? Its current jobs and child processes will be cancelled.`)
+    )
       return;
     if (
       kind === 'purge' &&

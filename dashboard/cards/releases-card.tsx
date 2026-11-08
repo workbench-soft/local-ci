@@ -112,10 +112,7 @@ export function ReleasesCard({
       return;
     setCancellingLocal((current) => new Set([...current, app]));
     const answer = await cancelLocalBuild(app).catch((error: Error) => ({ ok: false as const, error: error.message }));
-    setLocalAction(
-      app,
-      answer.ok ? { message: 'Stopping local build.', error: undefined } : { error: answer.error },
-    );
+    setLocalAction(app, answer.ok ? { message: 'Stopping local build.', error: undefined } : { error: answer.error });
     setCancellingLocal((current) => new Set([...current].filter((item) => item !== app)));
   };
 

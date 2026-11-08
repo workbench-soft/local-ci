@@ -63,7 +63,14 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
     await run('git', ['fetch', '--tags', 'origin', 'main'], sourceRepo, undefined, 120_000, control);
     const commit = (await run('git', ['rev-parse', 'FETCH_HEAD'], sourceRepo, undefined, 120_000, control)).trim();
     if (!/^[a-f0-9]{40}$/i.test(commit)) throw new Error('Git did not return a commit for main.');
-    await run('git', ['clone', '--shared', '--no-checkout', sourceRepo, join(buildDir, 'source')], workspaceRoot, undefined, 120_000, control);
+    await run(
+      'git',
+      ['clone', '--shared', '--no-checkout', sourceRepo, join(buildDir, 'source')],
+      workspaceRoot,
+      undefined,
+      120_000,
+      control,
+    );
     const checkout = join(buildDir, 'source');
     await run('git', ['checkout', '--detach', commit], checkout, undefined, 120_000, control);
     await run('mise', ['x', '--', 'pnpm', 'install', '--frozen-lockfile'], checkout, undefined, 120_000, control);
