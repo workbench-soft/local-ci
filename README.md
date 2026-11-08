@@ -233,7 +233,10 @@ Release starts alongside Checks; publication alone waits for the matching
 commit's successful checks. Open PRs hold no release build.
 
 From the Releases tab, **Release on CI** dispatches a supported app workflow
-on `main`. **Build locally** fetches the latest `main` of memories-mobile,
+on `main`. The button turns gray and is disabled while that app's release is
+queued or running. **Force stop** confirms and cancels its GitHub Actions run;
+**Force stop local build** terminates the tracked local build process tree
+(also during dependency installation). **Build locally** fetches the latest `main` of memories-mobile,
 Shuttrix, Tick-a-Lot, SkyAltar, Memoire, Shuttrix Legacy or SpotTheCam and builds its APK
 in a temporary clone. The build uses the app's local release key when it is
 set up on this PC. **Install local** sends that APK to the connected phone.
