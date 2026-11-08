@@ -25,8 +25,8 @@ export function kindOfJob(job: Pick<RunJob, 'runnerName' | 'labels'>, local: Set
   if (name && local.has(name)) return 'pc';
   if (labels.includes('oracle') || nameLower.startsWith('oracle')) return 'oracle';
   if (labels.some((label) => label.startsWith('blacksmith')) || nameLower.startsWith('blacksmith')) return 'blacksmith';
-  if (nameLower.startsWith('github actions') || (!labels.includes('self-hosted') && labels.some((l) => githubLabel.test(l))))
-    return 'github';
+  const hostedGithub = !labels.includes('self-hosted') && labels.some((label) => githubLabel.test(label));
+  if (nameLower.startsWith('github actions') || hostedGithub) return 'github';
   if (!name && (labels.includes('local') || labels.includes('heavy'))) return 'pc';
   return 'other';
 }
