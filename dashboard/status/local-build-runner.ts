@@ -78,6 +78,10 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
     await mkdir(artifactDir, { recursive: true });
     const file = join(artifactDir, fileName);
     await copyFile(builtApk, file);
+    if (control.cancelled) {
+      await rm(artifactDir, { recursive: true, force: true });
+      throw new Error('Local build was cancelled.');
+    }
     artifacts.set(token, { app, file, createdAt: Date.now() });
     return { ok: true, token, fileName, commit };
   } catch (error) {
@@ -173,7 +177,11 @@ async function run(
     // A stop may race with spawning the child; abort covers the in-between window.
     if (control?.cancelled) {
       if (process.platform !== 'win32' && child.pid) {
-        try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill(); }
+        try {
+          process.kill(-child.pid, 'SIGKILL');
+        } catch {
+          child.kill();
+        }
       } else {
         child.kill();
       }
