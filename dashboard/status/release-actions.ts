@@ -16,16 +16,22 @@ const dispatchVisibilityMs = 30_000;
 export async function dispatchRelease(app: string): Promise<ReleaseActionResult> {
   const target = typeof app === 'string' ? releaseTargetFor(app) : null;
   if (!target) return { ok: false, error: 'This app has no configured release workflow.' };
-  if (dispatching.has(app) || Date.now() - (recentlyDispatched.get(app) ?? 0) < dispatchVisibilityMs)
-    return { ok: false, error: 'A release was just queued. Wait for its status to appear.' };
+  if (dispatching.has(app)) return { ok: false, error: 'This release is being queued.' };
   dispatching.add(app);
   try {
     const workflow = `/repos/${orgName}/${target.repo}/actions/workflows/${encodeURIComponent(target.workflow)}`;
     const { workflow_runs: runs } = (await (await callGitHub(`${workflow}/runs?branch=main&per_page=100`)).json()) as {
-      workflow_runs: { status: string }[];
+      workflow_runs: { status: string; created_at: string }[];
     };
     if (hasUnfinishedRelease(runs))
       return { ok: false, error: 'This release is already queued or running. Stop it before starting another.' };
+    const dispatchedAt = recentlyDispatched.get(app);
+    if (
+      dispatchedAt &&
+      Date.now() - dispatchedAt < dispatchVisibilityMs &&
+      !runs.some((run) => Date.parse(run.created_at) >= dispatchedAt - 5_000)
+    )
+      return { ok: false, error: 'A release was just queued. Wait for it to appear on GitHub.' };
     await callGitHub(
       `/repos/${orgName}/${target.repo}/actions/workflows/${encodeURIComponent(target.workflow)}/dispatches`,
       'POST',
