@@ -562,6 +562,13 @@ td .run-controls {
   cursor: progress;
 }
 
+.release-on-ci:disabled {
+  background: #88888822;
+  color: var(--muted);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .action-error {
   color: var(--bad);
 }
