@@ -20,12 +20,13 @@ const githubLabel = /^(ubuntu|windows|macos)-/;
  */
 export function kindOfJob(job: Pick<RunJob, 'runnerName' | 'labels'>, local: Set<string>): RunnerKind {
   const name = job.runnerName ?? '';
+  const nameLower = name.toLowerCase();
   const labels = lower(job.labels);
   if (name && local.has(name)) return 'pc';
-  if (labels.includes('oracle') || name.toLowerCase().startsWith('oracle')) return 'oracle';
-  if (labels.some((label) => label.startsWith('blacksmith')) || name.startsWith('blacksmith')) return 'blacksmith';
-  if (name.startsWith('GitHub Actions') || (!labels.includes('self-hosted') && labels.some((l) => githubLabel.test(l))))
-    return 'github';
+  if (labels.includes('oracle') || nameLower.startsWith('oracle')) return 'oracle';
+  if (labels.some((label) => label.startsWith('blacksmith')) || nameLower.startsWith('blacksmith')) return 'blacksmith';
+  const hostedGithub = !labels.includes('self-hosted') && labels.some((label) => githubLabel.test(label));
+  if (nameLower.startsWith('github actions') || hostedGithub) return 'github';
   if (!name && (labels.includes('local') || labels.includes('heavy'))) return 'pc';
   return 'other';
 }

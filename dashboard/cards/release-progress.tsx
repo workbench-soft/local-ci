@@ -1,5 +1,6 @@
 import type { RunWait, ReleaseState } from '@/status/latest-releases';
 import type { LiveJob } from '@/status/placement';
+import { kindNames } from '@/status/runner-kind';
 import { durationProgress } from '@/status/progress';
 import { formatDuration } from '@/status/durations';
 import { JobProgress } from './job-progress';
@@ -20,13 +21,12 @@ export function ReleaseProgress({
   wait: RunWait | null;
   now: number;
 }) {
-  if (state === 'queued')
+  if (state === 'queued' && !jobs.length)
     return <p className="release-detail muted small">Waiting for a runner; progress starts when building.</p>;
 
-  const running = jobs.filter((job) => job.place !== 'waiting');
-  const typical = wait?.usualMs;
+  const typical = state === 'building' ? wait?.usualMs : null;
   const estimate = typical && typical > 0 && wait ? durationProgress(wait.elapsedMs, typical) : null;
-  if (!estimate && !running.length) return null;
+  if (!estimate && !jobs.length) return null;
   const percent = estimate ? Math.round(estimate.fraction * 100) : null;
 
   return (
@@ -48,10 +48,16 @@ export function ReleaseProgress({
           </div>
         </>
       )}
-      {running.map((job) => (
+      {jobs.map((job) => (
         <div className="release-job" key={job.key}>
-          <strong>{job.name ?? job.workflow}</strong>
-          <JobProgress job={job} now={now} />
+          <a href={job.url} target="_blank" rel="noreferrer">
+            <strong>{job.name ?? job.workflow}</strong>
+          </a>
+          <span className="muted small">
+            {' · '}
+            {job.place === 'waiting' ? `waiting for ${kindNames[job.kind]}` : `on ${kindNames[job.kind]}`}
+          </span>
+          {job.place !== 'waiting' && <JobProgress job={job} now={now} />}
         </div>
       ))}
     </div>

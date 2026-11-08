@@ -237,3 +237,10 @@ input[type='checkbox'] {
   font-size: 12px;
   font-weight: 600;
 }
+
+/* Surface the actual build provider beside each release's current workflow state. */
+.release-platforms {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
