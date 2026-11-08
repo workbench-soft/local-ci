@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { copyFile, mkdir, mkdtemp, readdir, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -27,16 +27,8 @@ export async function cancelLocalRelease(app: string): Promise<{ ok: true } | { 
   control.cancelled = true;
   const pid = control.pid;
   if (pid !== null) {
-    try {
-      // execFile's default termination only kills the shell; Gradle and its children keep running.
-      if (process.platform === 'win32') {
-        await execFileAsync('taskkill', ['/PID', String(pid), '/T', '/F'], { timeout: 10_000, windowsHide: true });
-      } else {
-        process.kill(-pid, 'SIGKILL');
-      }
-    } catch {
-      // A process that just exited is harmless; abort covers a concurrently started next command.
-    }
+    // A process that just exited is harmless; abort covers a concurrently started next command.
+    await killProcessTree(pid).catch(() => undefined);
   }
   control.controller.abort();
   return { ok: true };
@@ -147,6 +139,16 @@ async function pruneOldBuilds(): Promise<void> {
   }
 }
 
+async function killProcessTree(pid: number): Promise<void> {
+  if (process.platform === 'win32') {
+    // Windows taskkill /T stops bash, Gradle, Java and all other descendants.
+    await execFileAsync('taskkill', ['/PID', String(pid), '/T', '/F'], { timeout: 10_000, windowsHide: true });
+  } else {
+    // Each spawned command has its own process group on Unix.
+    process.kill(-pid, 'SIGKILL');
+  }
+}
+
 async function run(
   command: string,
   args: string[],
@@ -157,42 +159,46 @@ async function run(
 ): Promise<string> {
   if (control?.cancelled) throw new Error('Local build was cancelled.');
   return new Promise<string>((resolve, reject) => {
-    const child = execFile(
-      command,
-      args,
-      {
-        cwd,
-        env: { ...process.env, ...env },
-        timeout,
-        maxBuffer: 24 * 1024 * 1024,
-        windowsHide: true,
-        // On Unix each command gets its own process group for safe tree termination.
-        detached: process.platform !== 'win32',
-        signal: control?.controller.signal,
-      },
-      (error, stdout, stderr) => {
-        if (control?.pid === child.pid) control.pid = null;
-        if (error) {
-          const output = `${stdout ?? ''}\n${stderr ?? ''}`.trim();
-          reject(new Error(output.slice(-4000) || error.message));
-        } else {
-          resolve(`${stdout}${stderr}`);
-        }
-      },
-    );
+    const child = spawn(command, args, {
+      cwd,
+      env: { ...process.env, ...env },
+      windowsHide: true,
+      detached: process.platform !== 'win32',
+      signal: control?.controller.signal,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
     if (control) control.pid = child.pid ?? null;
-    // A stop may race with spawning the child; abort covers the in-between window.
-    if (control?.cancelled) {
-      if (process.platform !== 'win32' && child.pid) {
-        try {
-          process.kill(-child.pid, 'SIGKILL');
-        } catch {
-          child.kill();
-        }
-      } else {
-        child.kill();
-      }
-    }
+
+    let output = '';
+    let timedOut = false;
+    const append = (chunk: Buffer | string) => {
+      output += chunk.toString();
+      // Keep enough of the command log to report a useful failure without unbounded memory use.
+      if (output.length > 24 * 1024 * 1024) output = output.slice(-24 * 1024 * 1024);
+    };
+    child.stdout?.on('data', append);
+    child.stderr?.on('data', append);
+    const timer = setTimeout(() => {
+      timedOut = true;
+      if (child.pid) void killProcessTree(child.pid).catch(() => child.kill());
+      else child.kill();
+    }, timeout);
+    const finish = () => {
+      clearTimeout(timer);
+      if (control && control.pid === child.pid) control.pid = null;
+    };
+
+    child.on('error', (error) => {
+      finish();
+      reject(new Error(output.slice(-4000) || error.message));
+    });
+    child.on('close', (code) => {
+      finish();
+      if (control?.cancelled) reject(new Error('Local build was cancelled.'));
+      else if (timedOut) reject(new Error(`Build command timed out after ${timeout}ms. ${output.slice(-4000)}`));
+      else if (code !== 0) reject(new Error(output.slice(-4000) || `${command} exited with status ${code}`));
+      else resolve(output);
+    });
   });
 }
 
