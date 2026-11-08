@@ -104,6 +104,7 @@ export default async function StatusPage({
             <>
               <ReleasesCard
                 apps={apps}
+                localBuilds={activeLocalBuilds()}
                 jobs={live}
                 now={now}
                 devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}
