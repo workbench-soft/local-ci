@@ -225,8 +225,7 @@ function AppItem({
     dispatchedAt !== undefined &&
     ((run && Date.parse(run.createdAt) >= dispatchedAt - 5_000) ||
       (release && Date.parse(release.createdAt) >= dispatchedAt));
-  const dispatchJustRequested =
-    dispatchedAt !== undefined && now - dispatchedAt < 30_000 && !dispatchAcknowledged;
+  const dispatchJustRequested = dispatchedAt !== undefined && now - dispatchedAt < 30_000 && !dispatchAcknowledged;
   const hint = run && run.place !== 'done' && state === 'building' ? placeIcons[run.place].hint : undefined;
   return (
     <li>
