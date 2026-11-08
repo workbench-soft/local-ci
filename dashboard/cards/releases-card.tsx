@@ -8,6 +8,7 @@ import { formatDuration } from '@/status/durations';
 import { buildLatestMain, installLocalBuild } from '@/status/local-build';
 import type { AppRelease, ReleaseState, RunView } from '@/status/latest-releases';
 import type { LiveJob } from '@/status/placement';
+import { kindNames } from '@/status/runner-kind';
 import { dispatchRelease } from '@/status/release-actions';
 import { releaseTargetFor } from '@/status/release-config';
 import { Icon, placeIcons, type IconName } from './icons';
@@ -219,6 +220,15 @@ function AppItem({
             {chip.text}
           </span>
         )}
+        {run && run.machines.length > 0 && (
+          <span className="release-platforms" aria-label={`Build platforms for ${app}`}>
+            {run.machines.map((kind) => (
+              <span className={`machine ${kind}`} key={kind} title={`A job runs on ${kindNames[kind]}`}>
+                {kindNames[kind]}
+              </span>
+            ))}
+          </span>
+        )}
         {release && (
           <a className="release-link" href={release.url} target="_blank" rel="noreferrer">
             <Icon name="package" />
@@ -298,7 +308,15 @@ function Detail({
   if (state === 'building' || state === 'queued') {
     if (!wait) return null;
     const elapsed = `for ${formatDuration(wait.elapsedMs)}`;
-    const where = state === 'building' && run && run.place !== 'done' ? placeIcons[run.place].text.toLowerCase() : null;
+    const machines = run?.machines.map((kind) => kindNames[kind]).join(', ');
+    const where =
+      state === 'building'
+        ? machines
+          ? `on ${machines}`
+          : run && run.place !== 'done'
+            ? placeIcons[run.place].text.toLowerCase()
+            : null
+        : null;
     const left =
       wait.usualMs === null
         ? null

@@ -73,6 +73,7 @@ export default async function StatusPage({
     updatedAt: run.updatedAt,
     url: run.url,
     place: placeOfRun(run, local),
+    machines: kindsOfRun(run.jobs, local),
     jobs: run.jobs.map((job) => ({ name: job.name, conclusion: job.conclusion, failedStep: job.failedStep })),
   }));
   const apps = latestReleases(releases, pipelineRuns, cancels, now);
@@ -100,12 +101,15 @@ export default async function StatusPage({
       {tab === 'releases' ? (
         <div className="grid">
           {org.ok ? (
-            <ReleasesCard
-              apps={apps}
-              jobs={live}
-              now={now}
-              devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}
-            />
+            <>
+              <ReleasesCard
+                apps={apps}
+                jobs={live}
+                now={now}
+                devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}
+              />
+              <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />
+            </>
           ) : (
             <p className="error">{org.error}</p>
           )}

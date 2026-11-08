@@ -496,3 +496,26 @@ test('release ETA prefers the shared last-ten sliding-window estimate', () => {
   assert.equal(app.run?.id, 2);
   assert.equal(app.wait?.usualMs, 14 * 60_000);
 });
+
+test('an active release exposes all cloud build platforms with its run', () => {
+  const [app] = latestReleases(
+    [tickalotRelease],
+    [
+      madeIt(1, '2026-11-05T08:55:00Z'),
+      run({
+        id: 2,
+        workflow: 'Release',
+        event: 'workflow_run',
+        status: 'in_progress',
+        conclusion: null,
+        createdAt: '2026-11-05T11:00:00Z',
+        place: 'elsewhere',
+        machines: ['blacksmith', 'github'],
+      }),
+    ],
+    noCancels,
+    now,
+  );
+  assert.equal(app.state, 'building');
+  assert.deepEqual(app.run?.machines, ['blacksmith', 'github']);
+});

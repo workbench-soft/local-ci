@@ -1,4 +1,5 @@
 import type { CancelEntry } from './cancel-log.ts';
+import type { RunnerKind } from './runner-kind.ts';
 import { activeStatuses, type Place } from './placement.ts';
 import { typicalDuration } from './progress.ts';
 import { type Release, releasesByRun, releasePrefixes } from './releases.ts';
@@ -20,6 +21,8 @@ export type PipelineRun = {
   updatedAt: string;
   url: string;
   place: Place;
+  /** Runner providers that execute the workflow, including hosted CI jobs. */
+  machines?: RunnerKind[];
   jobs: { name: string; conclusion: string | null; failedStep: string | null }[];
 };
 
@@ -41,6 +44,7 @@ export type RunView = {
   conclusion: string | null;
   url: string;
   place: Place;
+  machines: RunnerKind[];
   createdAt: string;
   failedJob: string | null;
   failedStep: string | null;
@@ -98,6 +102,7 @@ function viewOf(run: PipelineRun): RunView {
     conclusion: run.conclusion,
     url: run.url,
     place: run.place,
+    machines: run.machines ?? [],
     createdAt: run.createdAt,
     failedJob: job?.name ?? null,
     failedStep: job?.failedStep ?? null,
