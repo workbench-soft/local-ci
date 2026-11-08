@@ -271,7 +271,7 @@ function AppItem({
       {(state === 'building' || state === 'queued') && (
         <ReleaseProgress app={app} state={state} jobs={jobs} wait={wait} now={now} />
       )}
-      {(release?.apk || hasReleaseWorkflow || canBuildLocally || (state === 'errored' && run)) && (
+      {(release?.apk || hasReleaseWorkflow || canBuildLocally || (run && (state === 'errored' || releaseRunning))) && (
         <div className="release-actions">
           {state === 'errored' && run && <RetryRunButtons repo={repo} runId={run.id} label={`${app} build`} />}
           {releaseRunning && run && (
