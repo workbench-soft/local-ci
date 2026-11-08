@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { formatAge } from '@/status/headline';
 import { installRelease } from '@/status/install-apk';
 import { formatDuration } from '@/status/durations';
-import { buildLatestMain, installLocalBuild } from '@/status/local-build';
+import { buildLatestMain, cancelLocalBuild, installLocalBuild } from '@/status/local-build';
 import type { AppRelease, ReleaseState, RunView } from '@/status/latest-releases';
 import type { LiveJob } from '@/status/placement';
 import { kindNames } from '@/status/runner-kind';
@@ -16,11 +16,13 @@ import { InstallButton } from './install-button';
 import { DevKeyNotice } from './dev-key-notice';
 import { ReleaseProgress } from './release-progress';
 import { RetryRunButtons } from './retry-run-buttons';
+import { RunControls } from './run-controls';
 import { StorageCleanupButton } from './storage-cleanup-button';
 
 type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
 type LocalAction = {
   busy?: 'dispatch' | 'build' | 'install';
+  requestedAt?: number;
   message?: string;
   error?: string;
   artifact?: { token: string; fileName: string; commit: string };
@@ -41,11 +43,13 @@ const chipOf: Record<ReleaseState, { icon: IconName; text: string; tone: 'ok' | 
 export function ReleasesCard({
   apps,
   jobs,
+  localBuilds,
   now,
   devKeyConfigured,
 }: {
   apps: AppRelease[];
   jobs: LiveJob[];
+  localBuilds: string[];
   now: number;
   devKeyConfigured: boolean;
 }) {
@@ -54,6 +58,7 @@ export function ReleasesCard({
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [localActions, setLocalActions] = useState<Record<string, LocalAction>>({});
   const [running, setRunning] = useState(false);
+  const [cancellingLocal, setCancellingLocal] = useState<ReadonlySet<string>>(new Set());
   const withApk = apps.filter((app) => app.release?.apk);
   const chosen = withApk.filter((app) => ticked.has(app.app));
   const allTicked = withApk.length > 0 && chosen.length === withApk.length;
@@ -70,7 +75,7 @@ export function ReleasesCard({
       const answer = await dispatchRelease(app).catch((error: Error) => ({ ok: false as const, error: error.message }));
       setLocalAction(app, {
         busy: undefined,
-        ...(answer.ok ? { message: 'Release queued on CI.' } : { error: answer.error }),
+        ...(answer.ok ? { message: 'Release queued on CI.', requestedAt: Date.now() } : { error: answer.error }),
       });
       return;
     }
@@ -100,6 +105,18 @@ export function ReleasesCard({
       busy: undefined,
       ...(answer.ok ? { message: `Installed on ${answer.device}.`, artifact: undefined } : { error: answer.error }),
     });
+  };
+
+  const stopLocal = async (app: string) => {
+    if (!window.confirm(`Force-stop the local build of ${app}? The build process and its children will be terminated.`))
+      return;
+    setCancellingLocal((current) => new Set([...current, app]));
+    const answer = await cancelLocalBuild(app).catch((error: Error) => ({ ok: false as const, error: error.message }));
+    setLocalAction(
+      app,
+      answer.ok ? { message: 'Stopping local build.', error: undefined } : { error: answer.error },
+    );
+    setCancellingLocal((current) => new Set([...current].filter((item) => item !== app)));
   };
 
   const installChosen = async () => {
@@ -154,12 +171,15 @@ export function ReleasesCard({
             jobs={app.run ? jobs.filter((job) => job.runId === app.run?.id) : []}
             ticked={ticked.has(app.app)}
             disabled={running}
+            localBuildRunning={localBuilds.includes(app.app) || localActions[app.app]?.busy === 'build'}
+            localBuildStopping={cancellingLocal.has(app.app)}
             outcome={outcomes[app.app]}
             actions={localActions[app.app] ?? {}}
             hasReleaseWorkflow={releaseTargetFor(app.app) !== null}
             canBuildLocally={!!releaseTargetFor(app.app)?.build}
             onToggle={() => toggle(app.app)}
             onAction={(kind) => runReleaseAction(app.app, kind)}
+            onStopLocal={() => stopLocal(app.app)}
           />
         ))}
       </ul>
@@ -174,12 +194,15 @@ type ItemProps = {
   jobs: LiveJob[];
   ticked: boolean;
   disabled: boolean;
+  localBuildRunning: boolean;
+  localBuildStopping: boolean;
   outcome: Outcome | undefined;
   actions: LocalAction;
   hasReleaseWorkflow: boolean;
   canBuildLocally: boolean;
   onToggle: () => void;
   onAction: (kind: 'dispatch' | 'build' | 'install') => void;
+  onStopLocal: () => void;
 };
 
 function AppItem({
@@ -188,14 +211,19 @@ function AppItem({
   jobs,
   ticked,
   disabled,
+  localBuildRunning,
+  localBuildStopping,
   outcome,
   actions,
   hasReleaseWorkflow,
   canBuildLocally,
   onToggle,
   onAction,
+  onStopLocal,
 }: ItemProps) {
   const chip = chipOf[state];
+  const releaseRunning = state === 'building' || state === 'queued';
+  const dispatchJustRequested = actions.requestedAt !== undefined && now - actions.requestedAt < 30_000;
   const hint = run && run.place !== 'done' && state === 'building' ? placeIcons[run.place].hint : undefined;
   return (
     <li>
@@ -246,9 +274,25 @@ function AppItem({
       {(release?.apk || hasReleaseWorkflow || canBuildLocally || (state === 'errored' && run)) && (
         <div className="release-actions">
           {state === 'errored' && run && <RetryRunButtons repo={repo} runId={run.id} label={`${app} build`} />}
+          {releaseRunning && run && (
+            <RunControls
+              repo={repo}
+              runId={run.id}
+              active
+              label={`the active ${app} / ${run.workflow} run`}
+              showPurge={false}
+              stopText="Force stop"
+            />
+          )}
           {release?.apk && <InstallButton tag={release.tag} name={app} />}
           {hasReleaseWorkflow && (
-            <button type="button" className="action" disabled={!!actions.busy} onClick={() => onAction('dispatch')}>
+            <button
+              type="button"
+              className="action release-on-ci"
+              disabled={!!actions.busy || releaseRunning || dispatchJustRequested}
+              title={releaseRunning ? 'Wait for the current release to finish or stop it first' : undefined}
+              onClick={() => onAction('dispatch')}
+            >
               {actions.busy === 'dispatch' ? 'Queueing' : 'Release on CI'}
             </button>
           )}
@@ -256,11 +300,22 @@ function AppItem({
             <button
               type="button"
               className="action"
-              disabled={!!actions.busy}
+              disabled={!!actions.busy || localBuildRunning}
               onClick={() => onAction('build')}
               title="Fetch main and build in a temporary checkout on this PC"
             >
               {actions.busy === 'build' ? 'Building locally' : 'Build locally'}
+            </button>
+          )}
+          {localBuildRunning && (
+            <button
+              type="button"
+              className="action danger"
+              disabled={localBuildStopping}
+              onClick={onStopLocal}
+              title="Force-stop this PC's local build process and all of its children"
+            >
+              {localBuildStopping ? 'Stopping local build' : 'Force stop local build'}
             </button>
           )}
           {actions.artifact && (
