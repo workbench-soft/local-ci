@@ -6,7 +6,21 @@
 # such as C:\ci\3, and the jobs of the other runners stay untouched.
 # A repo folder unused for RUNNER_CLEAN_DAYS days goes, and every repo folder but the
 # current one goes when the drive has less than RUNNER_CLEAN_MIN_FREE_GB free.
-param([string]$Workspace = $env:RUNNER_WORKSPACE)
+param([string]$Workspace = $env:RUNNER_WORKSPACE, [string]$DeleteTrash)
+
+# The second run, started below: deletes the trash of one runner, one run at a time per runner.
+if ($DeleteTrash) {
+	$mutex = [Threading.Mutex]::new($false, "Global\WorkbenchSoftTrash-$(Split-Path -Leaf $DeleteTrash)")
+	try { if (-not $mutex.WaitOne(0)) { exit 0 } } catch [Threading.AbandonedMutexException] { }
+	# A folder moved to the trash while this runs gets deleted on the next pass.
+	while ($trash = @(Get-ChildItem -LiteralPath $DeleteTrash -Directory -Force -Filter '_trash-*')) {
+		$trash | ForEach-Object { cmd /c "rd /s /q `"\\?\$($_.FullName)`"" 2>$null }
+		# A folder that a locked file keeps waits for the next job's start.
+		if (@(Get-ChildItem -LiteralPath $DeleteTrash -Directory -Force -Filter '_trash-*').Count -ge $trash.Count) { break }
+	}
+	$mutex.ReleaseMutex()
+	exit 0
+}
 
 try {
 	if (-not $Workspace) { throw 'RUNNER_WORKSPACE is not set' }
@@ -31,14 +45,13 @@ try {
 			Rename-Item -LiteralPath $_.FullName -NewName "_trash-$stamp-$($_.Name)"
 		}
 
-	$trash = @(Get-ChildItem -LiteralPath $root -Directory -Force -Filter '_trash-*')
-	if ($trash.Count) {
+	if (Get-ChildItem -LiteralPath $root -Directory -Force -Filter '_trash-*') {
 		# The runner ends the processes a job leaves behind, unless they lack its tracking id.
 		$env:RUNNER_TRACKING_ID = ''
-		$targets = ($trash | ForEach-Object { "rd /s /q `"\\?\$($_.FullName)`"" }) -join ' & '
-		# Idle priority keeps the delete from slowing the job and the desktop down.
-		$p = Start-Process cmd -ArgumentList "/c $targets" -WindowStyle Hidden -PassThru
-		$p.PriorityClass = 'Idle'
+		# One delete per runner: a new one each job piled up 530 starved deletes at idle priority.
+		$p = Start-Process powershell -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", '-DeleteTrash', "`"$root`"" -WindowStyle Hidden -PassThru
+		# Below normal ends between builds, and still yields to them.
+		$p.PriorityClass = 'BelowNormal'
 	}
 	Write-Host ('clean-work: {0:N0} GB free on the drive of {1}' -f $freeGb, $root)
 } catch {

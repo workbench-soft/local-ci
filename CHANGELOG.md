@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- **One trash delete per runner** each job start launched one more delete of
+  the runner's `_trash-*` folders at idle priority. About 530 piled up, starved,
+  and the trash and the low disk stayed. Now one delete per runner runs at a
+  time, at below normal priority.
+
 - **Docs match the code** the README, the docs and the specs describe Release
   after Checks, Install Dev, release progress, storage cleanup and the cancel
   reasons the sweep writes. Build cancellation gets its own feature section.
