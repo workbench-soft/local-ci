@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- **SpotTheCam developer install** releases tagged `spotthecam-v*` get the
+  Install Dev button again, like the older `speed-camera-map-v*` ones.
+
+- **Cancel reasons** Stop and Purge write each reason once, through the same
+  logger the sweep uses. The local APK install is no longer a server action
+  the browser can call with any file path.
+
 - **One release at a time** two pushes to main close together no longer
   pick the same version tag. The later release waits for the earlier one.
 

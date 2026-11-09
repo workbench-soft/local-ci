@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { installApkFile, type InstallResult } from './install-apk.ts';
+import { installApkFile, type InstallResult } from './adb.ts';
 import {
   buildLocalRelease,
   cancelLocalRelease,

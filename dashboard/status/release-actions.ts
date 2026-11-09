@@ -33,10 +33,10 @@ export async function dispatchRelease(app: string): Promise<ReleaseActionResult>
     )
       return { ok: false, error: 'A release was just queued. Wait for it to appear on GitHub.' };
     await callGitHub(
-      `/repos/${orgName}/${target.repo}/actions/workflows/${encodeURIComponent(target.workflow)}/dispatches`,
+      `${workflow}/dispatches`,
       'POST',
       {},
-      { ref: 'main', ...(app === 'media-organizer' && { inputs: { bump: 'patch' } }) },
+      { ref: 'main', ...(target.inputs && { inputs: target.inputs }) },
     );
     recentlyDispatched.set(app, Date.now());
     return { ok: true };

@@ -1,19 +1,17 @@
 'use server';
 
-import { execFile, spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { delimiter, join } from 'node:path';
-import { promisify } from 'node:util';
+import { join } from 'node:path';
+import { adbError, adbMissing, execFileAsync, findAdb, installFileOn, onePhone, type InstallResult } from './adb.ts';
+import { isDevKeyConfigured } from './dev-key.ts';
 import { callGitHub, githubStatus } from './org-status.ts';
 import { type ApiRelease, releasesRepo, toRelease } from './releases.ts';
 import { developerPackageForTag, developerUnlockCommand, launchActivity } from './dev-phone.ts';
 
-export type InstallResult = { ok: true; device: string } | { ok: false; error: string };
+export type { InstallResult } from './adb.ts';
 
-const execFileAsync = promisify(execFile);
-const adbName = process.platform === 'win32' ? 'adb.exe' : 'adb';
 const apkTimeoutMs = 180_000;
 
 /** Downloads the APK of a release and installs it with adb on the phone plugged in over USB. */
@@ -21,21 +19,15 @@ export async function installRelease(tag: string): Promise<InstallResult> {
   // The browser sends the tag, so it is checked before it goes in a GitHub path.
   if (!/^[\w.-]+$/.test(tag)) return { ok: false, error: 'Unknown release.' };
   const adb = findAdb();
-  if (!adb) return { ok: false, error: 'adb not found. Install Android platform tools, or set ADB_PATH.' };
+  if (!adb) return { ok: false, error: adbMissing };
   try {
     // The phone is checked first, so a missing one fails before the download.
-    const devices = await listDevices(adb);
-    if (devices.length === 0)
-      return { ok: false, error: 'No phone in adb devices. Plug it in over USB and allow USB debugging.' };
-    if (devices.length > 1)
-      return {
-        ok: false,
-        error: `${devices.length} phones in adb devices: ${devices.join(', ')}. Leave one plugged in.`,
-      };
+    const phone = await onePhone(adb);
+    if ('error' in phone) return { ok: false, error: phone.error };
     const found = await callGitHub(`/repos/${releasesRepo}/releases/tags/${tag}`).catch((error: Error) => {
       throw new Error(
         githubStatus(error) === 404
-          ? `${tag} is gone from ${releasesRepo}. The repo keeps the last 3 releases of each app.`
+          ? `${tag} is gone from ${releasesRepo}. Refresh the page to see the newest release.`
           : error.message,
       );
     });
@@ -48,7 +40,7 @@ export async function installRelease(tag: string): Promise<InstallResult> {
     await mkdir(folder, { recursive: true });
     const file = join(folder, release.apk.name.replace(/[^\w.-]/g, '_'));
     await writeFile(file, Buffer.from(await response.arrayBuffer()));
-    return installFileOn(adb, devices[0], file);
+    return installFileOn(adb, phone.device, file);
   } catch (error) {
     return { ok: false, error: adbError(error) };
   }
@@ -62,7 +54,7 @@ export async function installDeveloperRelease(tag: string): Promise<InstallResul
   if (!packageName) return { ok: false, error: 'This app has no confirmed developer unlock handler.' };
   // Never send an empty or malformed key: the unlock belongs to the local PC, not the browser.
   const key = process.env.WORKBENCH_DEV_KEY;
-  if (!key || !/^[a-f0-9]{64}$/i.test(key)) {
+  if (!isDevKeyConfigured(key)) {
     return { ok: false, error: 'Set WORKBENCH_DEV_KEY (64 hex characters) on this PC and restart the CI dashboard.' };
   }
   const installed = await installRelease(tag);
@@ -124,65 +116,4 @@ function sendDeveloperUnlock(adb: string, device: string, command: string): Prom
 
 function safeUnlockError(error: unknown): string {
   return error instanceof Error ? error.message : 'Check the phone and retry the developer install.';
-}
-
-/** Installs a local APK on the one authorized phone connected over USB. */
-export async function installApkFile(file: string): Promise<InstallResult> {
-  const adb = findAdb();
-  if (!adb) return { ok: false, error: 'adb not found. Install Android platform tools, or set ADB_PATH.' };
-  try {
-    const devices = await listDevices(adb);
-    if (devices.length === 0)
-      return { ok: false, error: 'No phone in adb devices. Plug it in over USB and allow USB debugging.' };
-    if (devices.length > 1)
-      return {
-        ok: false,
-        error: `${devices.length} phones in adb devices: ${devices.join(', ')}. Leave one plugged in.`,
-      };
-    return installFileOn(adb, devices[0], file);
-  } catch (error) {
-    return { ok: false, error: adbError(error) };
-  }
-}
-
-async function installFileOn(adb: string, device: string, file: string): Promise<InstallResult> {
-  try {
-    // -r keeps app data, and -d permits a lower version code from a local build.
-    await execFileAsync(adb, ['-s', device, 'install', '-r', '-d', file], { timeout: 180_000 });
-    return { ok: true, device };
-  } catch (error) {
-    return { ok: false, error: adbError(error) };
-  }
-}
-
-async function listDevices(adb: string): Promise<string[]> {
-  const { stdout } = await execFileAsync(adb, ['devices'], { timeout: 30_000 });
-  return stdout
-    .split(/\r?\n/)
-    .slice(1)
-    .map((line) => line.trim().split(/\s+/))
-    .filter(([serial, state]) => serial && state === 'device')
-    .map(([serial]) => serial);
-}
-
-// adb prints the reason, such as INSTALL_FAILED_UPDATE_INCOMPATIBLE, on stdout or stderr.
-function adbError(error: unknown): string {
-  const { stdout = '', stderr = '', message } = error as { stdout?: string; stderr?: string; message?: string };
-  return `${stderr}\n${stdout}`.trim() || message || String(error);
-}
-
-// The boot task runs without a login shell, so PATH may lack adb.
-function findAdb(): string | null {
-  const sdkRoots = [
-    process.env.ANDROID_HOME,
-    process.env.ANDROID_SDK_ROOT,
-    process.env.SystemDrive && join(process.env.SystemDrive, 'Android', 'Sdk'),
-    process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, 'Android', 'Sdk'),
-  ];
-  const candidates = [
-    process.env.ADB_PATH,
-    ...(process.env.PATH ?? '').split(delimiter).map((dir) => dir && join(dir, adbName)),
-    ...sdkRoots.map((root) => root && join(root, 'platform-tools', adbName)),
-  ];
-  return candidates.find((path): path is string => !!path && existsSync(path)) ?? null;
 }
