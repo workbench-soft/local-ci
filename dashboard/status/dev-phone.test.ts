@@ -7,6 +7,7 @@ test('developer install covers the released apps that support the phone key', ()
     'shuttrix-v2026.11.06.3': 'com.workbenchsoft.shuttrix',
     'memories-mobile-v2026.11.02.1': 'com.workbenchsoft.memories',
     'speed-camera-map-v2026.11.05.1': 'com.workbenchsoft.spotthecam',
+    'spotthecam-v2026.11.08.1': 'com.workbenchsoft.spotthecam',
     'tickalot-v2026.11.06.1': 'com.workbenchsoft.tickalot',
     'guitar-upscale-v2026.11.05.2': 'com.workbenchsoft.guitarupscale',
     'keeppad-v2026.11.06.1': 'com.workbenchsoft.keeppad',

@@ -147,7 +147,7 @@ The server renders the page for each request.
   a queued run stay in memory while its `updated_at` holds, for up to 60 s.
 - **App releases** `status/release-config.ts` maps each published Android app
   to its CI workflow and local build script. The Releases page dispatches the
-  CI workflow through the GitHub API. A local build fetches `main` from the
+  CI workflow through the GitHub API, with the inputs its config names. A local build fetches `main` from the
   app clone, builds its APK in a temporary clone, and gives the ADB installer
   an opaque token; the client never receives the file path.
 - **Rate limit** each GET sends back the ETag of its last answer. GitHub
@@ -216,7 +216,8 @@ The server renders the page for each request.
   and Purge write theirs, and the card reads the file back on each render.
   The append-only file keeps earlier evidence across restarts. `CANCEL_REASONS_FILE` in `.env.local`
   picks another file.
-- **Install** `status/install-apk.ts` is a server action. It checks
+- **Install** `status/install-apk.ts` holds the server actions, and
+  `status/adb.ts` the plain adb helpers a browser can't call. It checks
   `adb devices` for one phone, downloads the release's `.apk` to
   `%TEMP%local-ci-apk` and runs `adb install -r -d`. adb's output goes
   back to the button on failure.

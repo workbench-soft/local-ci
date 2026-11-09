@@ -8,6 +8,27 @@ type RunKey = Pick<
 >;
 const replaceableEvents = new Set(['push', 'workflow_dispatch', 'pull_request', 'pull_request_target']);
 const prEvents = new Set(['pull_request', 'pull_request_target']);
+const failedConclusions = new Set(['failure', 'timed_out', 'startup_failure']);
+const isFailed = (conclusion: string | null) => failedConclusions.has(conclusion ?? '');
+// Repos whose release workflow runs its checks as a job of its own.
+const integratedChecks: Record<string, { workflow: string; job: RegExp }> = {
+  consdr: { workflow: 'Deploy', job: /^checks$/ },
+  'guitar-upscale': { workflow: 'CI', job: /^checks$/ },
+  spotthecam: { workflow: 'Deploy', job: /^check \/ / },
+  'workbench-soft.github.io': { workflow: 'Pages', job: /^checks$/ },
+};
+// The checks workflow a release follows, by repo and workflow, then by repo. Checks for the rest.
+const checksOfRelease: Record<string, string> = {
+  'memories/Desktop release': 'Desktop checks',
+  'memories/Shuttrix release': 'Shuttrix checks',
+};
+const checksOfRepo: Record<string, string> = {
+  'agent-skills': 'check',
+  'agent-skills-private': 'check',
+  ci: 'Lint',
+  'gh-review-notify': 'shellcheck',
+  'git-aliases': 'lint',
+};
 
 function groupOf(run: RunKey): string {
   // A fork can call its branch main too; only an identified PR shares that build scope.
@@ -52,27 +73,16 @@ export function failedCheckReleases(
     (run) =>
       /checks?$|^lint$|^shellcheck$/i.test(run.workflow) &&
       run.headSha &&
-      (['failure', 'timed_out', 'startup_failure'].includes(run.conclusion ?? '') ||
-        run.jobs.some((job) => ['failure', 'timed_out', 'startup_failure'].includes(job.conclusion ?? ''))),
+      (isFailed(run.conclusion) || run.jobs.some((job) => isFailed(job.conclusion))),
   );
   return runs.flatMap((run) => {
     const stoppedAtGuard =
       run.status === 'completed' &&
       run.conclusion === 'failure' &&
       run.jobs.some((job) => /^Wait for matching checks before publication$/i.test(job.failedStep ?? ''));
-    const integrated = (
-      {
-        consdr: { workflow: 'Deploy', job: /^checks$/ },
-        'guitar-upscale': { workflow: 'CI', job: /^checks$/ },
-        spotthecam: { workflow: 'Deploy', job: /^check \/ / },
-        'workbench-soft.github.io': { workflow: 'Pages', job: /^checks$/ },
-      } as Record<string, { workflow: string; job: RegExp }>
-    )[run.repo];
+    const integrated = integratedChecks[run.repo];
     if (integrated?.workflow === run.workflow && (blocked ? stoppedAtGuard : activeStatuses.has(run.status))) {
-      const job = run.jobs.find(
-        (item) =>
-          integrated.job.test(item.name) && ['failure', 'timed_out', 'startup_failure'].includes(item.conclusion ?? ''),
-      );
+      const job = run.jobs.find((item) => integrated.job.test(item.name) && isFailed(item.conclusion));
       if (job && run.headSha) return [{ run, replacement: { ...run, url: job.url } }];
     }
     if (
@@ -81,18 +91,7 @@ export function failedCheckReleases(
       !/release|deploy/i.test(run.workflow)
     )
       return [];
-    const checkName =
-      run.repo === 'memories' && run.workflow === 'Desktop release'
-        ? 'Desktop checks'
-        : run.repo === 'memories' && run.workflow === 'Shuttrix release'
-          ? 'Shuttrix checks'
-          : ({
-              'agent-skills': 'check',
-              'agent-skills-private': 'check',
-              ci: 'Lint',
-              'gh-review-notify': 'shellcheck',
-              'git-aliases': 'lint',
-            }[run.repo] ?? 'Checks');
+    const checkName = checksOfRelease[`${run.repo}/${run.workflow}`] ?? checksOfRepo[run.repo] ?? 'Checks';
     const replacement = checks.find(
       (check) =>
         check.workflow === checkName &&

@@ -3,6 +3,8 @@ export type ReleaseTarget = {
   app: string;
   repo: string;
   workflow: string;
+  /** The workflow_dispatch inputs the release workflow asks for. */
+  inputs?: Record<string, string>;
   build?: { script: string; apk: string; gradleDir: string };
 };
 
@@ -58,7 +60,7 @@ const targets: ReleaseTarget[] = [
     workflow: 'deploy.yml',
     build: { script: 'scripts/build-apk.sh', apk: 'dist/speed-cameras.apk', gradleDir: '.' },
   },
-  { app: 'media-organizer', repo: 'media-organizer', workflow: 'release.yml' },
+  { app: 'media-organizer', repo: 'media-organizer', workflow: 'release.yml', inputs: { bump: 'patch' } },
 ];
 
 export function releaseTargetFor(app: string): ReleaseTarget | null {

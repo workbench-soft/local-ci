@@ -6,6 +6,8 @@ const packages: Record<string, string> = {
   'memories-mobile': 'com.workbenchsoft.memories',
   shuttrix: 'com.workbenchsoft.shuttrix',
   tickalot: 'com.workbenchsoft.tickalot',
+  spotthecam: 'com.workbenchsoft.spotthecam',
+  // Releases before the rename to spotthecam.
   'speed-camera-map': 'com.workbenchsoft.spotthecam',
   keeppad: 'com.workbenchsoft.keeppad',
   servohop: 'com.workbenchsoft.servohop',
