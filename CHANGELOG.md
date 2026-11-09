@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Install Dev for every app** the button now shows on each release:
+  the app id comes from the tag, such as `lumiere-v*` to
+  `com.workbenchsoft.lumiere`. A new app needs no line in local-ci.
+
 - **CI** Release starts on `workflow_run` once Checks pass on `main`, one at a time. It no longer holds a PC runner while it waits, which starved Checks and timed releases out.
 
 - **Releases card in parts** the 430 line card splits into the list, one

@@ -51,7 +51,7 @@ export async function installRelease(tag: string): Promise<InstallResult> {
  */
 export async function installDeveloperRelease(tag: string): Promise<InstallResult> {
   const packageName = typeof tag === 'string' ? developerPackageForTag(tag) : null;
-  if (!packageName) return { ok: false, error: 'This app has no confirmed developer unlock handler.' };
+  if (!packageName) return { ok: false, error: 'This release tag names no app.' };
   // Never send an empty or malformed key: the unlock belongs to the local PC, not the browser.
   const key = process.env.WORKBENCH_DEV_KEY;
   if (!isDevKeyConfigured(key)) {

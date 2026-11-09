@@ -1,23 +1,18 @@
-/** Apps whose released APKs accept the WORKBENCH_DEV_KEY deep link.
+/** Releases whose app id breaks the rule com.workbenchsoft.<tag app without dashes>.
+ * Every other release gets the Install Dev button on its own, so a new app needs no line here.
  * This is not an Android debug signing variant: the developer controls live in
  * each app's settings after a one-time unlock on the selected phone.
  */
-const packages: Record<string, string> = {
+const renamed: Record<string, string> = {
   'memories-mobile': 'com.workbenchsoft.memories',
-  shuttrix: 'com.workbenchsoft.shuttrix',
-  tickalot: 'com.workbenchsoft.tickalot',
-  spotthecam: 'com.workbenchsoft.spotthecam',
   // Releases before the rename to spotthecam.
   'speed-camera-map': 'com.workbenchsoft.spotthecam',
-  keeppad: 'com.workbenchsoft.keeppad',
-  servohop: 'com.workbenchsoft.servohop',
-  'guitar-upscale': 'com.workbenchsoft.guitarupscale',
 };
 
-/** Returns null for releases without a confirmed developer unlock handler. */
+/** Returns the Android app id for a release tag such as lumiere-v2026.11.09.1, or null for a malformed tag. */
 export function developerPackageForTag(tag: string): string | null {
-  const app = /^(.+)-v\d[\w.]*$/.exec(tag)?.[1];
-  return app ? (packages[app] ?? null) : null;
+  const app = /^([a-z][a-z0-9-]*)-v\d[\w.]*$/.exec(tag)?.[1];
+  return app ? (renamed[app] ?? `com.workbenchsoft.${app.replaceAll('-', '')}`) : null;
 }
 
 /** The resolved activity must belong to the intended package and contain no shell metacharacters. */

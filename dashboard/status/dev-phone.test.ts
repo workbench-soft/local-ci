@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { developerPackageForTag, developerUnlockCommand, launchActivity } from './dev-phone.ts';
 
-test('developer install covers the released apps that support the phone key', () => {
+test('developer install covers the release by its tag, with no list to update', () => {
   const cases = {
     'shuttrix-v2026.11.06.3': 'com.workbenchsoft.shuttrix',
     'memories-mobile-v2026.11.02.1': 'com.workbenchsoft.memories',
@@ -12,21 +12,16 @@ test('developer install covers the released apps that support the phone key', ()
     'guitar-upscale-v2026.11.05.2': 'com.workbenchsoft.guitarupscale',
     'keeppad-v2026.11.06.1': 'com.workbenchsoft.keeppad',
     'servohop-v2026.11.06.1': 'com.workbenchsoft.servohop',
+    'lumiere-v2026.11.09.1': 'com.workbenchsoft.lumiere',
+    'skyaltar-v1': 'com.workbenchsoft.skyaltar',
   };
   for (const [tag, packageName] of Object.entries(cases)) {
     assert.equal(developerPackageForTag(tag), packageName);
   }
 });
 
-test('no developer button for unsupported or malformed releases', () => {
-  for (const tag of [
-    'skyaltar-v1',
-    'lumiere-v2',
-    'memoire-v1',
-    'shuttrix-legacy-v1',
-    'shuttrix-main',
-    '../shuttrix-v1',
-  ]) {
+test('no developer button for malformed tags', () => {
+  for (const tag of ['v2026.11.09.1', 'Shuttrix-v1', 'shuttrix-main', '../shuttrix-v1']) {
     assert.equal(developerPackageForTag(tag), null);
   }
 });
