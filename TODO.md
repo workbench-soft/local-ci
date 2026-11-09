@@ -76,3 +76,8 @@
 ## runner-watchdog
 
 - [ ] `runner\cache-actions.ps1` reads all 1474 `Worker_*.log` files (419 MB) of the runners on each install, which held an install at "Filling the action cache" for over an hour on 2026-11-01 at 100% CPU. Read only the newest logs, or prune `_diag`.
+
+## Week review 2026-11
+
+- [ ] The status page shows English only, while the org rule asks for 9 languages. Pick an i18n library through the `stack` skill and move the strings of `dashboard/cards/` into catalogs, or record in a spec why this local tool stays English.
+- [ ] Checks on main failed on 2026-11-09 with HTTP 504 from GitHub on the mise download, and the sweep then cancelled the Release runs. The next push to main releases PRs #126 to #128; check that it does.
