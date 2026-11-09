@@ -51,7 +51,8 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   `~/actions-runner/_tool`. Node of one version downloads once for all of
   them.
 - **Shared pnpm store** every job installs from the machine's pnpm store,
-  so a package downloads once for all runners and runs.
+  so a package downloads once for all runners and runs. On Windows jobs that
+  use the setup action of `workbench-soft/ci` copy from `C:ci_pnpm-store`.
 - **Android SDK** on Windows the runners build with the SDK in
   `C:\Android\Sdk`. `runner\install.ps1` copies it there from
   `%LOCALAPPDATA%\Android\Sdk` on the first run and installs the parts the

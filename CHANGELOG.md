@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **pnpm store docs** on Windows the setup action of `workbench-soft/ci` copies
+  packages from `C:ci_pnpm-store`, to end the `EBUSY` failures of
+  `expo export`.
+
 - **One trash delete per runner** each job start launched one more delete of
   the runner's `_trash-*` folders at idle priority. About 530 piled up, starved,
   and the trash and the low disk stayed. Now one delete per runner runs at a

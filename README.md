@@ -77,7 +77,10 @@ runner. The runner scripts also work alone:
   action downloads node, Java or Python once per machine. A rerun of the
   script moves old runners onto it.
 - **pnpm store** every job uses the machine's pnpm store through
-  `pnpm_config_store_dir`, so `pnpm install` downloads a package once.
+  `pnpm_config_store_dir`, so `pnpm install` downloads a package once. On
+  Windows the setup action of `workbench-soft/ci` points it at
+  `C:ci_pnpm-store` and copies packages, since a hardlink shared with
+  another checkout fails reads with `EBUSY` while that checkout deletes.
 - **Defender** `windows\defender-exclusions.ps1` holds every Defender
   exclusion: the runner folders, `C:\ci`, `DEV_DIR`, and the Gradle, Cargo,
   sccache, pnpm, npm and mise caches. The runner script calls it, and it also runs
