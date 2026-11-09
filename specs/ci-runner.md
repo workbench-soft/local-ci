@@ -386,3 +386,23 @@ machine with several runners builds several jobs at once.
   5. Docs and changelog, and the top sections of this spec.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`.
+
+### 2026-11-10 One trash delete per runner
+
+- **Why** each job start launched one more `rd /s /q` over every `_trash-*`
+  folder of its runner, at idle priority, while the last one still ran. On
+  2026-11-10 about 530 of them ran, starved by the builds, and the trash
+  stayed: `C:\ci\1\_trash-20261109191120-suno-download` kept 11,389 entries
+  for a minute. The disk then stayed under 60 GB, so every job start moved
+  all the other checkouts of its runner to the trash. Each delete of a
+  hardlink into the shared pnpm store also failed reads of the same file in
+  running jobs with `EBUSY`, which ci's setup action now avoids by copying.
+- **Change** the hook starts the delete as a second run of itself, with
+  `-DeleteTrash`. That run holds the mutex `Global\WorkbenchSoftTrash-<n>`
+  for its runner, so a second one exits at once. It runs at below normal
+  priority, so it ends between builds.
+- **Steps**
+  1. This spec.
+  2. `runner/clean-work.ps1`, and its copy in `~/actions-runner/hooks`.
+  3. Docs and changelog.
+- **Docs** `README.md`, `CHANGELOG.md`.
