@@ -105,3 +105,11 @@ APK from the latest `main` in a separate worktree and install that build.
   release documentation.
 - **Docs** `README.md`, `CHANGELOG.md`, `docs/features.md`,
   `docs/user-flows.md` and `docs/architecture.md`.
+
+### 2026-11-09 one release at a time
+
+- **Why** the 2026-11-05 change dropped the `release` concurrency group, so two
+  pushes close together could pick the same version tag and the second failed.
+- **Changes** the release job holds the `release` group again, with
+  `cancel-in-progress: false`, so a later push waits in line and keeps its
+  Checks wait. `wait-for-checks.sh` gets its run bit and the shell lint.

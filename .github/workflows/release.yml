@@ -19,6 +19,11 @@ env:
 jobs:
   release:
     if: github.ref == 'refs/heads/main'
+    # One release at a time, so each one reads the tag of the one before and picks a free version.
+    # A later push waits in line instead of cancelling a release that already waits for its Checks.
+    concurrency:
+      group: release
+      cancel-in-progress: false
     # The repo is public, so GitHub runners cost 0 minutes.
     runs-on: ubuntu-latest
     steps:
