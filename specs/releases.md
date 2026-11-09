@@ -3,36 +3,42 @@
 ## One-pager
 
 - **Problem** a person needs a release on CI or an APK built from the newest `main` and installed on a phone.
-- **Fix** the Releases page dispatches supported CI releases, builds locally in an isolated worktree and installs either APK through ADB.
+- **Fix** the Releases page dispatches supported CI releases, builds locally in a temporary clone and installs either APK through ADB. Install Dev also unlocks the developer settings of the app.
 - **How** CI runs target `main`; local builds use each supported app's build script and the latest fetched `main`.
 - **Risks** a local build needs its app clone, build script and signing or build secrets on this PC. ADB needs one authorized phone.
-- **Next** add release actions and local build support to the Releases page, plus a confirmed GitHub storage cleanup control.
+- **This repo** Release starts on `workflow_run` once Checks pass on `main`, one release at a time.
 
 ## What it does for the person
 
-Each push to `main` starts Release alongside the `Checks` workflow. Publication
-waits for successful Checks of the same commit and branch. A passing commit gets a GitHub release
+Release starts on `workflow_run` once `Checks` pass on a push to `main`.
+A passing commit gets a GitHub release
 in this repo, such as `v2026.10.30.1`. Its notes list the commits since the
 release before. From the Releases page, a person can also dispatch an app's
 release workflow on `main`, install its published APK over ADB, or build an
-APK from the latest `main` in a separate worktree and install that build.
+APK from the latest `main` in a temporary clone and install that build.
+Install Dev installs the published APK, then unlocks the app's developer
+settings with the key in `WORKBENCH_DEV_KEY`.
 
 ## User flows
 
 1. A PR merges into `main`.
-2. `Checks` and Release start on the push. Release builds while Checks runs.
+2. `Checks` starts on the push. Release starts once Checks pass.
 3. Release tags the commit and publishes the notes on the Releases page.
+   A later release waits for the one before it.
 4. To release by hand, the person chooses an app and presses **Release on CI**.
    Local CI dispatches its release workflow against `main`. While it is queued
    or running, the button is gray and disabled. A second dispatch is also
    rejected server-side if the workflow is already active.
 5. After an APK release appears, the person presses **Install** to download
-   that APK and install it on the single ADB device.
+   that APK and install it on the single ADB device. **Install Dev** installs
+   the same APK, then opens the app's unlock link through `adb shell`.
 6. An active release or CI build exposes **Force stop**, which confirms and requests
    GitHub's force-cancel. Local builds offer **Force stop local build**, which
    terminates the spawned process tree and marks the build as cancelled.
 7. To build on this PC, the person presses **Build locally**. Local CI fetches
-    `origin/main`, builds in an isolated worktree, then offers **Install local**.
+   `origin/main`, builds in a temporary clone, then offers **Install local**.
+8. To free Actions storage, the person presses **Clean old APK releases &
+   artifacts**, reads the preview and confirms.
 
 ## How it works
 
@@ -46,8 +52,15 @@ APK from the latest `main` in a separate worktree and install that build.
 - **Release actions** the dashboard dispatches a supported app release
   workflow on its default branch and reports the GitHub run.
 - **Local build** the dashboard builds supported Android projects from the
-  latest `main` in a temporary worktree, then passes the resulting APK to the
+  latest `main` in a temporary clone, then passes the resulting APK to the
   existing ADB installer.
+- **Install Dev** `status/dev-phone.ts` reads the app id from the tag:
+  `com.workbenchsoft.<app without dashes>`, with `memories-mobile` and
+  `speed-camera-map` kept as renamed. `status/install-apk.ts` sends the
+  unlock link through `adb shell` stdin, so the key stays out of process
+  arguments. The browser only learns whether the key is set.
+- **Storage cleanup** `status/storage-cleanup*.ts` previews, then deletes
+  finished artifacts and all but the newest APK release of each app.
 
 ## Limits
 
@@ -56,6 +69,8 @@ APK from the latest `main` in a separate worktree and install that build.
 - **Supported local apps** memories-mobile, Shuttrix, Tick-a-Lot, SkyAltar,
   Memoire, Shuttrix Legacy and SpotTheCam have a local build entry point.
 - **ADB** installation requires exactly one authorized phone in `adb devices`.
+- **Install Dev key** `WORKBENCH_DEV_KEY` holds the 64 hex characters the
+  apps check. A new key breaks the unlock, since the apps hold the hash.
 - **CI workflow** manual dispatch is available only for apps with a release
   workflow that accepts `workflow_dispatch`.
 - **Temporary files** the build clone is removed after each run. The APK stays
@@ -121,3 +136,12 @@ APK from the latest `main` in a separate worktree and install that build.
 - **Changes** the release job holds the `release` group again, with
   `cancel-in-progress: false`, so a later push waits in line and keeps its
   Checks wait. `wait-for-checks.sh` gets its run bit and the shell lint.
+
+### 2026-11-09 Install Dev for every app
+
+- **Why** Lumiere releases had no Install Dev button, since the dashboard
+  kept a list of 8 apps by hand.
+- **Changes** `status/dev-phone.ts` reads the app id from the release tag,
+  and keeps a line only for the renamed apps.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md` and
+  `docs/architecture.md`.

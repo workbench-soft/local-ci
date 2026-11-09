@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **Docs match the code** the README, the docs and the specs describe Release
+  after Checks, Install Dev, release progress, storage cleanup and the cancel
+  reasons the sweep writes. Build cancellation gets its own feature section.
+
 - **Install Dev for every app** the button now shows on each release:
   the app id comes from the tag, such as `lumiere-v*` to
   `com.workbenchsoft.lumiere`. A new app needs no line in local-ci.
