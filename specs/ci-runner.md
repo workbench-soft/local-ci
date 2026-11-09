@@ -406,3 +406,20 @@ machine with several runners builds several jobs at once.
   2. `runner/clean-work.ps1`, and its copy in `~/actions-runner/hooks`.
   3. Docs and changelog.
 - **Docs** `README.md`, `CHANGELOG.md`.
+
+### 2026-11-10 The runners copy from their own pnpm store
+
+- **Why** the setup action of `workbench-soft/ci` moved to `C:\ci\_pnpm-store`
+  with copied packages, but jobs that run `pnpm install` themselves, such as
+  the memories Release build, still read the user store. Its files keep
+  hardlinks in old checkouts and dev clones, and memories Release run
+  42686695645 failed with `ERR_PNPM_EBUSY ... copyfile` from it while one of
+  those links got deleted.
+- **Change** `runner/install.ps1` writes `pnpm_config_store_dir` as
+  `<work root>\_pnpm-store` and `pnpm_config_package_import_method=copy`
+  into each `.env`. No checkout then links a store file, so a delete can't
+  lock a file a job reads. `pnpm_config_confirm_modules_purge=false` lets
+  pnpm replace a `node_modules` made from the old store without a prompt.
+- **Limits** a runner reads `.env` at start: the count task reruns the script
+  and restarts each runner once it is idle.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
