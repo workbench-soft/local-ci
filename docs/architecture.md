@@ -62,7 +62,8 @@ flowchart LR
 | --- | --- |
 | Homebrew, winget | tools and apps |
 | npm through mise | the Copilot CLI and agent-browser |
-| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page, the variables `CI_RUNNER` and `CI_HEAVY_RUNNER` |
+| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page, release dispatches and storage cleanup, the variables `CI_RUNNER`, `CI_HEAVY_RUNNER` and `CI_WINDOWS_RUNNER` |
+| adb | installs APKs on the phone plugged in over USB, and sends the Install Dev unlock link |
 | Blacksmith | cloud runners for the org, 3000 free 2 vCPU minutes a month |
 | Oracle Cloud | an Always Free ARM VM that runs `oracle` runners |
 | `github.com/actions/runner` releases | the runner download and its SHA256 |
@@ -213,15 +214,26 @@ The server renders the page for each request.
   `release-buttons.tsx` and `release-detail.tsx`.
 - **Cancel reasons** `status/cancel-log.ts` appends each force cancel to
   `dashboard/cancel-reasons.jsonl`: repo, run id, the words and the time.
-  The sweep writes `a newer run replaced it` or `its PR is closed`, Stop
+  The sweep writes `A newer commit started the same build` or
+  `Checks failed for this commit`, with the causing run, commit and PR. Stop
   and Purge write theirs, and the card reads the file back on each render.
   The append-only file keeps earlier evidence across restarts. `CANCEL_REASONS_FILE` in `.env.local`
   picks another file.
 - **Install** `status/install-apk.ts` holds the server actions, and
   `status/adb.ts` the plain adb helpers a browser can't call. It checks
   `adb devices` for one phone, downloads the release's `.apk` to
-  `%TEMP%local-ci-apk` and runs `adb install -r -d`. adb's output goes
+  `%TEMP%\local-ci-apk` and runs `adb install -r -d`. adb's output goes
   back to the button on failure.
+- **Install Dev** `installDeveloperRelease` installs the same APK, then
+  `status/dev-phone.ts` reads the app id from the tag, such as
+  `com.workbenchsoft.lumiere`, and builds the unlock link. The key comes from
+  `WORKBENCH_DEV_KEY` and goes to `adb shell` through stdin, so it stays out
+  of process arguments and the browser. The browser only learns whether the
+  key is set.
+- **Storage cleanup** `status/storage-cleanup-actions.ts` lists every artifact
+  and APK release first, keeps a preview plan, then deletes in small batches
+  after the confirm. `status/storage-cleanup.ts` keeps the newest APK
+  release of each app.
 - **Failed step** the page reads the jobs of failed runs too, with their steps.
 - **Run times** the Took column is `updated_at` minus `run_started_at` for
   a finished run, from `status/durations.ts`. A click on it calls the
@@ -401,6 +413,20 @@ sequenceDiagram
   - **`concurrency` groups in each workflow** each repo needs the block, and
     they leave runs of merged PRs alone.
 - **Cost to undo** low. Set `CANCEL_SUPERSEDED=off` in `.env.local`.
+
+### Release of this repo: after Checks, through `workflow_run`
+
+- **Picked** `release.yml` starts on `workflow_run` once Checks pass on a push
+  to `main`. Releases wait in line in the `release` group.
+- **Why** a Release that waited for Checks in a script held a runner, so
+  Checks starved and releases timed out.
+- **Trade-off** the release lands only after Checks end, a few minutes later
+  than a build beside Checks.
+- **Rejected**
+  - **Release beside Checks, waiting in a step** the starved runners above.
+  - **A release-gate build job** the repo builds no file to ship, so it has
+    nothing to build ahead of Checks.
+- **Cost to undo** low. `release.yml` alone.
 
 ### Runner speed fixes on Windows
 

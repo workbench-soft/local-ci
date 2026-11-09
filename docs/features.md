@@ -68,8 +68,8 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   checkout can delete a deep `node_modules` or build cache.
 - **Work folder clean** before each job a runner deletes its own repo
   checkouts unused for 3 days, and all but the current one when the drive
-  has under 60 GB free, so `C:ci` stops filling the disk.
-- **Clean by hand** `CLEAN-CI.cmd` in the repo root empties `C:ci` at once.
+  has under 60 GB free, so `C:\ci` stops filling the disk.
+- **Clean by hand** `CLEAN-CI.cmd` in the repo root empties `C:\ci` at once.
   The runners pause for a few seconds, and the delete runs in the background.
 
 Spec: [ci-runner](../specs/ci-runner.md).
@@ -221,15 +221,8 @@ icon: a white loop arrow round a check on a teal to violet gradient.
   show next, until the filter and search match none. Then it shows how many
   it purged and the first error. A run that won't stop within 60 seconds
   stays.
-- **Old runs die** every 10 seconds the page server force cancels an
-  unfinished push or PR run when a newer run of the same repo, workflow,
-  branch and event builds a different commit. PR closure alone cancels no run.
-  Failed Checks stop releases of the same repo, branch and commit.
-  Repeating the same commit keeps the build, and so do `workflow_run` and `schedule`
-  runs. `CANCEL_SUPERSEDED=off` in `.env.local` turns it off, and a rerun of
-  the install script keeps that line. `pnpm dev` doesn't cancel. Each cancel
-  is saved before the GitHub call. Cancellation history on both tabs links
-  the causing build, commit and PR with the request result.
+- **Old runs die** the page server stops replaced runs and releases whose
+  Checks failed. The Build cancellation section below has the rules.
 - **Stale page** when refreshes hang for 45 seconds, the line under the
   headline turns red and says when the page last updated. A stopped server
   shows the browser's error page instead, since Next reloads the tab. A
@@ -237,29 +230,34 @@ icon: a white loop arrow round a check on a teal to violet gradient.
 - **Localhost only** the page answers on `localhost`, `127.0.0.1` and `[::1]`
   and refuses any other host name with 421. Other sites can't frame it.
 - **Release and Install** the Release column links to the release a run
-  published, on the one run of its repo that ended nearest to it. Install puts its APK on the phone plugged in over USB through
-  adb. adb's error shows in a red box under the button. Needs exactly one
-  phone in `adb devices`, and the public repo keeps 3 releases per app.
+  published, on the one run of its repo that ended nearest to it. Install
+  Release puts its APK on the phone plugged in over USB through adb. adb's
+  error shows in a red box under the button. Needs exactly one phone in
+  `adb devices`.
 - **Releases tab** opens by default at `/`, with Status one click away at
   `/?tab=status`. Each app gets a colored chip with the state of its release:
-  released, building (with the machine it builds on), queued, errored, held
-  while a session PR is open, or no release yet. A building or queued row
-  says how long the run has taken and, when past runs of the same workflow
-  give the usual time, how long is left or how far over it already is. A
-  cancelled row says why and when: `a newer run replaced it, 22 min ago`.
-  The reasons come from `dashboard\cancel-reasons.jsonl`, where each force
-  cancel lands with its words, from Stop and Purge or from the sweep that
-  kills replaced runs. The tab title counts the apps on their way and the
-  errored ones. The newest release of each app sits beside its chip with its
-  age, and its notes under Changes. An app with no release yet shows from
-  its repo's runs, so the first release is on the page before it exists.
-  Tick apps, or All with an APK, and press Install: the APKs go on the
+  released, building (with the machine it builds on), queued, errored,
+  cancelled, held, or no release yet. Held means the release run skipped,
+  since its gate held it or its Checks failed. The apps sort by state, then
+  by name, with the ones in flight on top.
+- **Release progress** a building row gets a bar from the usual time of
+  past runs of the same workflow, and says how long is left or how far over
+  it already is. The jobs of the run show under it with their own bars. A
+  queued row says it waits for a runner.
+- **Cancel reason** a cancelled row says why and when, such as
+  `A newer commit started the same build · 22 min ago`, with links to the
+  causing run, commit and PR. The reasons come from
+  `dashboard\cancel-reasons.jsonl`, where each force cancel lands with its
+  words, from Stop and Purge or from the sweep.
+- **Release list** the tab title counts the apps on their way and the errored
+  ones. The newest release of each app sits beside its chip with its age, and
+  its notes under Changes. An app with no release yet shows from its repo's
+  runs. Tick apps, or All with an APK, and press Install: the APKs go on the
   phone one by one, and each row shows Installed or adb's error.
 - **Limits** a release with several APKs installs the first. A run on `main`
   counts toward a release when a push, a dispatch or a finished workflow
-  started it, so Dependabot runs stay out. The append-only log keeps earlier
-  cancellation evidence. The public repo keeps 3 releases
-  per app, so the tab shows only the newest.
+  started it, so Dependabot runs stay out. The tab shows only the newest
+  release of each app.
 - **Failed step** a failed run names its failed job and step under the
   result, linked to that job's log.
 - **PR and branch** the branch of a run is a link. The PR column links each
@@ -271,13 +269,47 @@ icon: a white loop arrow round a check on a teal to violet gradient.
 
 Spec: [ci-status-page](../specs/ci-status-page.md).
 
+## Build cancellation
+
+Every 10 seconds the page server stops runs that no longer ship anything.
+
+- **Replaced** an unfinished push, dispatch or PR run stops when a newer run
+  of the same repo, workflow and branch builds a different commit. Each PR
+  keeps its own scope, so a fork with the same branch name stops no build.
+- **Failed Checks** a failed Checks run, or a failed checks job inside a
+  release workflow, stops the releases of the same repo, branch and commit.
+- **Kept** a closed PR, a rerun of the same commit, and `workflow_run` and
+  `schedule` runs keep building.
+- **History** each cancel is saved to `dashboard\cancel-reasons.jsonl` before
+  the GitHub call, with the causing run, commit and PR. Cancellation history
+  on both tabs links them with the result of the request.
+- **Off** `CANCEL_SUPERSEDED=off` in `dashboard\.env.local` turns it off, and
+  a rerun of the install script keeps that line. `pnpm dev` doesn't cancel.
+
+Spec: [build-cancellation](../specs/build-cancellation.md).
+
 ## Releases
 
-- **What it gives** a tagged release after each passing push to `main`. On the Releases tab, a person can dispatch supported app workflows on CI, install a published APK over ADB or build the latest `main` of a supported Android app locally and install that APK.
-- **Where** the [Releases page](https://github.com/workbench-soft/local-ci/releases).
-- **Limits** local builds need a local app clone, its `scripts/build-apk.sh` and any app signing key on this PC. The supported builds include SpotTheCam. ADB needs one authorized phone. Published releases include the APKs from their app workflows.
+- **This repo** a tagged release follows each push to `main` once its Checks
+  pass, on the [Releases page](https://github.com/workbench-soft/local-ci/releases).
+- **Release on CI** on the Releases tab, a person dispatches the release
+  workflow of a supported app on `main`. The button stays gray while that
+  release runs, and the server refuses a second dispatch.
+- **Build locally** builds the APK of the latest `main` of a supported
+  Android app on this PC, in a temporary clone, then Install local puts it on
+  the phone. Force stop and Force stop local build end a release on CI or on
+  this PC.
+- **Install Dev** installs the published APK, then sends the app's unlock link
+  over adb so its developer settings show. Every app tag gets the button, with
+  the app id read from the tag. The key comes from `WORKBENCH_DEV_KEY` on this
+  PC and stays off the browser.
+- **Storage cleanup** Clean old APK releases & artifacts previews, then deletes
+  after a confirm, finished Actions artifacts and all but the newest APK
+  release of each app.
+- **Limits** local builds need a local app clone, its `scripts/build-apk.sh`
+  and any app signing key on this PC. ADB needs one authorized phone.
 
-Spec: [releases](../specs/releases.md)
+Spec: [releases](../specs/releases.md).
 
 ## Updates by themselves
 

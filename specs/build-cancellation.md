@@ -4,7 +4,7 @@
 
 - **Problem** a build can stop without a replacement or a useful reason.
 - **Fix** replace builds only within one repo, workflow and branch when a different commit starts that build type.
-- **Checks** build releases alongside Checks; failed Checks stop releases of that same commit.
+- **Checks** app repos build Release beside Checks, and failed Checks stop the releases of that same commit.
 - **History** save each cancellation request, its result and the causing run, commit and PR before stopping a build.
 - **Limits** external cancellations without evidence remain unattributed.
 
@@ -13,11 +13,14 @@
 A newer push or dispatch replaces an active run of the same repo, workflow
 and branch only when the commits differ. Identified PRs keep separate scopes
 so forks with the same branch name cannot stop each other. Closing a PR alone stops no build.
-Missing commit identities stop no build. Manual reruns of the same commit
+A run with no commit id keeps building. Manual reruns of the same commit
 are not replacements. Other products and build types keep running.
 
-Release workflows start on pushes to main alongside Checks. A failed job in
-Checks stops active release workflows of the same repo, branch and commit.
+In the app repos, Release builds on the push beside Checks and publishes
+once Checks pass. A failed Checks run, or a failed job in it, stops active
+release workflows of the same repo, branch and commit. A release workflow
+with its checks as a job of its own, such as `Deploy` of spotthecam, stops
+when that job fails. local-ci itself starts Release only after Checks pass.
 The dashboard does not infer a dependency from an unrelated workflow failure.
 
 ## Cancellation history

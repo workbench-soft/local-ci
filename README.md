@@ -85,12 +85,12 @@ runner. The runner scripts also work alone:
 - **Long paths** the script sets `git config --global core.longpaths true`
   and, in an admin run, `LongPathsEnabled` in the registry. `node_modules`
   and the `.open-next` cache hold paths over 260 characters.
-- **Work folder clean** before each job, `runnerclean-work.ps1` deletes the
-  runner's repo checkouts in `C:ci<n>` unused for 3 days, and all but the
+- **Work folder clean** before each job, `runner\clean-work.ps1` deletes the
+  runner's repo checkouts in `C:\ci\<n>` unused for 3 days, and all but the
   current one when the drive has under 60 GB free. `RUNNER_CLEAN_DAYS` and
   `RUNNER_CLEAN_MIN_FREE_GB` change the limits.
 - **Clean by hand** double click `CLEAN-CI.cmd` in the repo root to empty
-  `C:ci` at once. The runners stop for a few seconds, and the old files
+  `C:\ci` at once. The runners stop for a few seconds, and the old files
   delete in the background at idle priority.
 - **Folders** the first runner sits in `~/actions-runner/workbench-soft`, the
   next in `workbench-soft-2` and up. `RUNNER_ORG` picks another org.
@@ -180,10 +180,8 @@ once, from the main checkout:
   older runs included, until none match.
 - **Rerun failed builds** the Status tab offers `Rerun build` to rerun the full
   workflow, or `Retry failed jobs` to rerun only the failed jobs. The Releases
-  tab also has `Rerun build` for errored releases. The existing server-side
-  GitHub token needs Actions write access; no token is sent to the browser.
-  Purge all, after a confirm, purges every run the filter and search match,
-  older runs included, until none match.
+  tab also has `Rerun build` for errored releases. The server's GitHub token
+  needs Actions write access, and the browser doesn't get the token.
 - **Replaced builds** the server cancels an active build only when a newer
   push builds a different commit in the same repo, workflow, branch and event.
   Closing a PR alone keeps the build. Failed Checks stop releases of the same
@@ -191,16 +189,16 @@ once, from the main checkout:
   Requests are saved before GitHub is called. `CANCEL_SUPERSEDED=off` in
   `dashboard\.env.local` turns it off. A rerun of the install script keeps it.
 - **Release and Install** a run that published a release links to it in the
-  Release column. Install puts its APK on the phone plugged in over USB,
-  through `adb install -r`. adb comes from `ADB_PATH`, `PATH` or the
+  Release column. Install Release puts its APK on the phone plugged in over
+  USB, through `adb install -r -d`. adb comes from `ADB_PATH`, `PATH` or the
   Android SDK.
 - **Releases tab** opens by default at `http://localhost:4280`, with Status
   one click away at `/?tab=status`. Each app shows the state of its release:
-  released, building, queued, errored, cancelled, held while a session PR is
-  open, or no release yet. A building or queued row says how long the run
-  took so far and, when past runs give the usual time, how long until the
-  release. A cancelled row says why: each force cancel, from the page or from
-  the sweep that kills replaced runs, writes its reason to
+  released, building, queued, errored, cancelled, held, or no release yet.
+  Held means the release run skipped, since its gate held it or its Checks
+  failed. A building row shows a progress bar, the machine it builds on and
+  the time left, from the usual time of past runs. A cancelled row says why:
+  each force cancel, from the page or from the sweep, writes its reason to
   `dashboard\cancel-reasons.jsonl`. The newest release of each app sits
   beside its state with its notes under Changes. Tick several apps and
   press Install to put their APKs on the phone one after another.
@@ -219,8 +217,8 @@ once, from the main checkout:
   port 4281 and cancels no run. `mise x -- pnpm typecheck` and
   `mise x -- pnpm test` are the checks.
 - **CI** `.github/workflows/checks.yml` runs those checks, a build, shellcheck,
-  shfmt and a parse of each `.ps1` file on the Windows runners, for each push
-  to `main`. PR runs are off, so run the checks before a merge.
+  shfmt, markdownlint and a parse of each `.ps1` file on `windows-latest`. It
+  runs for each push to `main` and each PR.
 - **Logs** `dashboard\dashboard.log`.
 
 ## Releases
@@ -229,31 +227,36 @@ Each push to `main` that passes Checks gets a release on the
 [Releases page](https://github.com/workbench-soft/local-ci/releases), such as
 `v2026.10.30.1`. Its notes list the commits since the release before.
 `START.cmd` and the update task install the newest release.
-Release starts alongside Checks; publication alone waits for the matching
-commit's successful checks. Open PRs hold no release build.
 
-From the Releases tab, **Release on CI** dispatches a supported app workflow
-on `main`. The button turns gray and is disabled while that app's release is
-queued or running. **Force stop** confirms and cancels its GitHub Actions run;
-**Force stop local build** terminates the tracked local build process tree
-(also during dependency installation). **Build locally** fetches the latest `main` of memories-mobile,
-Shuttrix, Tick-a-Lot, SkyAltar, Memoire, Shuttrix Legacy or SpotTheCam and builds its APK
-in a temporary clone. The build uses the app's local release key when it is
-set up on this PC. **Install local** sends that APK to the connected phone.
-Tick a published APK and press **Install** to install a CI release instead.
-ADB needs one authorized phone; local builds also need the app clone and its
-Android SDK.
+- **After Checks** `release.yml` starts on `workflow_run` once Checks pass on
+  a push to `main`, so no job holds a runner while it waits.
+- **One at a time** a later release waits in the `release` group, so two
+  releases don't pick the same tag.
+- **By hand** a run of Release started by hand checks Checks of the commit
+  once, and stops unless they passed.
 
-**Clean old APK releases & artifacts** on the Releases tab previews storage use across
-all non-archived organization repositories, then asks for confirmation. It
-removes completed GitHub Actions artifacts without deleting workflow runs or
-logs, and old APK-bearing releases from the shared releases repo. The newest
-published APK release for **each** app stays available; non-APK releases,
-prereleases and drafts stay unchanged. Active run artifacts are protected.
-The page shows deletion progress and reports permission or quota errors.
-The local dashboard uses its server-side GitHub token; it must have Actions
-write access on the app repositories and Contents write access on the shared
-releases repository. The quota display may lag after cleanup.
+The Releases tab of the status page also ships the org's Android apps:
+
+- **Release on CI** dispatches the app's release workflow on `main`. The
+  button stays gray while that release is queued or running, and the server
+  refuses a second dispatch.
+- **Force stop** confirms, then force cancels the app's running release.
+- **Build locally** fetches the latest `main` of memories-mobile, Shuttrix,
+  Tick-a-Lot, SkyAltar, Memoire, Shuttrix Legacy or SpotTheCam. It builds the
+  APK in a temporary clone, with the app's release key when this PC has it.
+  **Force stop local build** ends the build and its child processes, and
+  **Install local** sends the APK to the phone.
+- **Install Release and Install Dev** put a published APK on the phone. Install
+  Dev then opens the app's unlock link, so its developer settings show. It
+  needs `WORKBENCH_DEV_KEY` on this PC, and the tab explains how to set it.
+- **Clean old APK releases & artifacts** previews, then deletes after a
+  confirm, the finished Actions artifacts of the org repos and old APK releases
+  of the shared releases repo. The newest APK release of each app stays, and
+  so do runs, logs, drafts, prereleases and non-APK releases.
+
+Install needs one authorized phone in `adb devices`. A local build also needs
+the app clone and its Android SDK. Cleanup needs a token with Actions write
+on the app repos and Contents write on the releases repo.
 
 ## Updates by themselves
 
@@ -327,7 +330,7 @@ the script first.
 [mise](https://mise.jdx.dev) sets the global versions:
 
 ```sh
-mise use -g node@22 pnpm@latest yarn@1
+mise use -g node@22 pnpm@latest yarn@1 python@3.15
 ```
 
 [sccache](https://github.com/mozilla/sccache) wraps rustc through the global

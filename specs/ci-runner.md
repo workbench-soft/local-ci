@@ -51,7 +51,7 @@ machine with several runners builds several jobs at once.
   jobs, a `matrix`, or runs of several repos.
 - **Shared machine** jobs at the same time share ports, the Android emulator
   and the Gradle cache. A test on a fixed port can fail when 2 jobs run it.
-- **Disk** each runner keeps its own work folder in `C:ci<n>` with
+- **Disk** each runner keeps its own work folder in `C:\ci\<n>` with
   checkouts and `node_modules`. The job started hook deletes the old ones,
   and `CLEAN-CI.cmd` empties them all.
 - **Fewer runners** on Windows a lower count removes the runners numbered
@@ -361,7 +361,7 @@ machine with several runners builds several jobs at once.
   - **By hand** `CLEAN-CI.cmd` in the repo root runs
     `windows/clean-ci.ps1` as admin. It waits up to 10 minutes for a gap
     between jobs, stops the runners, moves each work folder to
-    `C:ci-trash-<time>`, starts the runners on empty folders, then deletes
+    `C:\ci-trash-<time>`, starts the runners on empty folders, then deletes
     the trash at idle priority, 4 folders at a time. Only an admin can stop
     the listeners, so the script asks for the rights.
 - **Limits**
