@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **One release at a time** two pushes to main close together no longer
+  pick the same version tag. The later release waits for the earlier one.
+
 - **GitHub storage cleanup** the Releases tab can preview and confirm removal
   of completed Actions artifacts across the org and older APK releases in the
   shared releases repository. The newest published APK per app stays; active
