@@ -78,8 +78,7 @@ runner. The runner scripts also work alone:
   script moves old runners onto it.
 - **pnpm store** every job uses the machine's pnpm store through
   `pnpm_config_store_dir`, so `pnpm install` downloads a package once. On
-  Windows the setup action of `workbench-soft/ci` points it at
-  `C:ci_pnpm-store` and copies packages, since a hardlink shared with
+  Windows it is `C:ci_pnpm-store`, and jobs copy packages from it, since a hardlink shared with
   another checkout fails reads with `EBUSY` while that checkout deletes.
 - **Defender** `windows\defender-exclusions.ps1` holds every Defender
   exclusion: the runner folders, `C:\ci`, `DEV_DIR`, and the Gradle, Cargo,

@@ -121,7 +121,12 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	# The setup-* actions then download a tool once for every runner, not once per runner.
 	$jobVars = [ordered]@{ LANG = 'en_US.UTF-8'; RUNNER_TOOL_CACHE = $toolCache; AGENT_TOOLSDIRECTORY = $toolCache }
 	# action-setup puts PNPM_HOME, and with it the pnpm store, in _temp, which the runner wipes after each job.
-	$jobVars.pnpm_config_store_dir = Join-Path $env:LOCALAPPDATA 'pnpm\store'
+	# The runners keep a store of their own and copy from it: a hardlink shares the file with old
+	# checkouts and dev clones, and a delete of any link fails reads of the others with EBUSY.
+	$jobVars.pnpm_config_store_dir = Join-Path $workRoot '_pnpm-store'
+	$jobVars.pnpm_config_package_import_method = 'copy'
+	# A node_modules made from the old store gets replaced without a prompt.
+	$jobVars.pnpm_config_confirm_modules_purge = 'false'
 	if (Test-Path -LiteralPath $androidHome) { $jobVars.ANDROID_HOME = $androidHome; $jobVars.ANDROID_SDK_ROOT = $androidHome }
 	# Two jobs downloading the same SDK part at once leave it half written, so jobs only read the SDK.
 	$jobVars.'ORG_GRADLE_PROJECT_android.builder.sdkDownload' = 'false'
