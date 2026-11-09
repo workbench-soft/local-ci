@@ -61,7 +61,7 @@ flowchart TD
 ## Get a new version installed
 
 1. A PR merges into `main`.
-2. Checks and Release start together. Publication waits for this commit's Checks.
+2. Checks run. Release starts once they pass on this commit.
 3. Within 5 minutes the `local-ci update` task on the Windows PC runs.
 4. The task moves the checkout to the new tag.
 5. The task rebuilds the status page or reinstalls the runners when their

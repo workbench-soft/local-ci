@@ -11,8 +11,8 @@ run = [
   "markdownlint-cli2",
   "pnpm --dir dashboard lint",
   "pnpm --dir dashboard format:check",
-  "shellcheck install.sh runner/install.sh runner/oracle.sh .github/scripts/wait-for-checks.sh",
-  "shfmt -i 0 -d install.sh runner/install.sh runner/oracle.sh .github/scripts/wait-for-checks.sh",
+  "shellcheck install.sh runner/install.sh runner/oracle.sh",
+  "shfmt -i 0 -d install.sh runner/install.sh runner/oracle.sh",
 ]
 
 [tasks.format]

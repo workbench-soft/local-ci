@@ -1,11 +1,13 @@
 name: Release
 
-# Release starts beside Checks on each push; publication waits for that commit's Checks.
+# Release starts once Checks pass on main, so no job holds a runner while it waits.
 # The release carries notes only, since the repo builds no file to ship. The update task on the Windows PC
 # installs it within 5 minutes.
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: [Checks]
+    types: [completed]
+  # A run by hand ships main again, once its Checks passed. The local-ci page starts it this way.
   workflow_dispatch:
 
 permissions:
@@ -14,11 +16,17 @@ permissions:
 
 env:
   GH_TOKEN: ${{ github.token }}
-  SHA: ${{ github.sha }}
+  SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   release:
-    if: github.ref == 'refs/heads/main'
+    # Only Checks that passed on a push to main of this repo, or a run by hand on main, start it.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') || (
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      contains(fromJSON('["push","workflow_dispatch"]'), github.event.workflow_run.event))
     # One release at a time, so each one reads the tag of the one before and picks a free version.
     # A later push waits in line instead of cancelling a release that already waits for its Checks.
     concurrency:
@@ -33,8 +41,17 @@ jobs:
           # The release notes and the next version need every earlier tag and commit.
           fetch-depth: 0
 
-      - name: Wait for matching Checks before publication
-        run: bash .github/scripts/wait-for-checks.sh
+      # A run by hand looks up Checks of the commit once and stops unless they passed. It doesn't wait.
+      - name: Check that Checks passed on this commit
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          CHECKS_WORKFLOW: checks.yml
+        run: |
+          result=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/$CHECKS_WORKFLOW/runs?head_sha=$SHA&branch=main&per_page=1" --jq '.workflow_runs[0].conclusion // "missing"')
+          if [ "$result" != success ]; then
+            echo "::error::Checks of $SHA: $result. Run Checks on main, and this follows once they pass."
+            exit 1
+          fi
 
       - name: Pick the next version
         id: version

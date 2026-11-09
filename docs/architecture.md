@@ -395,8 +395,8 @@ sequenceDiagram
   They took runners to build code already replaced. One loop covers every org repo.
 - **Trade-off** a run dies up to 30 seconds late, and only while the page
   server runs. Runs with unknown commit identities stay. Repeating the same
-  commit keeps the running build. Publication also waits for matching Checks
-  in the workflow, so a stopped dashboard cannot publish an unchecked build.
+  commit keeps the running build. Release also starts only once matching Checks
+  pass, so a stopped dashboard cannot publish an unchecked build.
 - **Rejected**
   - **`concurrency` groups in each workflow** each repo needs the block, and
     they leave runs of merged PRs alone.

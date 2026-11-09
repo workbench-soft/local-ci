@@ -36,8 +36,8 @@ APK from the latest `main` in a separate worktree and install that build.
 
 ## How it works
 
-- **`.github/workflows/release.yml`** starts on a push to `main` alongside
-  Checks. Publication waits through `.github/scripts/wait-for-checks.sh`.
+- **`.github/workflows/release.yml`** starts on `workflow_run` once Checks
+  pass on a push to `main`.
   It runs on `ubuntu-latest`, free for a public repo.
 - **`.github/scripts/next-version.sh`** picks the tag: the date, then the
   number of the release that day.
@@ -64,6 +64,14 @@ APK from the latest `main` in a separate worktree and install that build.
 - **Failed check** a red `Checks` run or a PR run starts no release.
 
 ## Changes
+
+### 2026-11-09 Release starts after Checks
+
+- **Why** a Release that waited in `wait-for-checks.sh` held one of the 8 PC
+  runners, so Checks starved and releases timed out.
+- **Changes** Release starts on `workflow_run` once Checks pass on `main`. A
+  run from the page's Release button checks Checks of the commit once and
+  stops unless they passed. The script and its test go.
 
 ### 2026-11-07 clean up GitHub Actions storage
 
