@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Releases card in parts** the 430 line card splits into the list, one
+  app row, its buttons and its detail line. The page looks the same.
+
 - **SpotTheCam developer install** releases tagged `spotthecam-v*` get the
   Install Dev button again, like the older `speed-camera-map-v*` ones.
 

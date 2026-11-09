@@ -209,7 +209,8 @@ The server renders the page for each request.
   Kaplan-Meier usual life of the workflow's finished runs. A repo with runs
   and no release yet shows as an app once a workflow runs there after
   another one. `cards/releases-card.tsx` calls the install action once per
-  ticked app, in turn.
+  ticked app, in turn. Each row is `cards/release-item.tsx`, with
+  `release-buttons.tsx` and `release-detail.tsx`.
 - **Cancel reasons** `status/cancel-log.ts` appends each force cancel to
   `dashboard/cancel-reasons.jsonl`: repo, run id, the words and the time.
   The sweep writes `a newer run replaced it` or `its PR is closed`, Stop
