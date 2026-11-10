@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Lint before the push** a pre-push hook runs `mise run lint`, so a lint or format error stays on the PC instead of failing Checks on `main`.
+
 - **Release on CI for every app** each app on the Releases tab gets the button, and the hand kept `release-config.ts` is gone. The page takes the workflow whose run published the app's newest release, so a release of the latest `main` starts again even when that commit is already out. Build locally shows for each clone with `scripts/build-apk.sh`.
 
 - **Half installed tools** the job hook removes an npm tool in `C:ci_mise` that has no `node_modules` after 15 minutes, so the job installs it again. A full disk left oxfmt that way and failed lumiere-player. `runner/install.ps1` also puts mise in `_misein`, so the first jobs no longer download it at once.

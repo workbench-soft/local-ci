@@ -9,3 +9,4 @@ README.md merge=union
 docs/features.md merge=union
 docs/user-flows.md merge=union
 specs/*.md merge=union
+.githooks/* text eol=lf
