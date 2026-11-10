@@ -15,11 +15,14 @@ export type Release = {
 export const releasesRepo = process.env.RELEASES_REPO || `${orgName}/${orgName}.github.io`;
 
 // The memories repo was memories-mobile and took in media-organizer. Its apps keep the old release names, so installed copies keep updating.
-// The TV player of lumiere-player releases as lumiere.
+// The TV player of lumiere-player releases as lumiere, the phone app of app-updater as updater, and the
+// site of property-trends with its data as property-trends-web.
 export const releasePrefixes: Record<string, string[]> = {
   memories: ['memories-mobile', 'media-organizer'],
   'lumiere-player': ['lumiere'],
   spotthecam: ['spotthecam', 'speed-camera-map'],
+  'app-updater': ['updater'],
+  'property-trends': ['property-trends', 'property-trends-web'],
 };
 
 /** The name before -v<version> in a release tag such as memories-mobile-v2026.10.31.1, or null for another tag. */

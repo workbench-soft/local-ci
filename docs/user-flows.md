@@ -140,8 +140,8 @@ flowchart TD
    - **Install Dev** installs the release, then unlocks the app's developer
      settings on the phone. Open Install Dev: WORKBENCH_DEV_KEY first when the
      tab says the key is missing.
-   - **Release on CI** starts the app's release workflow on `main`. Force stop
-     ends it.
+   - **Release on CI** starts the app's release workflow on `main`, also
+     when that commit is already released. Force stop ends it.
    - **Build locally** builds the latest `main` on this PC. Install local
      then sends its APK to the phone.
    - **Rerun build** or **Retry failed jobs** runs an errored release again.

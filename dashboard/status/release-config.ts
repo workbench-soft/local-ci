@@ -61,6 +61,9 @@ const targets: ReleaseTarget[] = [
     build: { script: 'scripts/build-apk.sh', apk: 'dist/speed-cameras.apk', gradleDir: '.' },
   },
   { app: 'media-organizer', repo: 'media-organizer', workflow: 'release.yml', inputs: { bump: 'patch' } },
+  // These release from a workflow that a file name doesn't tell apart.
+  { app: 'property-trends-web', repo: 'property-trends', workflow: 'deploy.yml' },
+  { app: 'guitar-upscale', repo: 'guitar-upscale', workflow: 'ci.yml' },
 ];
 
 export function releaseTargetFor(app: string): ReleaseTarget | null {

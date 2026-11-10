@@ -248,7 +248,8 @@ Each push to `main` that passes Checks gets a release on the
 
 The Releases tab of the status page also ships the org's Android apps:
 
-- **Release on CI** dispatches the app's release workflow on `main`. The
+- **Release on CI** dispatches the app's release workflow on `main`, for
+  every app on the tab and also when `main` is already released. The
   button stays gray while that release is queued or running, and the server
   refuses a second dispatch.
 - **Force stop** confirms, then force cancels the app's running release.

@@ -297,7 +297,8 @@ Spec: [build-cancellation](../specs/build-cancellation.md).
 - **This repo** a tagged release follows each push to `main` once its Checks
   pass, on the [Releases page](https://github.com/workbench-soft/local-ci/releases).
 - **Release on CI** on the Releases tab, a person dispatches the release
-  workflow of a supported app on `main`. The button stays gray while that
+  workflow of any app on `main`, also when that commit is already released.
+  The page finds the workflow among the repo's workflows. The button stays gray while that
   release runs, and the server refuses a second dispatch.
 - **Build locally** builds the APK of the latest `main` of a supported
   Android app on this PC, in a temporary clone, then Install local puts it on

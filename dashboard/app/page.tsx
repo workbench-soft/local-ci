@@ -17,6 +17,7 @@ import { activeLocalBuilds } from '@/status/local-build-runner';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { releasesByRun } from '@/status/releases';
+import { releaseWorkflowFor } from '@/status/release-workflow';
 import { kindsOfRun } from '@/status/runner-kind';
 import { readRunnerCount, readThisPc } from '@/status/this-pc';
 
@@ -78,6 +79,10 @@ export default async function StatusPage({
     jobs: run.jobs.map((job) => ({ name: job.name, conclusion: job.conclusion, failedStep: job.failedStep })),
   }));
   const apps = latestReleases(releases, pipelineRuns, cancels, now);
+  // Release on CI shows for each app whose release workflow the page can tell.
+  const releasable = (
+    await Promise.all(apps.map(async ({ app }) => ((await releaseWorkflowFor(app, runs, releases)) ? app : null)))
+  ).filter((app) => app !== null);
   const building = apps.filter((app) => app.state === 'building' || app.state === 'queued').length;
   const errored = apps.filter((app) => app.state === 'errored').length;
   return (
@@ -105,6 +110,7 @@ export default async function StatusPage({
             <>
               <ReleasesCard
                 apps={apps}
+                releasable={releasable}
                 localBuilds={activeLocalBuilds()}
                 jobs={live}
                 now={now}

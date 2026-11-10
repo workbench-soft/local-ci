@@ -15,12 +15,15 @@ import { StorageCleanupButton } from './storage-cleanup-button';
 /** Each app, its newest release and what its release pipeline does. The ticked APKs go on the phone over adb one by one. */
 export function ReleasesCard({
   apps,
+  releasable,
   jobs,
   localBuilds,
   now,
   devKeyConfigured,
 }: {
   apps: AppRelease[];
+  /** The apps whose release workflow Release on CI can start. */
+  releasable: string[];
   jobs: LiveJob[];
   localBuilds: string[];
   now: number;
@@ -145,7 +148,7 @@ export function ReleasesCard({
             localBuildStopping={cancellingLocal.has(app.app)}
             outcome={outcomes[app.app]}
             actions={localActions[app.app] ?? {}}
-            hasReleaseWorkflow={releaseTargetFor(app.app) !== null}
+            hasReleaseWorkflow={releasable.includes(app.app)}
             canBuildLocally={!!releaseTargetFor(app.app)?.build}
             onToggle={() => toggle(app.app)}
             onAction={(kind) => runReleaseAction(app.app, kind)}

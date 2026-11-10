@@ -89,7 +89,8 @@ export function appOfTag(tag: string): string | null {
   return prefix === 'speed-camera-map' ? 'spotthecam' : prefix;
 }
 
-function repoOfApp(app: string): string {
+/** The repo that builds an app, for the apps that release under another name. */
+export function repoOfApp(app: string): string {
   return Object.entries(releasePrefixes).find(([, prefixes]) => prefixes.includes(app))?.[0] ?? app;
 }
 
