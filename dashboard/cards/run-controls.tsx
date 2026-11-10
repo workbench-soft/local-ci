@@ -72,6 +72,9 @@ export function RunControls({
     });
   };
 
+  // The name starts with the words on the button, so a screen reader hears Stopping, Stopped and Purging too.
+  const stopWords = stop === 'stopping' ? 'Stopping' : stop === 'stopped' ? 'Stopped' : stopText;
+  const purgeWords = busy === 'purge' ? 'Purging' : 'Purge';
   return (
     <div className="run-controls">
       {canRetryRun(status, conclusion) && <RetryRunButtons repo={repo} runId={runId} label={label} includeFailedJobs />}
@@ -81,11 +84,11 @@ export function RunControls({
           className="action"
           disabled={pending || stop !== 'idle'}
           onClick={() => run('stop')}
-          aria-label={`Stop ${label}`}
+          aria-label={`${stopWords} ${label}`}
           title="Force cancel the run on GitHub, so its runner takes the next job"
         >
           <Icon name="stop" />
-          {stop === 'stopping' ? 'Stopping' : stop === 'stopped' ? 'Stopped' : stopText}
+          {stopWords}
         </button>
       )}
       {showPurge && (
@@ -94,11 +97,11 @@ export function RunControls({
           className="action danger"
           disabled={pending}
           onClick={() => run('purge')}
-          aria-label={`Purge ${label}`}
+          aria-label={`${purgeWords} ${label}`}
           title="Force cancel the run, then delete it with its logs and artifacts"
         >
           <Icon name="trash" />
-          {busy === 'purge' ? 'Purging' : 'Purge'}
+          {purgeWords}
         </button>
       )}
       {error && (
