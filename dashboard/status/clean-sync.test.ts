@@ -15,7 +15,15 @@ const cleanCi = read('windows/clean-ci.ps1');
 test('CLEAN-CI.cmd empties the work root that runner/install.ps1 sets', () => {
   assert.ok(line(install, 'workRoot'));
   assert.equal(line(cleanCi, 'workRoot'), line(install, 'workRoot'));
+  // Two missing lines are equal too, so the org line has to be there.
+  assert.ok(line(install, 'org'));
   assert.equal(line(cleanCi, 'org'), line(install, 'org'));
+});
+
+test('the Defender exclusions and the watchdog read the work root and the org as runner/install.ps1 does', () => {
+  assert.equal(line(read('windows/defender-exclusions.ps1'), 'workRoot'), line(install, 'workRoot'));
+  // The watchdog sets the org inside a function, so its line is indented.
+  assert.ok(read('windows/runner-watchdog.ps1').includes(line(install, 'org') ?? 'no org line'));
 });
 
 test('CLEAN-CI.cmd stops the runner tasks that runner/install.ps1 registers', () => {
