@@ -59,6 +59,18 @@ try {
 		$p.PriorityClass = 'BelowNormal'
 	}
 	Write-Host ('clean-work: {0:N0} GB free on the drive of {1}' -f $freeGb, $root)
+
+	# An npm tool that a full disk cut short keeps its folder with no node_modules, and mise counts it
+	# installed: lumiere-player failed on "No executable found for configured tool: oxfmt" until a
+	# forced reinstall. Such a folder older than 15 minutes goes, so this job installs the tool again.
+	if ($env:MISE_DATA_DIR) {
+		Get-ChildItem -Path (Join-Path $env:MISE_DATA_DIR 'installs\npm-*\*') -Directory -ErrorAction SilentlyContinue |
+			Where-Object { -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -and $_.CreationTime -lt (Get-Date).AddMinutes(-15) -and -not (Test-Path -LiteralPath (Join-Path $_.FullName 'node_modules')) } |
+			ForEach-Object {
+				Write-Host "clean-work: $($_.FullName) has no node_modules, removing it so mise installs it again"
+				Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+			}
+	}
 } catch {
 	# A locked file must not fail the build.
 	Write-Host "clean-work: skipped, $($_.Exception.Message)"

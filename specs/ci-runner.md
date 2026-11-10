@@ -410,6 +410,11 @@ machine with several runners builds several jobs at once.
   - `runner/gh` goes first on the jobs PATH and retries a `gh` call that
     never reached GitHub. Two skyaltar releases stopped on a TLS handshake
     timeout while the PC downloaded tools.
+  - `runner/install.ps1` copies mise into `_misein`. Jobs that started on
+    an empty one each downloaded it, and all but one failed on the rename.
+  - `runner/clean-work.ps1` removes an npm tool in `_mise` that has no
+    `node_modules`, older than 15 minutes. The full disk of 2026-11-10 left
+    oxfmt that way, and mise counted it installed.
 - **Docs** `README.md`, `CHANGELOG.md`.
 
 ### 2026-11-10 The runners copy from their own pnpm store

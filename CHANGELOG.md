@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Half installed tools** the job hook removes an npm tool in `C:ci_mise` that has no `node_modules` after 15 minutes, so the job installs it again. A full disk left oxfmt that way and failed lumiere-player. `runner/install.ps1` also puts mise in `_misein`, so the first jobs no longer download it at once.
+
 - **gh retries** bash steps on the Windows runners get `runner/gh` first on PATH. It retries a call that never reached GitHub, a TLS handshake timeout or a refused connect, 4 times. Two skyaltar releases stopped on one such timeout.
 
 - **Jobs keep their own mise** the runners install their tools in

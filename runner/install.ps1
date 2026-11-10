@@ -318,7 +318,10 @@ Install-AndroidSdk
 
 # The runners install the tools once here, so 8 first jobs don't download them at the same time.
 function Install-CiMise {
-	New-Item -ItemType Directory -Force -Path $miseData | Out-Null
+	New-Item -ItemType Directory -Force -Path (Join-Path $miseData 'bin') | Out-Null
+	# mise-action skips its download when _mise\bin holds mise. Jobs that all started on an empty one
+	# downloaded it at once, and all but the first failed on the rename into place.
+	Copy-Item -Force -LiteralPath (Get-Command mise -CommandType Application).Source -Destination (Join-Path $miseData 'bin\mise.exe')
 	$config = Join-Path $miseData 'config.toml'
 	Copy-Item -Force -LiteralPath (Join-Path $PSScriptRoot 'mise-ci.toml') -Destination $config
 	# A job whose folder sits under the work root reads this file as a local config too.
