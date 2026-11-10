@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react';
 import { purgeRunById, runFinished, stopRun } from '@/status/run-actions';
 import { Icon } from './icons';
 import { canRetryRun } from '@/status/retry-policy';
+import { settled } from '@/status/settle';
 import { RetryRunButtons } from './retry-run-buttons';
 
 const finishCheckMs = 2_000;
@@ -39,7 +40,7 @@ export function RunControls({
   useEffect(() => {
     if (stop !== 'stopping' || busy === 'stop') return;
     const timer = setInterval(async () => {
-      const result = await runFinished(repo, runId);
+      const result = await settled(runFinished(repo, runId));
       if (result.ok && result.finished) setStop('stopped');
     }, finishCheckMs);
     return () => clearInterval(timer);
@@ -61,7 +62,7 @@ export function RunControls({
     setError(null);
     if (kind === 'purge') onPurging?.(true);
     startTransition(async () => {
-      const result = await (kind === 'stop' ? stopRun(repo, runId) : purgeRunById(repo, runId));
+      const result = await settled(kind === 'stop' ? stopRun(repo, runId) : purgeRunById(repo, runId));
       if (!result.ok) {
         setError(result.error);
         if (kind === 'stop') setStop('idle');

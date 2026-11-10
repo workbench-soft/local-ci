@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { maxRunners, type RunnerCountInfo } from '@/status/runner-count';
 import { applyRunnerCount } from '@/status/runner-count-action';
+import { settled } from '@/status/settle';
 
 /** Sets how many runners this PC keeps, next to the count its processors and memory suit. */
 export function RunnerCountForm({
@@ -23,7 +24,7 @@ export function RunnerCountForm({
     if (!valid) return;
     setNote(null);
     startTransition(async () => {
-      const result = await applyRunnerCount(count);
+      const result = await settled(applyRunnerCount(count));
       setNote(
         result.ok
           ? {
