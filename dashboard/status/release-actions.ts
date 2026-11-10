@@ -4,13 +4,12 @@ import { revalidatePath } from 'next/cache';
 import { callGitHub, forgetOrgStatus, githubStatus } from './org-status.ts';
 import { releaseTargetFor } from './release-config.ts';
 import { orgName } from './settings.ts';
-import { hasUnfinishedRelease } from './release-dispatch-guard.ts';
+import { dispatchSlackMs, dispatchVisibilityMs, hasUnfinishedRelease } from './release-dispatch-guard.ts';
 
 export type ReleaseActionResult = { ok: true } | { ok: false; error: string };
 
 const dispatching = new Set<string>();
 const recentlyDispatched = new Map<string, number>();
-const dispatchVisibilityMs = 30_000;
 
 /** Starts the app's release workflow on main. */
 export async function dispatchRelease(app: string): Promise<ReleaseActionResult> {
@@ -29,7 +28,7 @@ export async function dispatchRelease(app: string): Promise<ReleaseActionResult>
     if (
       dispatchedAt &&
       Date.now() - dispatchedAt < dispatchVisibilityMs &&
-      !runs.some((run) => Date.parse(run.created_at) >= dispatchedAt - 5_000)
+      !runs.some((run) => Date.parse(run.created_at) >= dispatchedAt - dispatchSlackMs)
     )
       return { ok: false, error: 'A release was just queued. Wait for it to appear on GitHub.' };
     await callGitHub(

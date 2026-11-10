@@ -1,4 +1,5 @@
 import type { AppRelease } from '@/status/latest-releases';
+import { dispatchSlackMs, dispatchVisibilityMs } from '@/status/release-dispatch-guard';
 import { InstallButton } from './install-button';
 import type { LocalAction } from './release-item';
 import { RetryRunButtons } from './retry-run-buttons';
@@ -32,9 +33,10 @@ export function ReleaseButtons({
   const dispatchedAt = actions.requestedAt;
   const dispatchAcknowledged =
     dispatchedAt !== undefined &&
-    ((run && Date.parse(run.createdAt) >= dispatchedAt - 5_000) ||
+    ((run && Date.parse(run.createdAt) >= dispatchedAt - dispatchSlackMs) ||
       (release && Date.parse(release.createdAt) >= dispatchedAt));
-  const dispatchJustRequested = dispatchedAt !== undefined && now - dispatchedAt < 30_000 && !dispatchAcknowledged;
+  const dispatchJustRequested =
+    dispatchedAt !== undefined && now - dispatchedAt < dispatchVisibilityMs && !dispatchAcknowledged;
   if (!(release?.apk || hasReleaseWorkflow || canBuildLocally || (run && (state === 'errored' || releaseRunning))))
     return null;
   return (
