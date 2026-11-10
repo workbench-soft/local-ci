@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { formatDuration, type JobTiming, type StepTiming } from '@/status/durations';
 import { toneOfRun } from '@/status/headline';
 import { runTimings } from '@/status/run-actions';
+import { resultOf } from './icons';
 
 /** The jobs and steps of a run, each with its time and a bar in scale with the longest step. */
 export function RunTimings({
@@ -53,7 +54,11 @@ export function RunTimings({
           <ol className="timing-steps">
             {job.steps.map((step, index) => (
               <li key={`${index}-${step.name}`}>
-                <span className="timing-name">{step.name}</span>
+                <span className="timing-name">
+                  {step.name}
+                  {/* The bar tells a failed step by its color alone, so a screen reader gets the word. */}
+                  <span className="sr-only">, {resultOf(step.status, step.conclusion).text}</span>
+                </span>
                 <span className="timing-bar">
                   <span className={toneOfRun(step)} style={{ width: `${((step.ms ?? 0) / longest) * 100}%` }} />
                 </span>
