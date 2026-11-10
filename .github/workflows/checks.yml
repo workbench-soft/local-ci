@@ -21,6 +21,8 @@ jobs:
   dashboard:
     # The installers and the page are for Windows, so the checks run on Windows.
     runs-on: windows-latest
+    # The job takes under 1 minute. A hung step would hold the runner and the release for 6 hours.
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: dashboard
@@ -41,6 +43,7 @@ jobs:
 
   scripts:
     runs-on: windows-latest
+    timeout-minutes: 10
     steps:
       # The Windows runner checks out with CRLF endings, and oxfmt then flags every file.
       - run: git config --global core.autocrlf false
