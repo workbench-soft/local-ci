@@ -12,6 +12,7 @@ run = [
   "pnpm --dir dashboard lint",
   "pnpm --dir dashboard format:check",
   "shellcheck install.sh runner/install.sh runner/oracle.sh",
+  "shellcheck .github/scripts/next-version.sh .github/scripts/release-notes.sh .agents/skills/fix-stuck-ci/ci-status.sh",
   "shfmt -i 0 -d install.sh runner/install.sh runner/oracle.sh",
 ]
 

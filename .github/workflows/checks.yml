@@ -51,6 +51,8 @@ jobs:
         with:
           cache: false
       # The same scripts as the lint task in mise.toml.
+      # The release and skill scripts keep their own indent, so only shellcheck reads them.
+      - run: shellcheck .github/scripts/next-version.sh .github/scripts/release-notes.sh .agents/skills/fix-stuck-ci/ci-status.sh
       - run: shellcheck install.sh runner/install.sh runner/oracle.sh && shfmt -i 0 -d install.sh runner/install.sh runner/oracle.sh
       - run: markdownlint-cli2
       # A syntax error in a .ps1 file shows only when a person runs it.
