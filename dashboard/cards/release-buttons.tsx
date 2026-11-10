@@ -57,6 +57,7 @@ export function ReleaseButtons({
         <button
           type="button"
           className="action release-on-ci"
+          aria-label={`${actions.busy === 'dispatch' ? 'Queueing' : 'Release on CI'}: ${app}`}
           disabled={!!actions.busy || releaseRunning || dispatchJustRequested}
           title={releaseRunning ? 'Wait for the current release to finish or stop it first' : undefined}
           onClick={() => onAction('dispatch')}
@@ -70,6 +71,7 @@ export function ReleaseButtons({
           className="action"
           disabled={!!actions.busy || localBuildRunning}
           onClick={() => onAction('build')}
+          aria-label={`${actions.busy === 'build' ? 'Building locally' : 'Build locally'}: ${app}`}
           title="Fetch main and build in a temporary checkout on this PC"
         >
           {actions.busy === 'build' ? 'Building locally' : 'Build locally'}
@@ -81,13 +83,20 @@ export function ReleaseButtons({
           className="action danger"
           disabled={localBuildStopping}
           onClick={onStopLocal}
+          aria-label={`${localBuildStopping ? 'Stopping local build' : 'Force stop local build'}: ${app}`}
           title="Force-stop this PC's local build process and all of its children"
         >
           {localBuildStopping ? 'Stopping local build' : 'Force stop local build'}
         </button>
       )}
       {actions.artifact && (
-        <button type="button" className="action" disabled={!!actions.busy} onClick={() => onAction('install')}>
+        <button
+          type="button"
+          className="action"
+          disabled={!!actions.busy}
+          onClick={() => onAction('install')}
+          aria-label={`${actions.busy === 'install' ? 'Installing' : 'Install local'}: ${app}`}
+        >
           {actions.busy === 'install' ? 'Installing' : 'Install local'}
         </button>
       )}
