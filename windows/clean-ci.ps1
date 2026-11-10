@@ -27,12 +27,23 @@ Start-Sleep -Seconds 3
 # A move on the same drive is instant, so the runners start again with empty folders in seconds.
 $trash = "$workRoot-trash-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 New-Item -ItemType Directory -Force -Path $trash | Out-Null
-Get-ChildItem -LiteralPath $workRoot -Directory -Force | ForEach-Object {
-	Move-Item -LiteralPath $_.FullName -Destination (Join-Path $trash $_.Name)
-	New-Item -ItemType Directory -Force -Path $_.FullName | Out-Null
+try {
+	Get-ChildItem -LiteralPath $workRoot -Directory -Force | ForEach-Object {
+		$folder = $_.FullName
+		# Windows refuses to move a folder while a process holds a file in it, such as the trash delete
+		# of runner/clean-work.ps1. That folder stays, and the rest still move.
+		try {
+			Move-Item -LiteralPath $folder -Destination (Join-Path $trash $_.Name)
+			New-Item -ItemType Directory -Force -Path $folder | Out-Null
+		} catch {
+			Write-Host "Skipping $folder, a process holds it: $($_.Exception.Message)"
+		}
+	}
+} finally {
+	# The runners are stopped by now, so they start again even when a step above fails.
+	$tasks | Start-ScheduledTask
 }
-$tasks | Start-ScheduledTask
-Write-Host 'The runners run again with empty work folders'
+Write-Host 'The runners run again'
 
 # The delete runs at idle priority, 4 folders at a time, so the PC stays responsive.
 # It takes this run's folders and any a closed window left behind.
