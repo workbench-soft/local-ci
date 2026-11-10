@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { describeRunner, runnerNumber, runnerTaskName } from './this-pc.ts';
+import { describeRunner, readThisPc, runnerNumber, runnerTaskName, type ThisPcStatus } from './this-pc.ts';
 
 test('runnerNumber reads the folders runner/install.ps1 makes', () => {
   assert.equal(runnerNumber('workbench-soft'), 1);
@@ -53,3 +53,41 @@ test(
     }
   },
 );
+
+test('readThisPc answers from the kept read while one new read runs', async () => {
+  let clock = 0;
+  const now = () => clock;
+  const pending: ((status: ThisPcStatus) => void)[] = [];
+  const load = () => new Promise<ThisPcStatus>((resolve) => pending.push(resolve));
+  const answer = (folder: string): ThisPcStatus => ({
+    supported: true,
+    runners: [{ ...describeRunner(folder, { tasks: [], logs: [] }), name: folder, lastJobAt: null }],
+  });
+  const nameOf = async (status: Promise<ThisPcStatus>) => {
+    const read = await status;
+    return read.supported ? read.runners[0].name : null;
+  };
+
+  // The first read has no answer to show, so visitors wait for it together.
+  const first = readThisPc(load, now);
+  assert.equal(readThisPc(load, now), first);
+  pending[0](answer('one'));
+  assert.equal(await nameOf(first), 'one');
+  await Promise.resolve();
+
+  // Past 5 s the page gets the kept answer at once, and one read starts behind it.
+  clock = 15_000;
+  assert.equal(await nameOf(readThisPc(load, now)), 'one');
+  assert.equal(await nameOf(readThisPc(load, now)), 'one');
+  assert.equal(pending.length, 2);
+  pending[1](answer('two'));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(await nameOf(readThisPc(load, now)), 'two');
+
+  // Past 30 s the kept answer is too old to show, so the visit waits for a new read.
+  clock = 60_000;
+  const late = readThisPc(load, now);
+  assert.equal(pending.length, 3);
+  pending[2](answer('three'));
+  assert.equal(await nameOf(late), 'three');
+});

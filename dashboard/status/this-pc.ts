@@ -32,9 +32,12 @@ export const countFile = join(runnersRoot, 'runner-count');
 export const countTaskName = `GitHub Actions runner count (${orgName})`;
 const execFileAsync = promisify(execFile);
 const pcCacheTtlMs = 5_000;
+// An older answer still shows while the next read runs, up to this age.
+const pcStaleMaxMs = 30_000;
 const powershellTimeoutMs = 15_000;
 type PcCache = { doneAt: number | null; status: Promise<ThisPcStatus> };
 let pcCache: PcCache | null = null;
+let pcRefresh: Promise<ThisPcStatus> | null = null;
 // A failed or hung PowerShell would read as every runner down, so the last good answer stays for a
 // minute. Past that the runners show as down, since one may have died meanwhile.
 const snapshotKeepMs = 60_000;
@@ -65,16 +68,42 @@ export function describeRunner(folder: string, snapshot: ProcessSnapshot): Omit<
   };
 }
 
-/** The runners on this PC. The checks need Windows. */
-export function readThisPc(): Promise<ThisPcStatus> {
-  // PowerShell takes 2 to 8 s here, so open tabs share a read, and its answer for 5 s after it ends.
-  if (pcCache && (pcCache.doneAt === null || Date.now() - pcCache.doneAt < pcCacheTtlMs)) return pcCache.status;
-  const entry: PcCache = { doneAt: null, status: loadThisPc() };
-  void entry.status.finally(() => {
-    entry.doneAt = Date.now();
-  });
+/**
+ * The runners on this PC. The checks need Windows.
+ * PowerShell takes 2 to 8 s here, so open tabs share a read, and its answer for 5 s after it ends.
+ * Up to 30 s the kept answer still shows at once while one new read runs in the background.
+ */
+export function readThisPc(load: () => Promise<ThisPcStatus> = loadThisPc, now = Date.now): Promise<ThisPcStatus> {
+  const kept = pcCache;
+  const age = kept?.doneAt == null ? null : now() - kept.doneAt;
+  if (kept && (age === null || age < pcCacheTtlMs)) return kept.status;
+  if (kept && age !== null && age < pcStaleMaxMs) {
+    pcRefresh ??= refreshThisPc(load, now);
+    return kept.status;
+  }
+  // A background read already runs, so the visit waits for it and starts no second PowerShell.
+  if (pcRefresh) return pcRefresh;
+  const entry: PcCache = { doneAt: null, status: load() };
+  void entry.status.then(
+    () => (entry.doneAt = now()),
+    () => (entry.doneAt = now()),
+  );
   pcCache = entry;
   return entry.status;
+}
+
+function refreshThisPc(load: () => Promise<ThisPcStatus>, now: () => number): Promise<ThisPcStatus> {
+  const status = load();
+  const done = (keep: boolean) => {
+    if (keep) pcCache = { doneAt: now(), status };
+    pcRefresh = null;
+  };
+  // A failed read keeps the answer on the page, and the next visit tries again.
+  void status.then(
+    () => done(true),
+    () => done(false),
+  );
+  return status;
 }
 
 /** The saved runner count, and the count this PC's processors and memory suit. */

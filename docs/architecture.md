@@ -135,7 +135,8 @@ The server renders the page for each request.
 - **This PC** `status/this-pc.ts` finds each runner folder of the org. For
   each it reads the boot task and which `_diag` logs a live process holds open.
   One PowerShell call reads them all, gives up after 15 s and keeps its
-  answer for 5 s. A failed call keeps the last answer for up to a minute.
+  answer for 5 s. Up to 30 s the page shows that answer at once while one new
+  call runs behind it. A failed call keeps the last answer for up to a minute.
 - **GitHub** `status/org-status.ts` calls the API with the token from
   `.env.local`, and each call gives up after 20 s. It keeps the answer in
   memory for 20 seconds, and requests that arrive during a load wait for that
