@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { delimiter, join } from 'node:path';
 import { promisify } from 'node:util';
 
@@ -31,6 +32,15 @@ export async function installFileOn(adb: string, device: string, file: string): 
     return { ok: true, device };
   } catch (error) {
     return { ok: false, error: adbError(error) };
+  }
+}
+
+/** Deletes a downloaded APK once its install ends. Each one is 20 to 155 MB with the version in its name, so they piled up. */
+export async function installThenRemove(file: string, install: () => Promise<InstallResult>): Promise<InstallResult> {
+  try {
+    return await install();
+  } finally {
+    await rm(file, { force: true }).catch(() => undefined);
   }
 }
 

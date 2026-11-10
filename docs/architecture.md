@@ -224,8 +224,8 @@ The server renders the page for each request.
 - **Install** `status/install-apk.ts` holds the server actions, and
   `status/adb.ts` the plain adb helpers a browser can't call. It checks
   `adb devices` for one phone, downloads the release's `.apk` to
-  `%TEMP%\local-ci-apk` and runs `adb install -r -d`. adb's output goes
-  back to the button on failure.
+  `%TEMP%\local-ci-apk`, runs `adb install -r -d` and deletes the file.
+  adb's output goes back to the button on failure.
 - **Install Dev** `installDeveloperRelease` installs the same APK, then
   `status/dev-phone.ts` reads the app id from the tag, such as
   `com.workbenchsoft.lumiere`, and builds the unlock link. The key comes from

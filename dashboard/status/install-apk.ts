@@ -4,7 +4,16 @@ import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { adbError, adbMissing, execFileAsync, findAdb, installFileOn, onePhone, type InstallResult } from './adb.ts';
+import {
+  adbError,
+  adbMissing,
+  execFileAsync,
+  findAdb,
+  installFileOn,
+  installThenRemove,
+  onePhone,
+  type InstallResult,
+} from './adb.ts';
 import { isDevKeyConfigured } from './dev-key.ts';
 import { callGitHub, githubStatus } from './org-status.ts';
 import { type ApiRelease, releasesRepo, toRelease } from './releases.ts';
@@ -39,8 +48,11 @@ export async function installRelease(tag: string): Promise<InstallResult> {
     const folder = join(tmpdir(), 'local-ci-apk');
     await mkdir(folder, { recursive: true });
     const file = join(folder, release.apk.name.replace(/[^\w.-]/g, '_'));
-    await writeFile(file, Buffer.from(await response.arrayBuffer()));
-    return installFileOn(adb, phone.device, file);
+    // A write cut short leaves a file too, so the delete covers it as well.
+    return await installThenRemove(file, async () => {
+      await writeFile(file, Buffer.from(await response.arrayBuffer()));
+      return installFileOn(adb, phone.device, file);
+    });
   } catch (error) {
     return { ok: false, error: adbError(error) };
   }
