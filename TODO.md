@@ -110,3 +110,10 @@ Audit of 2026-11-10:
 ## Week review 2026-11
 
 - [ ] The status page shows English only, while the org rule asks for 9 languages. Pick an i18n library through the `stack` skill and move the strings of `dashboard/cards/` into catalogs, or record in a spec why this local tool stays English.
+
+## ci-failures-2026-11-10
+
+- [ ] Turn off Surfshark on this PC, or add `C:\ci`, `%USERPROFILE%\actions-runner` and `gh.exe` to its split tunnelling (Bypasser). Its connects and drops on 2026-11-08 to 2026-11-10 lined up with TLS handshake timeouts in CI jobs
+- [ ] Set `retention-days` on `actions/upload-artifact` in farnear and suno-download: both hit "Artifact storage quota has been hit" on 2026-11-08 and 2026-11-09
+- [ ] Look at the Dependabot `update_files` failures in app-updater, keeppad, skyaltar, suno-download, tickalot, tripforge, alina-photo, aspirationstyle and chrome-site-sources
+- [ ] Give the merge workflows of aspirationstyle and tickalot a `workflow_dispatch` trigger, their merge job fails without it
