@@ -1,7 +1,7 @@
 'use server';
 
 import { spawn } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -47,9 +47,11 @@ export async function installRelease(tag: string): Promise<InstallResult> {
     if (!response.ok) return { ok: false, error: `GitHub answered ${response.status} to the APK download.` };
     const folder = join(tmpdir(), 'local-ci-apk');
     await mkdir(folder, { recursive: true });
-    const file = join(folder, release.apk.name.replace(/[^\w.-]/g, '_'));
+    // Each install gets its own folder, so two installs of one release can't delete each other's file.
+    const own = await mkdtemp(join(folder, 'i-'));
+    const file = join(own, release.apk.name.replace(/[^\w.-]/g, '_'));
     // A write cut short leaves a file too, so the delete covers it as well.
-    return await installThenRemove(file, async () => {
+    return await installThenRemove(own, async () => {
       await writeFile(file, Buffer.from(await response.arrayBuffer()));
       return installFileOn(adb, phone.device, file);
     });
