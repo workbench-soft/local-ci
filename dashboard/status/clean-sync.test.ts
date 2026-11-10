@@ -50,3 +50,8 @@ test('runner/install.ps1 gives the jobs their own mise, and CLEAN-CI.cmd keeps i
   assert.match(install, /MISE_GLOBAL_CONFIG_FILE = Join-Path \$miseData 'config\.toml'/);
   assert.match(cleanCi, /Where-Object Name -ne '_mise'/);
 });
+
+test('runner/install.ps1 puts the retrying gh first on the jobs PATH', () => {
+  assert.match(install, /Copy-Item -Force -LiteralPath \(Join-Path \$PSScriptRoot 'gh'\) -Destination \$ghRetryDir/);
+  assert.match(install, /\$dirs = @\(\$ghRetryDir, /);
+});

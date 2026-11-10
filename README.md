@@ -85,6 +85,9 @@ runner. The runner scripts also work alone:
   own mise tools stay out of the jobs, so a session that holds or swaps one
   can't fail a build. A tool every job needs without a repo pin goes in
   `mise-ci.toml`, then run the runner script again.
+- **gh retries** bash steps run `runnergh` first, copied to
+  `%USERPROFILE%actions-runnerin`. It retries a `gh` call whose
+  connection to GitHub failed, and returns any HTTP error at once.
 - **Defender** `windows\defender-exclusions.ps1` holds every Defender
   exclusion: the runner folders, `C:\ci`, `DEV_DIR`, and the Gradle, Cargo,
   sccache, pnpm, npm and mise caches. The runner script calls it, and it also runs

@@ -407,6 +407,9 @@ machine with several runners builds several jobs at once.
   1. This spec.
   2. `runner/clean-work.ps1`, and its copy in `~/actions-runner/hooks`.
   3. Docs and changelog.
+  - `runner/gh` goes first on the jobs PATH and retries a `gh` call that
+    never reached GitHub. Two skyaltar releases stopped on a TLS handshake
+    timeout while the PC downloaded tools.
 - **Docs** `README.md`, `CHANGELOG.md`.
 
 ### 2026-11-10 The runners copy from their own pnpm store

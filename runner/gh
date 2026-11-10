@@ -1,0 +1,37 @@
+#!/bin/sh
+# gh for the CI jobs on this PC: runner/install.ps1 copies it to ~/actions-runner/bin, first on the jobs' PATH.
+# It runs the real gh and retries when the connection to GitHub failed before the request went out:
+# a TLS handshake timeout or a refused connect. Such a failure stopped skyaltar releases on 2026-11-10.
+# Any other failure, a 4xx or 5xx included, returns at once, so a POST never runs twice.
+self=$(cd "$(dirname "$0")" && pwd -P)
+real=
+IFS=:
+for dir in $PATH; do
+  [ "$(cd "$dir" 2>/dev/null && pwd -P)" = "$self" ] && continue
+  for name in gh.exe gh; do
+    [ -x "$dir/$name" ] && [ ! -d "$dir/$name" ] && real="$dir/$name" && break 2
+  done
+done
+unset IFS
+[ -n "$real" ] || {
+  echo "gh: no gh found on PATH apart from $self" >&2
+  exit 127
+}
+# Input from stdin can't be read twice, so such a call runs once.
+for arg in "$@"; do
+  [ "$arg" = - ] && exec "$real" "$@"
+done
+err=$(mktemp)
+trap 'rm -f "$err"' EXIT
+wait=10
+for try in 1 2 3 4; do
+  "$real" "$@" 2>"$err"
+  code=$?
+  cat "$err" >&2
+  [ "$code" = 0 ] && exit 0
+  grep -qE 'TLS handshake timeout|dial tcp|connectex|no such host' "$err" || exit "$code"
+  [ "$try" = 4 ] && exit "$code"
+  echo "gh: no connection to GitHub, try $((try + 1)) of 4 in ${wait}s" >&2
+  sleep "$wait"
+  wait=$((wait * 2))
+done

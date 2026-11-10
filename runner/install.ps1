@@ -109,7 +109,8 @@ function Get-RegistrationToken {
 function Get-ToolDirs {
 	$git = Get-Command git -CommandType Application -ErrorAction SilentlyContinue | Where-Object { $_.Source -like '*\Git\cmd\git.exe' } | Select-Object -First 1
 	$gitRoot = if ($git) { Split-Path (Split-Path $git.Source) } else { Join-Path $env:ProgramFiles 'Git' }
-	$dirs = @("$gitRoot\bin", "$gitRoot\usr\bin")
+	# The gh of runner/gh comes first, so a bash step retries a call that never reached GitHub.
+	$dirs = @($ghRetryDir, "$gitRoot\bin", "$gitRoot\usr\bin")
 	# install.ps1 puts mise's python in the shims and python3 forwarders in .local\bin.
 	$dirs += (Join-Path $HOME '.local\bin'), (Join-Path $miseData 'shims')
 	return $dirs
@@ -340,6 +341,10 @@ function Install-CiMise {
 Write-Step "Installing the CI tools of runner/mise-ci.toml in $miseData"
 Install-CiMise
 
+# A copy outside this clone, as with the clean hook below.
+$ghRetryDir = Join-Path $HOME 'actions-runner\bin'
+New-Item -ItemType Directory -Force -Path $ghRetryDir | Out-Null
+Copy-Item -Force -LiteralPath (Join-Path $PSScriptRoot 'gh') -Destination $ghRetryDir
 $toolDirs = Get-ToolDirs
 $toolCache = Join-Path $HOME 'actions-runner\_tool'
 New-Item -ItemType Directory -Force -Path $toolCache | Out-Null

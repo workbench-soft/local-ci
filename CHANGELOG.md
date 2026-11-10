@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **gh retries** bash steps on the Windows runners get `runner/gh` first on PATH. It retries a call that never reached GitHub, a TLS handshake timeout or a refused connect, 4 times. Two skyaltar releases stopped on one such timeout.
+
 - **Jobs keep their own mise** the runners install their tools in
   `C:ci_mise` from `runner/mise-ci.toml`. A tool a session on the PC held
   or swapped, such as an MCP server, failed CI jobs with "being used by
