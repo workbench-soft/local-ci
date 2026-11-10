@@ -1,3 +1,5 @@
+import { tagPrefix } from './releases.ts';
+
 /** GitHub API snapshots used when planning an explicit storage cleanup. */
 export type StoredArtifact = {
   id: number;
@@ -31,7 +33,7 @@ export function oldArtifacts(artifacts: StoredArtifact[], activeRunIds: Readonly
 export function apkAppOf(release: StoredRelease): string | null {
   if (release.draft || release.prerelease || !release.assets.some((asset) => asset.name.toLowerCase().endsWith('.apk')))
     return null;
-  return /^(.+)-v\d[\w.]*$/.exec(release.tag_name)?.[1] ?? null;
+  return tagPrefix(release.tag_name);
 }
 
 function publishedTime(release: StoredRelease): number {
