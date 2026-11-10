@@ -425,3 +425,21 @@ machine with several runners builds several jobs at once.
 - **Limits** a runner reads `.env` at start: the count task reruns the script
   and restarts each runner once it is idle.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+### 2026-11-10 Jobs keep their own mise tools
+
+- **Why** 135 runs failed across the org from 7 to 10 November. The jobs ran
+  the PC's own mise: each installed its 25 global tools, MCP servers and agent
+  CLIs included, and failed when a session held or swapped one, such as
+  `github-mcp-server\2.0.3 is being used by another process` in servohop and
+  `sccache\0.19` in app-updater.
+- **Changes**
+  - `runner/mise-ci.toml` lists the tools a job may call without a repo pin.
+  - `runner/install.ps1` copies it to `<work root>\_mise\config.toml`, sets
+    `MISE_DATA_DIR` and `MISE_GLOBAL_CONFIG_FILE` in each runner's `.env`,
+    installs the tools once and puts `_mise\shims` on the jobs' PATH.
+  - `windows/clean-ci.ps1` keeps `_mise`.
+  - `runner/clean-work.ps1` writes one plain line for a folder a process
+    holds, in place of a red `Rename-Item` error that read like the cause of
+    each failed job.
+- **Docs** `README.md`, `CHANGELOG.md`.

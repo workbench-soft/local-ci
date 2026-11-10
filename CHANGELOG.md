@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Jobs keep their own mise** the runners install their tools in
+  `C:ci_mise` from `runner/mise-ci.toml`. A tool a session on the PC held
+  or swapped, such as an MCP server, failed CI jobs with "being used by
+  another process". Run `runner/install.ps1` again to switch.
+
+- **Quiet clean** a work folder a process holds stays for a later job with
+  one plain line, in place of a red `Rename-Item` error in every job log.
+
 - **Reruns keep their release** a rerun on GitHub keeps the run id, and the
   page kept the failed jobs of the first attempt. Checks that passed on the
   rerun then read as failed, and the sweep cancelled the release. The page

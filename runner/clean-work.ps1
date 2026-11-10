@@ -41,8 +41,13 @@ try {
 		Where-Object { $freeGb -lt $minFreeGb -or $_.LastWriteTime -lt $cutoff } |
 		ForEach-Object {
 			Write-Host "clean-work: removing $($_.Name), last used $($_.LastWriteTime)"
-			# A rename on the same drive is instant, so the job starts at once.
-			Rename-Item -LiteralPath $_.FullName -NewName "_trash-$stamp-$($_.Name)"
+			# A rename on the same drive is instant, so the job starts at once. A folder a process still
+			# holds stays for the next job, with one plain line in place of a red error in the job log.
+			try {
+				Rename-Item -LiteralPath $_.FullName -NewName "_trash-$stamp-$($_.Name)" -ErrorAction Stop
+			} catch {
+				Write-Host "clean-work: $($_.Exception.Message) It stays until a later job."
+			}
 		}
 
 	if (Get-ChildItem -LiteralPath $root -Directory -Force -Filter '_trash-*') {

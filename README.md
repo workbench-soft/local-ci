@@ -80,6 +80,11 @@ runner. The runner scripts also work alone:
   `pnpm_config_store_dir`, so `pnpm install` downloads a package once. On
   Windows it is `C:\ci\_pnpm-store`, and jobs copy packages from it, since a hardlink shared with
   another checkout fails reads with `EBUSY` while that checkout deletes.
+- **Own mise** jobs on Windows install and run their tools from
+  `C:\ci\_mise`, with `runner\mise-ci.toml` as their global config. The PC's
+  own mise tools stay out of the jobs, so a session that holds or swaps one
+  can't fail a build. A tool every job needs without a repo pin goes in
+  `mise-ci.toml`, then run the runner script again.
 - **Defender** `windows\defender-exclusions.ps1` holds every Defender
   exclusion: the runner folders, `C:\ci`, `DEV_DIR`, and the Gradle, Cargo,
   sccache, pnpm, npm and mise caches. The runner script calls it, and it also runs

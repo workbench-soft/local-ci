@@ -28,7 +28,8 @@ Start-Sleep -Seconds 3
 $trash = "$workRoot-trash-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
 New-Item -ItemType Directory -Force -Path $trash | Out-Null
 try {
-	Get-ChildItem -LiteralPath $workRoot -Directory -Force | ForEach-Object {
+	# _mise holds the jobs' tools from runner/install.ps1. Without it 8 jobs would download them at once.
+	Get-ChildItem -LiteralPath $workRoot -Directory -Force | Where-Object Name -ne '_mise' | ForEach-Object {
 		$folder = $_.FullName
 		# Windows refuses to move a folder while a process holds a file in it, such as the trash delete
 		# of runner/clean-work.ps1. That folder stays, and the rest still move.

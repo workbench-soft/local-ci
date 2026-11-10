@@ -44,6 +44,8 @@ function Write-Step([string]$text) { Write-Host "`n==> $text" }
 # The first runner keeps the folder, name and task it had before runners got numbers.
 # Jobs check repos out here, a short root so deep node_modules paths stay under 260 characters.
 $workRoot = if ($env:RUNNER_WORK_ROOT) { $env:RUNNER_WORK_ROOT } else { Join-Path $env:SystemDrive 'ci' }
+# The jobs' own mise tools and global config, apart from the PC's. See runner/mise-ci.toml.
+$miseData = Join-Path $workRoot '_mise'
 
 # The SDK sits outside AppData. Claude Desktop is a packaged app, so a tool it
 # runs writes %LOCALAPPDATA% into its own LocalCache folder. An SDK part
@@ -109,7 +111,7 @@ function Get-ToolDirs {
 	$gitRoot = if ($git) { Split-Path (Split-Path $git.Source) } else { Join-Path $env:ProgramFiles 'Git' }
 	$dirs = @("$gitRoot\bin", "$gitRoot\usr\bin")
 	# install.ps1 puts mise's python in the shims and python3 forwarders in .local\bin.
-	$dirs += (Join-Path $HOME '.local\bin'), (Join-Path $env:LOCALAPPDATA 'mise\shims')
+	$dirs += (Join-Path $HOME '.local\bin'), (Join-Path $miseData 'shims')
 	return $dirs
 }
 
@@ -127,6 +129,10 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 	$jobVars.pnpm_config_package_import_method = 'copy'
 	# A node_modules made from the old store gets replaced without a prompt.
 	$jobVars.pnpm_config_confirm_modules_purge = 'false'
+	# With the PC's mise, every job installed its 25 global tools and failed when a session held or
+	# swapped one, such as "github-mcp-server\2.0.3 is being used by another process".
+	$jobVars.MISE_DATA_DIR = $miseData
+	$jobVars.MISE_GLOBAL_CONFIG_FILE = Join-Path $miseData 'config.toml'
 	if (Test-Path -LiteralPath $androidHome) { $jobVars.ANDROID_HOME = $androidHome; $jobVars.ANDROID_SDK_ROOT = $androidHome }
 	# Two jobs downloading the same SDK part at once leave it half written, so jobs only read the SDK.
 	$jobVars.'ORG_GRADLE_PROJECT_android.builder.sdkDownload' = 'false'
@@ -308,6 +314,31 @@ Write-Step "Installing the Android SDK parts the apps build with, in $androidHom
 Copy-AndroidSdk
 Set-MiseAndroidHome
 Install-AndroidSdk
+
+# The runners install the tools once here, so 8 first jobs don't download them at the same time.
+function Install-CiMise {
+	New-Item -ItemType Directory -Force -Path $miseData | Out-Null
+	$config = Join-Path $miseData 'config.toml'
+	Copy-Item -Force -LiteralPath (Join-Path $PSScriptRoot 'mise-ci.toml') -Destination $config
+	# A job whose folder sits under the work root reads this file as a local config too.
+	mise trust --quiet $config | Out-Null
+	mise set --file $config "ANDROID_HOME=$($androidHome -replace '\\', '/')" | Out-Null
+	$saved = $env:MISE_DATA_DIR, $env:MISE_GLOBAL_CONFIG_FILE
+	$env:MISE_DATA_DIR = $miseData
+	$env:MISE_GLOBAL_CONFIG_FILE = $config
+	try {
+		# Not from $HOME: its .config\mise\config.toml counts as a local config there and adds the PC's tools.
+		Push-Location $workRoot
+		mise install --yes | Out-Host
+		if ($LASTEXITCODE -ne 0) { Write-Host "mise install ended with $LASTEXITCODE, the first jobs install the rest" }
+		mise reshim | Out-Null
+	} finally {
+		Pop-Location
+		$env:MISE_DATA_DIR, $env:MISE_GLOBAL_CONFIG_FILE = $saved
+	}
+}
+Write-Step "Installing the CI tools of runner/mise-ci.toml in $miseData"
+Install-CiMise
 
 $toolDirs = Get-ToolDirs
 $toolCache = Join-Path $HOME 'actions-runner\_tool'

@@ -42,3 +42,11 @@ test('CLEAN-CI.cmd starts the runner tasks again when a move fails', () => {
   assert.match(cleanCi, /\} finally \{[^}]*\$tasks \| Start-ScheduledTask/);
   assert.equal(cleanCi.match(/Start-ScheduledTask/g)?.length, 1);
 });
+
+// The jobs' mise lives under the work root, apart from the PC's tools, and a full clean keeps it.
+test('runner/install.ps1 gives the jobs their own mise, and CLEAN-CI.cmd keeps it', () => {
+  assert.match(install, /\$miseData = Join-Path \$workRoot '_mise'/);
+  assert.match(install, /MISE_DATA_DIR = \$miseData/);
+  assert.match(install, /MISE_GLOBAL_CONFIG_FILE = Join-Path \$miseData 'config\.toml'/);
+  assert.match(cleanCi, /Where-Object Name -ne '_mise'/);
+});
