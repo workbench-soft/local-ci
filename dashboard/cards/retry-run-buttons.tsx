@@ -41,29 +41,32 @@ export function RetryRunButtons({
     }
   };
 
+  // The name starts with the words on the button, so voice control finds it and a screen reader hears Queued.
+  const rerunWords = queued ? 'Queued' : busy === 'all' ? 'Restarting' : 'Rerun build';
+  const retryWords = busy === 'failed' ? 'Retrying' : 'Retry failed jobs';
   return (
     <>
       <button
         type="button"
         className="action"
         disabled={busy !== null || queued}
-        aria-label={`Rerun ${label}`}
+        aria-label={`${rerunWords}: ${label}`}
         title="Restart the entire workflow on GitHub Actions"
         onClick={() => void retry('all')}
       >
         <Icon name="retry" />
-        {queued ? 'Queued' : busy === 'all' ? 'Restarting' : 'Rerun build'}
+        {rerunWords}
       </button>
       {includeFailedJobs && (
         <button
           type="button"
           className="action"
           disabled={busy !== null || queued}
-          aria-label={`Retry failed jobs of ${label}`}
+          aria-label={`${retryWords}: ${label}`}
           title="Retry only the failed jobs of this workflow"
           onClick={() => void retry('failed')}
         >
-          {busy === 'failed' ? 'Retrying' : 'Retry failed jobs'}
+          {retryWords}
         </button>
       )}
       {error && (

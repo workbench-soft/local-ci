@@ -37,6 +37,9 @@ export function InstallButton({ tag, name }: { tag: string; name: string }) {
     });
   };
 
+  // The name starts with the words on the button, so a screen reader hears Installing and Enabling Dev too.
+  const releaseWords = pending && mode === 'release' ? 'Installing' : 'Install Release';
+  const devWords = pending && mode === 'developer' ? 'Enabling Dev' : 'Install Dev';
   return (
     <div className="install">
       <div className="install-choices">
@@ -45,11 +48,11 @@ export function InstallButton({ tag, name }: { tag: string; name: string }) {
           className="action"
           disabled={pending}
           onClick={() => install('release')}
-          aria-label={`Install release of ${name}`}
+          aria-label={`${releaseWords}: ${name}`}
           title={`Install the published ${name} APK on the phone over ADB, keeping app data`}
         >
           <Icon name="phone" />
-          {pending && mode === 'release' ? 'Installing' : 'Install Release'}
+          {releaseWords}
         </button>
         {hasDeveloperUnlock && (
           <button
@@ -57,11 +60,11 @@ export function InstallButton({ tag, name }: { tag: string; name: string }) {
             className="action"
             disabled={pending}
             onClick={() => install('developer')}
-            aria-label={`Install developer-enabled ${name}`}
+            aria-label={`${devWords}: ${name}`}
             title="Install the same release APK, then unlock the existing developer settings on this phone"
           >
             <Icon name="phone" />
-            {pending && mode === 'developer' ? 'Enabling Dev' : 'Install Dev'}
+            {devWords}
           </button>
         )}
       </div>
