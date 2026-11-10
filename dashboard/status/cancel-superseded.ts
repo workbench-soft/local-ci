@@ -1,9 +1,18 @@
 import { loggedCancellation, readCancels, recordCancel, type CancelCause } from './cancel-log.ts';
 import { callGitHub, fetchOrgStatus, forgetOrgStatus, githubStatus } from './org-status.ts';
 import { orgName } from './settings.ts';
-import { cancelCause, failedCheckReleases, replacementRuns } from './superseded.ts';
+import {
+  cancelCause,
+  cancelIsDue,
+  failedCheckReleases,
+  noteRefusedCancel,
+  type RefusedCancels,
+  replacementRuns,
+} from './superseded.ts';
 
 let started = false;
+// Only the sweep reads it, so it lives in this module. A restart of the server starts the waits over.
+const refused: RefusedCancels = new Map();
 
 /** The production server alone cancels replaced builds and releases whose Checks failed. */
 export function startCancellingSuperseded(): void {
@@ -56,7 +65,11 @@ async function cancelSuperseded(): Promise<void> {
     });
   }
   const recorded = await readCancels();
-  for (const [id] of decisions) if (recorded.get(id)?.outcome === 'accepted') decisions.delete(id);
+  const now = Date.now();
+  // A run that needs no cancel any more has finished or got its cancel.
+  for (const id of refused.keys()) if (!decisions.has(id)) refused.delete(id);
+  for (const [id] of decisions)
+    if (recorded.get(id)?.outcome === 'accepted' || !cancelIsDue(refused, id, now)) decisions.delete(id);
   const results = await Promise.allSettled(
     [...decisions].map(async ([id, { repo, words, cause }]) => {
       try {
@@ -64,9 +77,12 @@ async function cancelSuperseded(): Promise<void> {
           callGitHub(`/repos/${orgName}/${repo}/actions/runs/${id}/force-cancel`, 'POST'),
         );
       } catch (error) {
+        // GitHub answers 409 while it can't stop the run, and the run can stay active for hours.
+        noteRefusedCancel(refused, id, Date.now());
         if (githubStatus(error) === 409) return;
         throw error;
       }
+      refused.delete(id);
       console.log(
         `${new Date().toISOString()} Cancelled ${repo} run ${id}: ${words}; caused by ${cause.url} (${cause.sha}).`,
       );

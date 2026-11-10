@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { WorkflowRun } from './org-status.ts';
-import { replacementRuns, failedCheckReleases } from './superseded.ts';
+import {
+  cancelIsDue,
+  failedCheckReleases,
+  noteRefusedCancel,
+  type RefusedCancels,
+  replacementRuns,
+} from './superseded.ts';
 
 const run = (id: number, change: Partial<WorkflowRun> = {}): WorkflowRun => ({
   id,
@@ -127,4 +133,26 @@ test('a release blocked by its publication guard records the matching failed che
   });
   assert.deepEqual(failedCheckReleases([checks, release]), []);
   assert.deepEqual(failedCheckReleases([checks, release], true), [{ run: release, replacement: checks }]);
+});
+
+test('a cancel GitHub refuses waits longer before each try, up to 5 minutes', () => {
+  const refused: RefusedCancels = new Map();
+  assert.equal(cancelIsDue(refused, 7, 0), true);
+  noteRefusedCancel(refused, 7, 0);
+  assert.equal(cancelIsDue(refused, 7, 10_000), false);
+  assert.equal(cancelIsDue(refused, 7, 20_000), true);
+  assert.equal(cancelIsDue(refused, 8, 10_000), true);
+  noteRefusedCancel(refused, 7, 20_000);
+  assert.equal(cancelIsDue(refused, 7, 50_000), false);
+  assert.equal(cancelIsDue(refused, 7, 60_000), true);
+
+  // The sweep of 2026-11-09 tried one run every 10 s for 6 h 22 min: 2204 tries.
+  let tries = 0;
+  const stuck: RefusedCancels = new Map();
+  for (let now = 0; now < 22_920_000; now += 10_000) {
+    if (!cancelIsDue(stuck, 1, now)) continue;
+    tries++;
+    noteRefusedCancel(stuck, 1, now);
+  }
+  assert.equal(tries, 80);
 });
