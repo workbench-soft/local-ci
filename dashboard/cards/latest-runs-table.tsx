@@ -142,7 +142,9 @@ export function LatestRunsTable({ runs, now }: { runs: RunRow[]; now: number }) 
                 <th key={key} aria-sort={sort.key === key ? (sort.descending ? 'descending' : 'ascending') : undefined}>
                   <button type="button" className="sort" onClick={() => sortBy(key)}>
                     {text}
-                    <span className="arrow">{sort.key === key ? (sort.descending ? '▼' : '▲') : ''}</span>
+                    <span className="arrow" aria-hidden>
+                      {sort.key === key ? (sort.descending ? '▼' : '▲') : ''}
+                    </span>
                   </button>
                 </th>
               ))}
@@ -245,7 +247,9 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
             onClick={() => setOpen(!open)}
             title="Show the time of each job and step"
           >
-            <span className="arrow">{open ? '▼' : '▶'}</span>
+            <span className="arrow" aria-hidden>
+              {open ? '▼' : '▶'}
+            </span>
             {run.tookMs === null ? 'in queue' : formatDuration(run.tookMs)}
           </button>
         </td>
