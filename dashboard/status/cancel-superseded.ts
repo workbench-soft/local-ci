@@ -77,10 +77,11 @@ async function cancelSuperseded(): Promise<void> {
           callGitHub(`/repos/${orgName}/${repo}/actions/runs/${id}/force-cancel`, 'POST'),
         );
       } catch (error) {
+        if (githubStatus(error) !== 409) throw error;
         // GitHub answers 409 while it can't stop the run, and the run can stay active for hours.
-        noteRefusedCancel(refused, id, Date.now());
-        if (githubStatus(error) === 409) return;
-        throw error;
+        // The wait counts from the tick's start, so the tick 20 s later is due.
+        noteRefusedCancel(refused, id, now);
+        return;
       }
       refused.delete(id);
       console.log(
