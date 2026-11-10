@@ -5,7 +5,7 @@ description: Use when a workbench-soft CI run sits in "queued", a runner is offl
 
 # Fix stuck CI
 
-The `workbench-soft` repos build on the self-hosted Windows runners of this PC. The agent SHOULD read "CI runner" in `README.md` for how they are set up.
+The `workbench-soft` repos build on Blacksmith, Oracle and GitHub runners while their free minutes last, then on the self-hosted Windows runners of this PC. The agent SHOULD read "CI runner" and "Cloud runners first" in `README.md` for how they are set up.
 
 ## 1. See the state
 
@@ -25,6 +25,7 @@ The agent MUST act on each row that matches the output:
 | --- | --- |
 | A runner `offline` | Ask the user to double click `START.cmd`. It starts each runner task and the status page. |
 | Each runner `busy`, runs `queued` | The runs wait their turn. Cancel stale ones from step 3, or raise the count on the Runners card of <http://localhost:4280>. |
+| A runner `online` with no `busy`, runs `queued` | The run waits for a label the idle runners lack, such as `heavy` on the first 2 runners, or for a cloud runner. Open <http://localhost:4280/?tab=status>: "Queued on GitHub" names what each job waits for. When "Running now" says a runner sits idle while jobs wait, ask the user to restart that runner's boot task or reboot the PC. |
 | A run `in_progress` for hours | Read its log, then use LocalCI Stop so the cancellation reason is saved. |
 | No runner listed | The token lacks `admin:org`. Run `gh auth refresh -s admin:org`. |
 
