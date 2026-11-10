@@ -52,21 +52,20 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
     await mkdir(buildRoot, { recursive: true });
     await pruneOldBuilds();
     buildDir = await mkdtemp(join(buildRoot, `${safeName(app)}-`));
-    await run('git', ['fetch', '--tags', 'origin', 'main'], sourceRepo, undefined, 120_000, control);
-    const commit = (await run('git', ['rev-parse', 'FETCH_HEAD'], sourceRepo, undefined, 120_000, control)).trim();
+    await run('git', ['fetch', '--tags', 'origin', 'main'], sourceRepo, 120_000, control);
+    const commit = (await run('git', ['rev-parse', 'FETCH_HEAD'], sourceRepo, 120_000, control)).trim();
     if (!/^[a-f0-9]{40}$/i.test(commit)) throw new Error('Git did not return a commit for main.');
     await run(
       'git',
       ['clone', '--shared', '--no-checkout', sourceRepo, join(buildDir, 'source')],
       workspaceRoot,
-      undefined,
       120_000,
       control,
     );
     const checkout = join(buildDir, 'source');
-    await run('git', ['checkout', '--detach', commit], checkout, undefined, 120_000, control);
-    await run('mise', ['x', '--', 'pnpm', 'install', '--frozen-lockfile'], checkout, undefined, 120_000, control);
-    await run('bash', [target.build.script], checkout, undefined, buildTimeoutMs, control);
+    await run('git', ['checkout', '--detach', commit], checkout, 120_000, control);
+    await run('mise', ['x', '--', 'pnpm', 'install', '--frozen-lockfile'], checkout, 120_000, control);
+    await run('bash', [target.build.script], checkout, buildTimeoutMs, control);
     if (control.cancelled) throw new Error('Local build was cancelled.');
     const builtApk = resolve(checkout, target.build.apk);
     if (!(await fileExists(builtApk))) throw new Error(`The build finished without producing ${target.build.apk}.`);
@@ -153,7 +152,6 @@ async function run(
   command: string,
   args: string[],
   cwd: string,
-  env?: NodeJS.ProcessEnv,
   timeout = 120_000,
   control?: BuildControl,
 ): Promise<string> {
@@ -161,7 +159,6 @@ async function run(
   return new Promise<string>((resolve, reject) => {
     const child = spawn(command, args, {
       cwd,
-      env: { ...process.env, ...env },
       windowsHide: true,
       detached: process.platform !== 'win32',
       signal: control?.controller.signal,
