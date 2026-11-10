@@ -18,7 +18,7 @@ note() {
   git log -1 --format='%s' "$1" | sed -E 's/^[a-z]+(\([^)]*\))?!?: //' |
     awk -v sha="$(git rev-parse --short "$1")" '{ print "- " toupper(substr($0, 1, 1)) substr($0, 2) " (" sha ")" }'
   git log -1 --format='%b' "$1" | awk '
-    /^(Co-authored-by|Signed-off-by):/ { next }
+    tolower($0) ~ /^(co-authored-by|signed-off-by):/ { next }
     /^[[:space:]]*$/ { if (seen) exit; next }
     { seen = 1; print "  " $0 }'
 }
