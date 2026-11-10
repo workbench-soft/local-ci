@@ -1,4 +1,4 @@
-import { appendFile, mkdir, readFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 /** One force cancel of a run, with the words that say why. */
@@ -66,11 +66,22 @@ async function append(entry: CancelEntry): Promise<void> {
   await appendFile(file, `\n${JSON.stringify(entry)}\n`, { encoding: 'utf8', flush: true });
 }
 
-/** The latest reason of each cancelled run, by run id. A missing file gives an empty map. */
+// The page reads the log on each render and the sweep every 10 s, so an unchanged file is parsed once.
+let parsed: { file: string; size: number; mtimeMs: number; cancels: Map<number, CancelEntry> } | null = null;
+
+/**
+ * The latest reason of each cancelled run, by run id. A missing file gives an empty map.
+ * Callers share the map until the file changes, so they only read it.
+ */
 export async function readCancels(): Promise<Map<number, CancelEntry>> {
+  const file = cancelFile();
   let text: string;
+  let size: number;
+  let mtimeMs: number;
   try {
-    text = await readFile(/*turbopackIgnore: true*/ cancelFile(), 'utf8');
+    ({ size, mtimeMs } = await stat(/*turbopackIgnore: true*/ file));
+    if (parsed && parsed.file === file && parsed.size === size && parsed.mtimeMs === mtimeMs) return parsed.cancels;
+    text = await readFile(/*turbopackIgnore: true*/ file, 'utf8');
   } catch {
     return new Map();
   }
@@ -89,5 +100,6 @@ export async function readCancels(): Promise<Map<number, CancelEntry>> {
       // A line cut short by a crash goes, the rest still read.
     }
   }
+  parsed = { file, size, mtimeMs, cancels };
   return cancels;
 }
