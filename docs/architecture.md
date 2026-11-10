@@ -29,8 +29,8 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   `START.cmd` holds it, and `START.cmd` waits while the task holds it.
 - **Status page** `dashboard/` is a Next.js app. `dashboard/install.ps1`
   builds it and starts it at boot.
-- **Release controls** `dashboard/status/release-actions.ts` dispatches a
-  supported app workflow on `main`. `status/local-build-runner.ts` fetches the
+- **Release controls** `dashboard/status/release-actions.ts` dispatches an
+  app's release workflow on `main`. `status/local-build-runner.ts` fetches the
   app's latest `main`, builds in a temporary clone and retains only its APK.
   `status/local-build.ts` installs that APK through ADB. Local build clones
   are removed after the build; uninstalled APKs expire after 6 hours.
@@ -147,10 +147,14 @@ The server renders the page for each request.
   under a pile of newer queued runs stays on the page. For each unfinished
   run it also reads the jobs, with the runner that took each one. The jobs of
   a queued run stay in memory while its `updated_at` holds, for up to 60 s.
-- **App releases** `status/release-config.ts` maps each published Android app
-  to its CI workflow and local build script. The Releases page dispatches the
-  CI workflow through the GitHub API, with the inputs its config names. A local build fetches `main` from the
-  app clone, builds its APK in a temporary clone, and gives the ADB installer
+- **App releases** no list names the apps. `status/release-workflow.ts`
+  takes the workflow whose run published the app's newest release, found in
+  the repo's runs of the 6 hours before it. A file named for a release or
+  deploy, then a workflow whose YAML has `workflow_dispatch` and
+  `gh release create`, answer when no run does. Each input keeps its default.
+  `status/local-build-target.ts` finds `scripts/build-apk.sh` in the app's
+  clone, at the root or in `apps/<app>`, and the APK in `dist/` beside it.
+  A local build fetches `main` from the app clone, builds its APK in a temporary clone, and gives the ADB installer
   an opaque token; the client never receives the file path.
 - **Rate limit** each GET sends back the ETag of its last answer. GitHub
   answers 304 when the data is the same, and a 304 costs no part of the 5000

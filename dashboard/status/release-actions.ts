@@ -20,9 +20,9 @@ export async function dispatchRelease(app: string): Promise<ReleaseActionResult>
   try {
     // The server finds the workflow itself, so the page can only start a release workflow of an org app.
     const org = await fetchOrgStatus();
-    target = await releaseWorkflowFor(app, org.ok ? org.runs : [], org.ok ? org.releases : []);
+    target = await releaseWorkflowFor(app, org.ok ? org.releases : []);
     if (!target) return { ok: false, error: 'No release workflow found for this app.' };
-    const workflow = `/repos/${orgName}/${target.repo}/actions/workflows/${encodeURIComponent(target.workflow)}`;
+    const workflow = `/repos/${orgName}/${target.repo}/actions/workflows/${target.workflow}`;
     const { workflow_runs: runs } = (await (await callGitHub(`${workflow}/runs?branch=main&per_page=100`)).json()) as {
       workflow_runs: { status: string; created_at: string }[];
     };
@@ -39,7 +39,8 @@ export async function dispatchRelease(app: string): Promise<ReleaseActionResult>
       `${workflow}/dispatches`,
       'POST',
       {},
-      { ref: 'main', ...(target.inputs && { inputs: target.inputs }) },
+      // Each input of the workflow takes its default.
+      { ref: 'main' },
     );
     recentlyDispatched.set(app, Date.now());
     return { ok: true };

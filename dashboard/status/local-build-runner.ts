@@ -4,7 +4,7 @@ import { copyFile, mkdir, mkdtemp, readdir, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
-import { releaseTargetFor } from './release-config.ts';
+import { buildScript, localBuildOf, workspaceRoot as rootOfWorkspace } from './local-build-target.ts';
 
 const execFileAsync = promisify(execFile);
 const buildTimeoutMs = 30 * 60_000;
@@ -20,7 +20,6 @@ export function activeLocalBuilds(): string[] {
 }
 
 export async function cancelLocalRelease(app: string): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!releaseTargetFor(app)?.build) return { ok: false, error: 'Unknown local build.' };
   const control = running.get(app);
   if (!control) return { ok: false, error: 'No local build of this app is running.' };
   if (control.cancelled) return { ok: true };
@@ -40,12 +39,12 @@ export type LocalBuildResult =
 
 /** Fetches main, builds its APK in a temporary clone, and keeps only the APK for installation. */
 export async function buildLocalRelease(app: string): Promise<LocalBuildResult> {
-  const target = releaseTargetFor(app);
-  if (!target?.build) return { ok: false, error: 'This app has no local Android build configured.' };
+  const target = await localBuildOf(app);
+  if (!target) return { ok: false, error: `This app has no ${buildScript} in its repo.` };
   if (running.has(app)) return { ok: false, error: 'A local build of this app is already running.' };
   const control: BuildControl = { controller: new AbortController(), pid: null, cancelled: false };
   running.set(app, control);
-  const workspaceRoot = process.env.WBS_ROOT || resolve(process.cwd(), '../..');
+  const workspaceRoot = rootOfWorkspace();
   const sourceRepo = resolve(workspaceRoot, target.repo);
   let buildDir: string | null = null;
   try {
@@ -65,10 +64,13 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
     const checkout = join(buildDir, 'source');
     await run('git', ['checkout', '--detach', commit], checkout, 120_000, control);
     await run('mise', ['x', '--', 'pnpm', 'install', '--frozen-lockfile'], checkout, 120_000, control);
-    await run('bash', [target.build.script], checkout, buildTimeoutMs, control);
+    const script = `${target.dir}/${buildScript}`;
+    if (!(await fileExists(join(checkout, script)))) throw new Error(`main has no ${script}.`);
+    await run('bash', [script], checkout, buildTimeoutMs, control);
     if (control.cancelled) throw new Error('Local build was cancelled.');
-    const builtApk = resolve(checkout, target.build.apk);
-    if (!(await fileExists(builtApk))) throw new Error(`The build finished without producing ${target.build.apk}.`);
+    // Each build script leaves its APK in dist/ beside its scripts/ folder.
+    const builtApk = await newestApk(join(checkout, target.dir, 'dist'));
+    if (!builtApk) throw new Error(`The build finished without an APK in ${target.dir}/dist.`);
 
     const token = randomUUID();
     const fileName = `${safeName(app)}-local.apk`;
@@ -85,12 +87,12 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
   } catch (error) {
     return { ok: false, error: control.cancelled ? 'Local build force-stopped.' : errorText(error) };
   } finally {
-    const config = releaseTargetFor(app)?.build;
-    if (!control.cancelled && buildDir && config?.gradleDir) {
-      const gradleDir = resolve(buildDir, 'source', config.gradleDir);
-      if (await fileExists(join(gradleDir, 'gradlew'))) {
-        await run('bash', ['-lc', './gradlew --stop'], gradleDir).catch(() => undefined);
-      }
+    // An Expo app keeps gradlew in android/, a native one beside its build script.
+    const dir = buildDir && (await localBuildOf(app))?.dir;
+    for (const gradleDir of !control.cancelled && dir ? [dir, `${dir}/android`] : []) {
+      const path = resolve(buildDir as string, 'source', gradleDir);
+      if (await fileExists(join(path, 'gradlew')))
+        await run('bash', ['-lc', './gradlew --stop'], path).catch(() => undefined);
     }
     if (buildDir) await rm(buildDir, { recursive: true, force: true }).catch(() => undefined);
     running.delete(app);
@@ -201,6 +203,14 @@ async function run(
 
 function safeName(value: string): string {
   return value.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
+}
+
+async function newestApk(dir: string): Promise<string | null> {
+  const files = (await readdir(dir).catch(() => [] as string[])).filter((name) => name.toLowerCase().endsWith('.apk'));
+  const dated = await Promise.all(
+    files.map(async (name) => ({ path: join(dir, name), at: (await stat(join(dir, name))).mtimeMs })),
+  );
+  return dated.toSorted((a, b) => b.at - a.at)[0]?.path ?? null;
 }
 
 async function fileExists(path: string): Promise<boolean> {

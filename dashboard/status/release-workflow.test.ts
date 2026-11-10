@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { pickReleaseWorkflow, type RepoWorkflow } from './release-workflow.ts';
+import { pickReleaseWorkflow, publishesRelease, type RepoWorkflow } from './release-workflow.ts';
 
 const flow = (id: number, file: string, state = 'active'): RepoWorkflow => ({
   id,
@@ -26,4 +26,26 @@ test('lets the run that made the release choose among several, then a lone relea
 test('falls back to the workflow that made the release, and skips disabled ones', () => {
   assert.equal(pickReleaseWorkflow([flow(1, 'checks.yml'), flow(2, 'ci.yml')], 2)?.id, 2);
   assert.equal(pickReleaseWorkflow([flow(1, 'release.yml', 'disabled_manually')], null), null);
+  const pages = {
+    id: 3,
+    name: 'pages-build-deployment',
+    path: 'dynamic/pages/pages-build-deployment',
+    state: 'active',
+  };
+  assert.equal(pickReleaseWorkflow([pages], 3), null);
+});
+
+test('reads a release workflow from its YAML when nothing else tells', () => {
+  const ci = [
+    'on:',
+    '  push:',
+    '  workflow_dispatch:',
+    'jobs:',
+    '  r:',
+    '    steps:',
+    '      - run: gh release create "$TAG"',
+  ];
+  assert.equal(publishesRelease(ci.join('\n')), true);
+  assert.equal(publishesRelease(ci.filter((line) => !line.includes('dispatch')).join('\n')), false);
+  assert.equal(publishesRelease(['on:', '  workflow_dispatch:', 'jobs: {}'].join('\n')), false);
 });

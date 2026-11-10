@@ -5,7 +5,6 @@ import { buildLatestMain, cancelLocalBuild, installLocalBuild } from '@/status/l
 import type { AppRelease } from '@/status/latest-releases';
 import type { LiveJob } from '@/status/placement';
 import { dispatchRelease } from '@/status/release-actions';
-import { releaseTargetFor } from '@/status/release-config';
 import { DevKeyNotice } from './dev-key-notice';
 import { Icon } from './icons';
 import type { Outcome } from './release-detail';
@@ -16,6 +15,7 @@ import { StorageCleanupButton } from './storage-cleanup-button';
 export function ReleasesCard({
   apps,
   releasable,
+  buildable,
   jobs,
   localBuilds,
   now,
@@ -24,6 +24,8 @@ export function ReleasesCard({
   apps: AppRelease[];
   /** The apps whose release workflow Release on CI can start. */
   releasable: string[];
+  /** The apps this PC can build an APK of from the latest main. */
+  buildable: string[];
   jobs: LiveJob[];
   localBuilds: string[];
   now: number;
@@ -149,7 +151,7 @@ export function ReleasesCard({
             outcome={outcomes[app.app]}
             actions={localActions[app.app] ?? {}}
             hasReleaseWorkflow={releasable.includes(app.app)}
-            canBuildLocally={!!releaseTargetFor(app.app)?.build}
+            canBuildLocally={buildable.includes(app.app)}
             onToggle={() => toggle(app.app)}
             onAction={(kind) => runReleaseAction(app.app, kind)}
             onStopLocal={() => stopLocal(app.app)}

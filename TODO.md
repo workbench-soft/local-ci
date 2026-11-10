@@ -85,7 +85,7 @@ Audit of 2026-11-10:
 - Left: no git hook runs the checks before a push (2 new packages, and `prepare` would run in the live checkout).
 - Left: a cold load fires about 150 GitHub calls at once at 25 repos (a guess, the page retries on the next load).
 - Left: pnpm 12.16.1 to 12.18.0 (no measured gain, changes the tool on the live PC).
-- Left: the `speed-camera-map` alias sits in 3 tables, `error instanceof Error` is copied 16 times, the time left line is built twice, `releases-card.tsx` ships `release-config.ts` to the browser (moves of code, or a change of visible words).
+- Left: the `speed-camera-map` alias sits in 3 tables, `error instanceof Error` is copied 16 times, the time left line is built twice (moves of code, or a change of visible words).
 - Left: artifacts are kept only for `in_progress` and `queued` runs (unseen in about 2,900 runs).
 - Left: 6 commits carry a personal author email (history stays, `## rewrite-repo` holds the reset).
 

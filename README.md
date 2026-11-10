@@ -253,9 +253,9 @@ The Releases tab of the status page also ships the org's Android apps:
   button stays gray while that release is queued or running, and the server
   refuses a second dispatch.
 - **Force stop** confirms, then force cancels the app's running release.
-- **Build locally** fetches the latest `main` of memories-mobile, Shuttrix,
-  Tick-a-Lot, SkyAltar, Memoire, Shuttrix Legacy or SpotTheCam. It builds the
-  APK in a temporary clone, with the app's release key when this PC has it.
+- **Build locally** shows for each app whose clone on this PC has
+  `scripts/build-apk.sh`, at the root or in `apps/<app>`. It fetches the
+  latest `main` and builds the APK in a temporary clone, with the app's release key when this PC has it.
   **Force stop local build** ends the build and its child processes, and
   **Install local** sends the APK to the phone.
 - **Install Release and Install Dev** put a published APK on the phone. Install

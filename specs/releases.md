@@ -49,9 +49,11 @@ settings with the key in `WORKBENCH_DEV_KEY`.
   number of the release that day.
 - **`.github/scripts/release-notes.sh`** writes the notes from the commits
   since the last tag.
-- **Release actions** the dashboard dispatches a supported app release
-  workflow on its default branch and reports the GitHub run.
-- **Local build** the dashboard builds supported Android projects from the
+- **Release actions** the dashboard dispatches an app's release workflow on
+  `main` and reports the GitHub run. `status/release-workflow.ts` finds the
+  workflow with no list kept by hand.
+- **Local build** the dashboard builds each app whose clone has
+  `scripts/build-apk.sh`, at the root or in `apps/<app>`, from the
   latest `main` in a temporary clone, then passes the resulting APK to the
   existing ADB installer.
 - **Install Dev** `status/dev-phone.ts` reads the app id from the tag:
@@ -66,8 +68,8 @@ settings with the key in `WORKBENCH_DEV_KEY`.
 
 - **Local build setup** an app needs a local clone, a `scripts/build-apk.sh`
   entry point and any signing or build secrets on this PC.
-- **Supported local apps** memories-mobile, Shuttrix, Tick-a-Lot, SkyAltar,
-  Memoire, Shuttrix Legacy and SpotTheCam have a local build entry point.
+- **APK path** the build script MUST leave its APK in `dist/` beside its
+  `scripts/` folder.
 - **ADB** installation requires exactly one authorized phone in `adb devices`.
 - **Install Dev key** `WORKBENCH_DEV_KEY` holds the 64 hex characters the
   apps check. A new key breaks the unlock, since the apps hold the hash.
@@ -153,9 +155,18 @@ settings with the key in `WORKBENCH_DEV_KEY`.
   from the latest `main`.
 - **Changes** each app row takes its release workflow from the run that made
   its newest release, by workflow id. A repo with no release yet takes its
-  newest release or deploy run. `release-config.ts` keeps only the apps that
-  need inputs or a local build. The server finds the workflow again from the
+  newest release or deploy run. The server finds the workflow again from the
   org status, so the page can't dispatch an arbitrary workflow. The button
   works on an app whose release already exists.
-- **Docs** `README.md`, `CHANGELOG.md`, `docs/features.md` and
+- **Docs** `README.md`, `CHANGELOG.md`, `TODO.md`, `docs/architecture.md`, `docs/features.md` and
   `docs/user-flows.md`.
+- **No list** the person wants no app list kept by hand, so
+  `release-config.ts` goes. The workflow comes from the run that published
+  the newest release, read from the repo's runs of the 6 hours before it and
+  kept per tag. A file named for a release or deploy, then the one workflow
+  whose YAML has `workflow_dispatch` and `gh release create`, answer when no
+  run does. Inputs keep their defaults. The local build finds
+  `scripts/build-apk.sh` at the clone root or in `apps/<app>`, and the
+  newest APK in `dist/` beside it. `shuttrix` and `updater` map to the
+  memories and app-updater repos. The old list sent media-organizer to a repo
+  that no longer exists.

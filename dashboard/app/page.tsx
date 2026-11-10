@@ -18,6 +18,7 @@ import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { releasesByRun } from '@/status/releases';
 import { releaseWorkflowFor } from '@/status/release-workflow';
+import { localBuildOf } from '@/status/local-build-target';
 import { kindsOfRun } from '@/status/runner-kind';
 import { readRunnerCount, readThisPc } from '@/status/this-pc';
 
@@ -79,10 +80,13 @@ export default async function StatusPage({
     jobs: run.jobs.map((job) => ({ name: job.name, conclusion: job.conclusion, failedStep: job.failedStep })),
   }));
   const apps = latestReleases(releases, pipelineRuns, cancels, now);
-  // Release on CI shows for each app whose release workflow the page can tell.
-  const releasable = (
-    await Promise.all(apps.map(async ({ app }) => ((await releaseWorkflowFor(app, runs, releases)) ? app : null)))
-  ).filter((app) => app !== null);
+  // Release on CI shows for each app whose release workflow the page can tell, Build locally for each
+  // app whose clone on this PC has a build script.
+  const [releasable, buildable] = await Promise.all(
+    [(app: string) => releaseWorkflowFor(app, releases), (app: string) => localBuildOf(app)].map(async (find) =>
+      (await Promise.all(apps.map(async ({ app }) => ((await find(app)) ? app : null)))).filter((app) => app !== null),
+    ),
+  );
   const building = apps.filter((app) => app.state === 'building' || app.state === 'queued').length;
   const errored = apps.filter((app) => app.state === 'errored').length;
   return (
@@ -111,6 +115,7 @@ export default async function StatusPage({
               <ReleasesCard
                 apps={apps}
                 releasable={releasable}
+                buildable={buildable}
                 localBuilds={activeLocalBuilds()}
                 jobs={live}
                 now={now}
