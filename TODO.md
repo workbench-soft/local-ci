@@ -113,6 +113,8 @@ Audit of 2026-11-10:
 
 ## ci-failures-2026-11-10
 
+- [ ] Free about 100 GB on C: (it fell to 11 GB on 2026-11-10 and jobs failed with ENOSPC). In PowerShell: `Remove-Item -Recurse -Force "$env:USERPROFILEactions-runnerworkbench-soft*_work"; uv cache clean; mise x -- pip cache purge`. The `_work` folders are from before the work root moved to `C:ci`, about 30 GB
+- [ ] Decide on fewer runners or more RAM: 8 jobs at once plus local builds and the emulator on 31 GB RAM grew `pagefile.sys` to 82 GB, which filled the disk. `RUNNER_COUNT=6` and `.unnerinstall.ps1` lower it
 - [ ] Turn off Surfshark on this PC, or add `C:\ci`, `%USERPROFILE%\actions-runner` and `gh.exe` to its split tunnelling (Bypasser). Its connects and drops on 2026-11-08 to 2026-11-10 lined up with TLS handshake timeouts in CI jobs
 - [ ] Set `retention-days` on `actions/upload-artifact` in farnear and suno-download: both hit "Artifact storage quota has been hit" on 2026-11-08 and 2026-11-09
 - [ ] Look at the Dependabot `update_files` failures in app-updater, keeppad, skyaltar, suno-download, tickalot, tripforge, alina-photo, aspirationstyle and chrome-site-sources
