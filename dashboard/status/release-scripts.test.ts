@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { delimiter, join } from 'node:path';
 import { test } from 'node:test';
 
 const scripts = join(import.meta.dirname, '..', '..', '.github', 'scripts');
@@ -42,3 +42,27 @@ test('release notes leave out the co-author line in any letter case', { skip: no
     rmSync(repo, { recursive: true, force: true });
   }
 });
+
+// Git Bash has no zone data, so the script asks powershell.exe. A PATH without it stands for a runner with neither.
+test(
+  'the next version fails without a date, where it once printed .1',
+  { skip: noSh || process.platform !== 'win32' },
+  () => {
+    const repo = repoWith([]);
+    const path = (process.env.PATH ?? '')
+      .split(delimiter)
+      .filter((dir) => dir && !existsSync(join(dir, 'powershell.exe')))
+      .join(delimiter);
+    try {
+      const run = spawnSync('sh', [join(scripts, 'next-version.sh')], {
+        cwd: repo,
+        env: { ...process.env, PATH: path, Path: path },
+        encoding: 'utf8',
+      });
+      assert.equal(run.stdout, '');
+      assert.equal(run.status, 1);
+    } finally {
+      rmSync(repo, { recursive: true, force: true });
+    }
+  },
+);
