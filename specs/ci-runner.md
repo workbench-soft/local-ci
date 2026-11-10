@@ -364,6 +364,8 @@ machine with several runners builds several jobs at once.
     `C:\ci-trash-<time>`, starts the runners on empty folders, then deletes
     the trash at idle priority, 4 folders at a time. Only an admin can stop
     the listeners, so the script asks for the rights.
+    A folder that a process holds stays where it is, and the runners start
+    again even when a move fails.
 - **Limits**
   - **Cold builds** the first job of a repo after a clean checks it out and
     installs its packages again. The shared pnpm store and Gradle cache keep

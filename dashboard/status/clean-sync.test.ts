@@ -36,3 +36,9 @@ test('runner/install.ps1 copies the clean hook and points each runner at it', ()
   assert.match(install, /ACTIONS_RUNNER_HOOK_JOB_STARTED = \$cleanHook/);
   assert.match(read('CLEAN-CI.cmd'), /windows\\clean-ci\.ps1/);
 });
+
+// A folder that a process holds fails its move. Without the finally every runner stayed stopped.
+test('CLEAN-CI.cmd starts the runner tasks again when a move fails', () => {
+  assert.match(cleanCi, /\} finally \{[^}]*\$tasks \| Start-ScheduledTask/);
+  assert.equal(cleanCi.match(/Start-ScheduledTask/g)?.length, 1);
+});
