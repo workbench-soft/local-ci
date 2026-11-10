@@ -66,7 +66,3 @@ const targets: ReleaseTarget[] = [
 export function releaseTargetFor(app: string): ReleaseTarget | null {
   return targets.find((target) => target.app === app) ?? null;
 }
-
-export function releaseTargets(): ReleaseTarget[] {
-  return targets;
-}
