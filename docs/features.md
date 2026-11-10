@@ -52,7 +52,7 @@ runner for `workbench-soft`. Private repos then build on it for 0 minutes.
   them.
 - **Shared pnpm store** every job installs from the machine's pnpm store,
   so a package downloads once for all runners and runs. On Windows the runners
-  use `C:ci_pnpm-store` and copy from it, so a delete of an old checkout
+  use `C:\ci\_pnpm-store` and copy from it, so a delete of an old checkout
   can't fail a read with `EBUSY`.
 - **Android SDK** on Windows the runners build with the SDK in
   `C:\Android\Sdk`. `runner\install.ps1` copies it there from
