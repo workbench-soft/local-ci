@@ -29,6 +29,15 @@ test('the latest reason of a run wins', async () => {
   assert.equal((await readCancels()).get(101)?.words, 'Stopped from the page');
 });
 
+test('an unchanged file is parsed once, and a new line reads at once', async () => {
+  const kept = await readCancels();
+  assert.equal(await readCancels(), kept);
+  await recordCancel('keeppad', 203, 'Stopped from the page');
+  const next = await readCancels();
+  assert.notEqual(next, kept);
+  assert.equal(next.get(203)?.words, 'Stopped from the page');
+});
+
 test('replacement evidence survives saving and reloading', async () => {
   const cause = {
     kind: 'superseded' as const,
