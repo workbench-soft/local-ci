@@ -103,6 +103,23 @@ export function failedCheckReleases(
   });
 }
 
+/** The cancels GitHub refused, by run id: how often, and when the next try is due. */
+export type RefusedCancels = Map<number, { failures: number; retryAt: number }>;
+
+const retryBaseMs = 10_000;
+const retryMaxMs = 5 * 60_000;
+
+/** A refused cancel waits 20 s, 40 s, 80 s and so on up to 5 min. One run got 2204 tries in 6 hours at 10 s each. */
+export function noteRefusedCancel(refused: RefusedCancels, runId: number, now: number): void {
+  const failures = (refused.get(runId)?.failures ?? 0) + 1;
+  refused.set(runId, { failures, retryAt: now + Math.min(retryBaseMs * 2 ** failures, retryMaxMs) });
+}
+
+/** True when the run has no refused cancel, or its wait is over. */
+export function cancelIsDue(refused: RefusedCancels, runId: number, now: number): boolean {
+  return now >= (refused.get(runId)?.retryAt ?? 0);
+}
+
 export function cancelCause(kind: CancelCause['kind'], run: WorkflowRun): CancelCause {
   return { kind, runId: run.id, url: run.url, sha: run.headSha, branch: run.branch, pullRequests: run.pullRequests };
 }

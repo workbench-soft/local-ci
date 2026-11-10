@@ -189,7 +189,8 @@ The server renders the page for each request.
   compares commit identities within one repo, workflow, branch and event.
   PR closure alone cancels no run. Failed Checks or a failed Checks job stop
   active release workflows of the same repo, branch and SHA. The JSONL log
-  saves requests before cancellation and then saves the result. Both tabs
+  saves requests before cancellation and then saves the result. A cancel
+  GitHub refuses waits twice as long before each try, up to 5 minutes. Both tabs
   link the causing run, commit and PR from a shared history component.
 - **Releases** the app repos are private, so their release workflows publish
   to the public `workbench-soft/workbench-soft.github.io` with the tag

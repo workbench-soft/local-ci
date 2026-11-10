@@ -23,6 +23,9 @@ with its checks as a job of its own, such as `Deploy` of spotthecam, stops
 when that job fails. local-ci itself starts Release only after Checks pass.
 The dashboard does not infer a dependency from an unrelated workflow failure.
 
+A cancel GitHub refuses waits before its next try: 20 s, 40 s, 80 s and so on
+up to 5 minutes. The wait ends when the run finishes or the server restarts.
+
 ## Cancellation history
 
 The JSONL cancellation log stores the reason, causing run ID and URL,
@@ -45,3 +48,9 @@ their active commits even past the displayed recent-run limit.
 - **Changes** cancellation selection, commit metadata, durable history and linked reasons on both dashboard tabs.
 - **Steps** spec, selection and log tests, server actions, dashboard and docs, workflow rollout.
 - **Docs** README, architecture, features, user flows and changelog.
+
+### 2026-11-10 a refused cancel backs off
+
+- **Problem** on 2026-11-09 GitHub answered 409 to the cancel of one run for 6 h 22 min. The sweep tried every 10 s: 2204 calls, 4408 log lines, 1.6 MB of the 2 MB log.
+- **Changes** `status/superseded.ts` holds the wait per run, and `status/cancel-superseded.ts` skips a run until its wait is over. The same 6 hours now take 80 tries.
+- **Docs** architecture and features.
