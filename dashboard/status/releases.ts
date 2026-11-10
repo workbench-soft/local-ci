@@ -22,6 +22,11 @@ export const releasePrefixes: Record<string, string[]> = {
   spotthecam: ['spotthecam', 'speed-camera-map'],
 };
 
+/** The name before -v<version> in a release tag such as memories-mobile-v2026.10.31.1, or null for another tag. */
+export function tagPrefix(tag: string): string | null {
+  return /^(.+)-v\d[\w.]*$/.exec(tag)?.[1] ?? null;
+}
+
 // An upload can land a little after GitHub last updates the run.
 const slackMs = 60_000;
 

@@ -2,7 +2,7 @@ import type { CancelEntry } from './cancel-log.ts';
 import type { RunnerKind } from './runner-kind.ts';
 import { activeStatuses, type Place } from './placement.ts';
 import { typicalDuration } from './progress.ts';
-import { type Release, releasesByRun, releasePrefixes } from './releases.ts';
+import { type Release, releasesByRun, releasePrefixes, tagPrefix } from './releases.ts';
 
 /** A run of a repo, with the place it builds on and the failure inside it. */
 export type PipelineRun = {
@@ -85,7 +85,7 @@ const stateOrder: Record<ReleaseState, number> = {
 
 /** The app of a release tag such as memories-mobile-v2026.10.31.1, or null for another tag. */
 export function appOfTag(tag: string): string | null {
-  const prefix = /^(.+)-v\d[\w.]*$/.exec(tag)?.[1] ?? null;
+  const prefix = tagPrefix(tag);
   return prefix === 'speed-camera-map' ? 'spotthecam' : prefix;
 }
 
