@@ -81,7 +81,7 @@ type Store = {
   refreshing: Promise<OrgStatus> | null;
   etagged: Map<string, { etag: string; body: string }>;
   queuedJobs: Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>;
-  finishedJobs: Map<number, Promise<RunJob[]>>;
+  finishedJobs: Map<number, { attempt: number; jobs: Promise<RunJob[]> }>;
 };
 
 // Next bundles this module once for the page and once for the sweep. One store on globalThis
@@ -176,6 +176,8 @@ type ApiRun = {
   conclusion: string | null;
   created_at: string;
   run_started_at?: string;
+  /** A rerun keeps the run id and counts up from 1. */
+  run_attempt?: number;
   updated_at: string;
   html_url: string;
   pull_requests?: { number: number }[];
@@ -280,7 +282,7 @@ async function listRepoRuns(fullName: string): Promise<WorkflowRun[]> {
       // Every run needs its jobs, since only they tell which machine built it. A finished run's jobs read once.
       jobs: activeStatuses.has(run.status)
         ? await activeRunJobs(fullName, run)
-        : await finishedRunJobs(fullName, run.id),
+        : await finishedRunJobs(fullName, run.id, run.run_attempt),
     })),
   );
   await addTypicalTimes(fullName, runs);
@@ -310,7 +312,7 @@ async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<v
 
       // Queued workflows have no running jobs yet; avoid fetching ten job lists for them.
       if (!related.some((run) => run.jobs.some((job) => job.status === 'in_progress'))) return;
-      const jobs = (await Promise.all(past.map((run) => finishedRunJobs(fullName, run.id)))).flat();
+      const jobs = (await Promise.all(past.map((run) => finishedRunJobs(fullName, run.id, run.run_attempt)))).flat();
       for (const run of related)
         for (const job of run.jobs.filter((item) => item.status === 'in_progress'))
           job.typicalMs = typicalDuration(job.name, jobs);
@@ -318,7 +320,13 @@ async function addTypicalTimes(fullName: string, runs: WorkflowRun[]): Promise<v
   );
 }
 
-type PreviousRun = { id: number; conclusion: string | null; created_at: string; updated_at: string };
+type PreviousRun = {
+  id: number;
+  run_attempt?: number;
+  conclusion: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 // The latest runs of a busy repo are often all queued, so the finished ones come from a call of their own.
 async function latestFinishedRuns(fullName: string, workflowId: number): Promise<PreviousRun[]> {
@@ -353,18 +361,21 @@ async function activeRunJobs(fullName: string, run: ApiRun): Promise<RunJob[]> {
   return jobs;
 }
 
-// A finished run never changes, so its jobs are read once. The oldest entry goes past 400 runs.
+// A finished attempt never changes, so its jobs are read once. The oldest entry goes past 400 runs.
+// A rerun on GitHub keeps the run id, so the jobs of an earlier attempt are read again:
+// they would show a failed job on Checks that passed since, and the sweep would cancel the release.
 const finishedJobs = store.finishedJobs;
 
-function finishedRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
-  let jobs = finishedJobs.get(runId);
-  if (!jobs) {
-    jobs = listRunJobs(fullName, runId);
-    finishedJobs.set(runId, jobs);
-    // A failed call gives no jobs, so the next load tries again.
-    void jobs.then((list) => list.length || finishedJobs.delete(runId));
-    if (finishedJobs.size > 400) finishedJobs.delete(finishedJobs.keys().next().value as number);
-  }
+function finishedRunJobs(fullName: string, runId: number, attempt = 1): Promise<RunJob[]> {
+  const kept = finishedJobs.get(runId);
+  if (kept?.attempt === attempt) return kept.jobs;
+  const jobs = listRunJobs(fullName, runId);
+  const entry = { attempt, jobs };
+  finishedJobs.delete(runId);
+  finishedJobs.set(runId, entry);
+  // A failed call gives no jobs, so the next load tries again.
+  void jobs.then((list) => list.length || (finishedJobs.get(runId) === entry && finishedJobs.delete(runId)));
+  if (finishedJobs.size > 400) finishedJobs.delete(finishedJobs.keys().next().value as number);
   return jobs;
 }
 

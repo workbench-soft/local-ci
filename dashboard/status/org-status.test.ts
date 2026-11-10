@@ -192,6 +192,40 @@ test('a failed run names its failed job and step, and releases come from the pub
   assert.equal(status.runs[0].branchUrl, 'https://github.com/workbench-soft/good/tree/main');
 });
 
+test('a run that passed on a rerun shows the jobs of its new attempt', async () => {
+  let attempt = 1;
+  const job = (conclusion: string) => ({
+    id: attempt,
+    name: 'checks',
+    status: 'completed',
+    conclusion,
+    runner_name: 'pc',
+    labels: [],
+    started_at: null,
+    completed_at: null,
+    html_url: 'https://job',
+  });
+  route = (path) => {
+    if (path.endsWith('/jobs?per_page=100'))
+      return { status: 200, body: { jobs: [job(attempt === 1 ? 'failure' : 'success')] } };
+    if (path.includes('/actions/runs?')) {
+      const run = { ...apiRun(1), run_attempt: attempt, conclusion: attempt === 1 ? 'failure' : 'success' };
+      return { status: 200, body: { workflow_runs: [run] } };
+    }
+    return healthyOrg(path);
+  };
+  const { fetchOrgStatus, forgetOrgStatus } = await freshModule();
+  const conclusions = async () => {
+    const status = await fetchOrgStatus();
+    return status.ok && status.runs.flatMap((run) => run.jobs.map((item) => item.conclusion));
+  };
+  assert.deepEqual(await conclusions(), ['failure', 'failure']);
+  // The rerun happens on GitHub, so the page hears of it only through the attempt number.
+  attempt = 2;
+  forgetOrgStatus();
+  assert.deepEqual(await conclusions(), ['success', 'success']);
+});
+
 test('pickRuns keeps the latest 5 runs and every unfinished run past them', async () => {
   const { pickRuns } = await freshModule();
   const statuses = [
