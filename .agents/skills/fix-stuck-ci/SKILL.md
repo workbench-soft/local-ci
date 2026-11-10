@@ -27,7 +27,8 @@ The agent MUST act on each row that matches the output:
 | Each runner `busy`, runs `queued` | The runs wait their turn. Cancel stale ones from step 3, or raise the count on the Runners card of <http://localhost:4280/?tab=status>. |
 | A runner `online` with no `busy`, runs `queued` | The run waits for a label the idle runners lack, such as `heavy` on the first 2 runners, or for a cloud runner. Open <http://localhost:4280/?tab=status>: "Queued on GitHub" names what each job waits for. When "Running now" says a runner sits idle while jobs wait, ask the user to restart that runner's boot task or reboot the PC. |
 | A run `in_progress` for hours | Read its log, then use LocalCI Stop so the cancellation reason is saved. |
-| No runner listed | The token lacks `admin:org`. Run `gh auth refresh -s admin:org`. |
+| `(needs gh with the admin:org scope ...)` under `Runners:` | The token lacks `admin:org`. Ask the user to run `gh auth refresh -s admin:org`, since it waits for a browser login. |
+| No line at all under `Runners:` | No runner is registered in the org. Ask the user to run `runner\install.ps1`. |
 
 ## 3. Cancel stale runs
 
