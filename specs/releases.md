@@ -145,3 +145,17 @@ settings with the key in `WORKBENCH_DEV_KEY`.
   and keeps a line only for the renamed apps.
 - **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md` and
   `docs/architecture.md`.
+
+### 2026-11-11 Release on CI for every app
+
+- **Why** the Release on CI button showed only for the 9 apps in
+  `status/release-config.ts`. The person could not release the rest again
+  from the latest `main`.
+- **Changes** each app row takes its release workflow from the run that made
+  its newest release, by workflow id. A repo with no release yet takes its
+  newest release or deploy run. `release-config.ts` keeps only the apps that
+  need inputs or a local build. The server finds the workflow again from the
+  org status, so the page can't dispatch an arbitrary workflow. The button
+  works on an app whose release already exists.
+- **Docs** `README.md`, `CHANGELOG.md`, `docs/features.md` and
+  `docs/user-flows.md`.
