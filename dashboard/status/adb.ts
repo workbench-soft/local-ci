@@ -35,12 +35,15 @@ export async function installFileOn(adb: string, device: string, file: string): 
   }
 }
 
-/** Deletes a downloaded APK once its install ends. Each one is 20 to 155 MB with the version in its name, so they piled up. */
-export async function installThenRemove(file: string, install: () => Promise<InstallResult>): Promise<InstallResult> {
+/**
+ * Deletes a downloaded APK, or the folder that holds it, once its install ends.
+ * Each one is 20 to 155 MB with the version in its name, so they piled up.
+ */
+export async function installThenRemove(path: string, install: () => Promise<InstallResult>): Promise<InstallResult> {
   try {
     return await install();
   } finally {
-    await rm(file, { force: true }).catch(() => undefined);
+    await rm(path, { recursive: true, force: true }).catch(() => undefined);
   }
 }
 

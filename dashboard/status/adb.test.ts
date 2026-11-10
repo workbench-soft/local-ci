@@ -25,6 +25,15 @@ test('a downloaded APK goes once its install ends, whether it worked or threw', 
       /adb timed out/,
     );
     assert.equal(existsSync(file), false);
+
+    // An install in its own folder takes the folder with it, so a second install keeps its file.
+    const own = await mkdtemp(join(folder, 'i-'));
+    const other = await mkdtemp(join(folder, 'i-'));
+    await writeFile(join(own, 'app.apk'), 'apk');
+    await writeFile(join(other, 'app.apk'), 'apk');
+    await installThenRemove(own, async () => ({ ok: true, device: 'phone' }));
+    assert.equal(existsSync(own), false);
+    assert.equal(existsSync(join(other, 'app.apk')), true);
   } finally {
     await rm(folder, { recursive: true, force: true });
   }
