@@ -36,6 +36,6 @@ A run MUST count as replaced only when a newer push builds a different commit in
 ## 4. A job fails only on the runner
 
 1. The agent MUST read the failed step: `GH_PAGER=cat gh run view <id> -R workbench-soft/<repo> --log-failed`.
-2. The agent MUST check the runner's own log in `~/actions-runner/workbench-soft/_diag/`, the newest `Worker_*.log`.
+2. The agent MUST check the log of the runner that took the job, the newest `Worker_*.log` in its `_diag` folder. The first runner keeps `%USERPROFILE%\actions-runner\workbench-soft\_diag\`, and runner N, named `<PC>-N` in step 1, keeps `%USERPROFILE%\actions-runner\workbench-soft-N\_diag\`.
 3. The usual causes are a path over 260 characters, a tool missing from mise or the Android SDK, or a file another job holds open. A fix to the runner MUST go into `runner/install.ps1`, and the user reruns it.
 4. A failure that also shows on the default branch MUST go into `TODO.md` of that repo.
