@@ -86,7 +86,7 @@ export function AppItem({
           </span>
         )}
         {run && run.machines.length > 0 && (
-          <span className="release-platforms" aria-label={`Build platforms for ${app}`}>
+          <span className="release-platforms" role="group" aria-label={`Build platforms for ${app}`}>
             {run.machines.map((kind) => (
               <span className={`machine ${kind}`} key={kind} title={`A job runs on ${kindNames[kind]}`}>
                 {kindNames[kind]}
