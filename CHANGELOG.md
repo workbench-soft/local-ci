@@ -2,8 +2,41 @@
 
 ## Unreleased
 
+- **Reruns keep their release** a rerun on GitHub keeps the run id, and the
+  page kept the failed jobs of the first attempt. Checks that passed on the
+  rerun then read as failed, and the sweep cancelled the release. The page
+  now reads the jobs of the new attempt.
+
+- **Refused cancels wait** a force cancel GitHub refuses waits 20 s, 40 s, up
+  to 5 minutes before each try. One run got 2,204 tries in 6 hours and filled
+  1.6 MB of `cancel-reasons.jsonl`.
+
+- **CLEAN-CI restarts the runners** `windows\clean-ci.ps1` skips a work folder
+  a process holds and starts the runner tasks even when a move fails.
+
+- **Buttons and installs** Stop, Purge and Apply show an error when the page
+  server is down. Install deletes its APK from `%TEMP%\local-ci-apk` once adb
+  ends.
+
+- **Faster page** a render shows the kept runner read while PowerShell runs
+  again, and an unchanged cancel log is parsed once.
+
+- **Screen readers** button names carry their state and their app, step
+  results reach a screen reader, the Cloud meters have names, and progress
+  bars stop sliding under reduced motion.
+
+- **Release scripts** release notes drop the `Co-Authored-By` line, and
+  `next-version.sh` fails without a date.
+
+- **CI** Checks runs shellcheck on `runner/oracle.sh`, the release scripts and
+  `ci-status.sh`. Each job stops after 10 minutes, and the type check rejects
+  fallthrough, missing returns and silent overrides.
+
+- **fix-stuck-ci skill** the table covers idle runners beside queued runs and
+  an org with no runner, and names the log folder of each runner.
+
 - **Runner pnpm store** on Windows each runner's `.env` points pnpm at
-  `C:ci_pnpm-store` and copies packages, which ends the `EBUSY` failures of
+  `C:\ci\_pnpm-store` and copies packages, which ends the `EBUSY` failures of
   `expo export` and `pnpm install`.
 
 - **One trash delete per runner** each job start launched one more delete of

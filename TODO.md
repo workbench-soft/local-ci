@@ -59,6 +59,36 @@
 - Left: runner labels set once, installer lists kept twice, `RUNNER_ORG` missing from the page, no paging past 100 repos (effort M, or no effect at 16 repos).
 - Left: the boot task gives up after 3 restarts, the APK sits in memory, `start.cmd` is rewritten during the idle wait (low value, `## python-setup` covers the wait).
 
+Audit of 2026-11-10:
+
+- [ ] Add branch protection or a ruleset to `main` of `workbench-soft/local-ci`. The update task pulls the newest `v*` tag every 5 minutes and runs the installers as admin, so a leaked write token runs code as admin on the PC.
+- [ ] Read `%USERPROFILE%\actions-runner\update.log`: it shows 112 merges stopped on 2026-11-02 by a leftover `MERGE_AUTOSTASH` ref, 65 failed page installs and 4 failed runner installs, the last on 2026-11-10 11:02. The page shows none of them.
+- [ ] Delete `%TEMP%\local-ci-apk` once: 4 old APKs, 393 MB. New installs clean up after themselves.
+- [ ] Run `CLEAN-CI.cmd` once when the queue is empty and check that the runners start again. The new `try` and `finally` were parsed and tested by text only.
+- [ ] After the next Checks rerun that passes, check that its release keeps building. The fix was tested against a fake GitHub only.
+- [ ] Decide on `C:\ci\_pnpm-store`: it has no clean rule in `runner\clean-work.ps1` and no reason in `specs\ci-runner.md`, and with copies it only grows.
+- [ ] Decide on a cap for the cancellation history: 550 runs make 961 KB of HTML on each 15 s refresh, and `cancel-reasons.jsonl` has no size cap.
+- [ ] Decide what an agent may press in `fix-stuck-ci`: step 3 says to use "LocalCI Stop" without saying where it is, and the description says the skill restarts the runners while the table says to ask.
+- Left: small text under 4.5:1: the errored tab count 3.81, the pressed chip count 3.40, the Blacksmith pill 4.23, the Oracle pill 3.73, the search placeholder 4.30 (a colour change is a look change, the fix sat in commit `713075f` of the dropped lens branch).
+- Left: `claude/MEMORY.md` names the review skill with a Windows path only (the file is the person's global memory, so the wording is theirs).
+- Left: visible copy slips: `.\\dashboard\\install.ps1` with doubled backslashes in `dev-key-notice.tsx:41`, "Tick apps above" over tick boxes that sit below in `releases-card.tsx:116`, a raw ISO time in `cancellation-history.tsx:27` (changes visible words).
+- Left: the router cancels a run stuck on Blacksmith without a logged reason, `cloud-router.ts:177` (needs a new `kind` in `cancel-reasons.jsonl`).
+- Left: a purged run answers 404 on each router tick and blocks later reruns, `cloud-router.ts:181` (latent, 0 Blacksmith cancels in 5 days, the router has no test harness).
+- Left: an accepted cancel hides later cancels of the same run id, `cancel-log.ts:85` (a person's rerun may be meant to build).
+- Left: `.built-commit` is written before the token file and the boot task in `dashboard/install.ps1:61`, and the page stays down for the whole build (needs an admin run to test).
+- Left: `Remove-Runner` deletes the runner folder before its work folder, `runner/install.ps1:219` (a change under `runner/` reruns the installer on the live PC).
+- Left: a local build passes `GITHUB_TOKEN` to the app's build script, `local-build-runner.ts:160` (a guess that no build needs it).
+- Left: the CSP holds `frame-ancestors` only, while release notes render as HTML (a `script-src` policy needs nonces, effort M to L).
+- Left: `.env.local.new` gets the token before its ACL lock, `gh auth token` has no timeout, `install.sh` pipes curl into a shell for Homebrew (single user PC, dev only, no upstream checksum).
+- Left: GitHub JSON is cast without a check at about 20 sites, and `cloud-usage.json` is cast to its type (a schema library over 10 files, effort L).
+- Left: `noUncheckedIndexedAccess` finds 74 errors and `exactOptionalPropertyTypes` 22 (too big for one pass).
+- Left: no git hook runs the checks before a push (2 new packages, and `prepare` would run in the live checkout).
+- Left: a cold load fires about 150 GitHub calls at once at 25 repos (a guess, the page retries on the next load).
+- Left: pnpm 12.16.1 to 12.18.0 (no measured gain, changes the tool on the live PC).
+- Left: the `speed-camera-map` alias sits in 3 tables, `error instanceof Error` is copied 16 times, the time left line is built twice, `releases-card.tsx` ships `release-config.ts` to the browser (moves of code, or a change of visible words).
+- Left: artifacts are kept only for `in_progress` and `queued` runs, and two installs of one APK at once share a temp file (unseen in about 2,900 runs, or needs two tabs in the same second).
+- Left: 6 commits carry a personal author email (history stays, `## rewrite-repo` holds the reset).
+
 ## Org releases
 
 - [ ] Copy the Memories desktop signing key and password from `~/.config/memories` to the password manager. Reinstall the Memories desktop app once with the install command (key rotated 2026-10-30, memories#42).
