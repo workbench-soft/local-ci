@@ -34,6 +34,8 @@ jobs:
       cancel-in-progress: false
     # The repo is public, so GitHub runners cost 0 minutes.
     runs-on: ubuntu-latest
+    # A hung step would hold the release line, and each later release waits behind it.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
