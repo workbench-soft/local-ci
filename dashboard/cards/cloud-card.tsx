@@ -40,7 +40,13 @@ export function CloudCard({ state, now }: { state: RouterState; now: number }) {
                   ? 'Counting the minutes of this month.'
                   : `${state.used} of ${state.budget} minutes used this month, ${left} left.`}
             {state.blacksmithInstalled && left !== null && (
-              <meter min={0} max={state.budget} value={state.used ?? 0} high={state.budget * 0.8} />
+              <meter
+                aria-label="Blacksmith minutes used this month"
+                min={0}
+                max={state.budget}
+                value={state.used ?? 0}
+                high={state.budget * 0.8}
+              />
             )}
           </dd>
           <dt>GitHub</dt>
@@ -51,7 +57,13 @@ export function CloudCard({ state, now }: { state: RouterState; now: number }) {
                 `${state.githubRunning} running now, Windows x2 and macOS x10. Jobs move to this PC at ` +
                 `${state.githubStop}, so a running build finishes before GitHub cancels it.`}
             {githubTotal !== null && (
-              <meter min={0} max={state.githubFree} value={githubTotal} high={state.githubStop} />
+              <meter
+                aria-label="GitHub minutes used this month"
+                min={0}
+                max={state.githubFree}
+                value={githubTotal}
+                high={state.githubStop}
+              />
             )}
           </dd>
           <dt>Oracle</dt>
