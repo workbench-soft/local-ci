@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **Install while jobs run** `runner\install.ps1` keeps the jobs' `C:\ci\_mise\bin\mise.exe` when a job holds it, in place of stopping before the runners get their new settings.
+
+- **gh retries more, and faster** the CI `gh` wrapper also retries a host name that didn't resolve, runs a call that reads a field from stdin (`-F body=@-`) once, and starts each call about half a second sooner.
+
+- **Faster Status tab** the Status tab skips the release workflow lookup that only the Releases tab shows.
+
+- **Next.js 16.4.6** the page moves past the 16.4.5 security release.
+
+- **Scripts in lint** `mise run lint-scripts` holds the one list of scripts that CI and `mise run lint` check, now with `runner/gh` and the pre-push hook. `runner/install.sh` runs on a Mac without `chmod`.
+
 - **Lint before the push** a pre-push hook runs `mise run lint`, so a lint or format error stays on the PC instead of failing Checks on `main`.
 
 - **Release on CI for every app** each app on the Releases tab gets the button, and the hand kept `release-config.ts` is gone. The page takes the workflow whose run published the app's newest release, so a release of the latest `main` starts again even when that commit is already out. Build locally shows for each clone with `scripts/build-apk.sh`.
