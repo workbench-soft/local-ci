@@ -88,8 +88,7 @@ export async function buildLocalRelease(app: string): Promise<LocalBuildResult> 
     return { ok: false, error: control.cancelled ? 'Local build force-stopped.' : errorText(error) };
   } finally {
     // An Expo app keeps gradlew in android/, a native one beside its build script.
-    const dir = buildDir && (await localBuildOf(app))?.dir;
-    for (const gradleDir of !control.cancelled && dir ? [dir, `${dir}/android`] : []) {
+    for (const gradleDir of !control.cancelled && buildDir ? [target.dir, `${target.dir}/android`] : []) {
       const path = resolve(buildDir as string, 'source', gradleDir);
       if (await fileExists(join(path, 'gradlew')))
         await run('bash', ['-lc', './gradlew --stop'], path).catch(() => undefined);
@@ -124,19 +123,15 @@ export async function forgetLocalArtifact(token: string): Promise<void> {
 
 async function pruneOldBuilds(): Promise<void> {
   const cutoff = Date.now() - artifactTtlMs;
-  const entries = await readdir(buildRoot, { withFileTypes: true }).catch(() => []);
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name === 'artifacts') continue;
-    const path = join(buildRoot, entry.name);
-    const info = await stat(path).catch(() => null);
-    if (info && info.mtimeMs < cutoff) await rm(path, { recursive: true, force: true }).catch(() => undefined);
-  }
-  const artifactDirs = await readdir(join(buildRoot, 'artifacts'), { withFileTypes: true }).catch(() => []);
-  for (const entry of artifactDirs) {
-    if (!entry.isDirectory()) continue;
-    const path = join(buildRoot, 'artifacts', entry.name);
-    const info = await stat(path).catch(() => null);
-    if (info && info.mtimeMs < cutoff) await rm(path, { recursive: true, force: true }).catch(() => undefined);
+  // The build folders and the APK folders under artifacts/ both go after the artifact lifetime.
+  for (const dir of [buildRoot, join(buildRoot, 'artifacts')]) {
+    const entries = await readdir(dir, { withFileTypes: true }).catch(() => []);
+    for (const entry of entries) {
+      if (!entry.isDirectory() || (dir === buildRoot && entry.name === 'artifacts')) continue;
+      const path = join(dir, entry.name);
+      const info = await stat(path).catch(() => null);
+      if (info && info.mtimeMs < cutoff) await rm(path, { recursive: true, force: true }).catch(() => undefined);
+    }
   }
 }
 
