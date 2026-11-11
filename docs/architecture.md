@@ -28,7 +28,10 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   `~/.local-ci/install.lock` open. The update task skips its turn while
   `START.cmd` holds it, and `START.cmd` waits while the task holds it.
 - **Status page** `dashboard/` is a Next.js app. `dashboard/install.ps1`
-  builds it and starts it at boot.
+  builds it and starts it at boot. The build goes to `.next-a` or `.next-b`,
+  the folder the running page doesn't serve, and `start.cmd` names the folder
+  in `NEXT_DIST_DIR`. The page stops only for the swap, so the sweep of
+  replaced runs keeps going through a build.
 - **Release controls** `dashboard/status/release-actions.ts` dispatches an
   app's release workflow on `main`. `status/local-build-runner.ts` fetches the
   app's latest `main`, builds in a temporary clone and retains only its APK.
@@ -38,7 +41,8 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   tag. It runs `dashboard/install.ps1` when `dashboard/` moved past
   `dashboard/.built-commit`, and `runner/install.ps1` when the runner files
   moved past `~/.local-ci/runner-commit`. The `local-ci update` task runs it
-  every 5 minutes and at logon.
+  every 5 minutes and at logon. It also starts the page task when no process
+  listens on the page's port.
 - **Data files** `mcp-config.json` and `claude/MEMORY.md`, copied into the
   home folder when missing.
 

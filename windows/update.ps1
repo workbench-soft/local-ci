@@ -122,6 +122,13 @@ if (($FromStart -or $tasks -contains $pageTask) -and $pageCommit -ne (Read-Mark 
 	if (-not (Invoke-Installer 'dashboard\install.ps1' @('-Unattended'))) { $failed++ }
 }
 
+# The page cancels replaced runs, so a page that died starts again here, not at the next boot.
+$pagePort = if ($env:DASHBOARD_PORT) { $env:DASHBOARD_PORT } else { '4280' }
+if ($tasks -contains $pageTask -and -not (Get-NetTCPConnection -LocalPort $pagePort -State Listen -ErrorAction SilentlyContinue)) {
+	Write-Log 'The status page is down, starting it'
+	Start-ScheduledTask -TaskName $pageTask
+}
+
 $runnerCommit = Get-LastCommit @('runner', 'windows/boot-task.ps1', 'windows/defender-exclusions.ps1')
 if (($tasks -like 'GitHub Actions runner (*') -and $runnerCommit -ne (Read-Mark $runnerFile)) {
 	if (Invoke-Installer 'runner\install.ps1') { Set-Content -LiteralPath $runnerFile -Encoding ascii -Value $runnerCommit } else { $failed++ }

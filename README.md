@@ -220,8 +220,9 @@ once, from the main checkout:
   Startup folder. Delete `local-ci dashboard.lnk` there to stop it.
 - **Token** the boot task can't read the gh login, so the script copies
   `gh auth token` into `dashboard\.env.local`.
-- **Rerun** after a `git pull` or a new gh login. The script rebuilds the page
-  and restarts it.
+- **Rerun** after a `git pull` or a new gh login. The script builds the new
+  page beside the running one, then swaps them. The old page keeps cancelling
+  replaced builds until the swap, and stays when the build fails.
 - **In the launcher** the CI tab of the Workbench launcher frames the page.
   Other sites can't frame it, so none can steer a click onto Stop.
 - **Develop and test** in `dashboard`, `mise x -- pnpm dev` serves the page on

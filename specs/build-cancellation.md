@@ -6,6 +6,7 @@
 - **Fix** replace builds only within one repo, workflow and branch when a different commit starts that build type.
 - **Checks** app repos build Release beside Checks, and failed Checks stop the releases of that same commit.
 - **History** save each cancellation request, its result and the causing run, commit and PR before stopping a build.
+- **Stays up** the sweep runs inside the status page, so an update builds the new page beside the running one and swaps them in seconds.
 - **Limits** external cancellations without evidence remain unattributed.
 
 ## Behaviour
@@ -25,6 +26,22 @@ The dashboard does not infer a dependency from an unrelated workflow failure.
 
 A cancel GitHub refuses waits before its next try: 20 s, 40 s, 80 s and so on
 up to 5 minutes. The wait ends when the run finishes or the server restarts.
+
+A run that waits for a runner is active too, so a newer run stops it in the
+queue. A `workflow_run` run replaces no build: GitHub stamps it with the
+newest commit of `main`, which can belong to another product of the repo.
+
+## The sweep stays up
+
+The sweep runs every 10 s inside the production status page. While the page
+is down, no run gets cancelled.
+
+- **Update** `dashboard\install.ps1` builds the new page into its own folder,
+  `.next-a` or `.next-b`, while the old page serves and sweeps. It stops the
+  old page only once the build is done, then starts the new one.
+- **Failed build** the old page keeps running.
+- **Dead page** `windows\update.ps1` starts the page task when no process
+  listens on the page's port. The task runs it every 5 minutes.
 
 ## Cancellation history
 

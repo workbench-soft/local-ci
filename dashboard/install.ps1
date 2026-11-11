@@ -45,35 +45,57 @@ $mise = (Get-Command mise -CommandType Application -ErrorAction Stop).Source
 & $mise trust --quiet (Split-Path $appDir -Parent)
 if ($LASTEXITCODE -ne 0) { throw 'mise trust failed' }
 
-Write-Step 'Stopping the running page'
-Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-# Stopping the task leaves the node it started still listening.
-Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+function Stop-Page {
+	Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+	# Stopping the task leaves the node it started still listening.
+	Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }
+}
 
-Write-Step 'Installing packages and building'
+# The running page cancels replaced runs every 10 s. A build takes over an hour
+# while the runners are busy, so it goes to the folder the page doesn't serve.
+$startScript = Join-Path $appDir 'start.cmd'
+$served = if ((Test-Path -LiteralPath $startScript) -and (Get-Content -LiteralPath $startScript -Raw) -match 'NEXT_DIST_DIR=(\S+)') { $Matches[1] } else { '' }
+$buildDir = if ($served -eq '.next-a') { '.next-b' } else { '.next-a' }
+
+Write-Step "Installing packages and building into $buildDir, while the old page runs"
 Push-Location $appDir
 try {
 	& $mise x -- pnpm install --frozen-lockfile
-	if ($LASTEXITCODE -ne 0) { throw 'pnpm install failed' }
+	if ($LASTEXITCODE -ne 0) {
+		# The running page can hold a file of a package that changed.
+		Write-Host 'pnpm install failed, so the page stops for a second try'
+		Stop-Page
+		& $mise x -- pnpm install --frozen-lockfile
+		if ($LASTEXITCODE -ne 0) { throw 'pnpm install failed' }
+	}
+	$env:NEXT_DIST_DIR = $buildDir
 	& $mise x -- pnpm build
 	if ($LASTEXITCODE -ne 0) { throw 'pnpm build failed' }
-	# START.cmd rebuilds when dashboard/ moves past this commit.
-	git -C (Split-Path $appDir -Parent) log -1 --format=%H -- dashboard | Set-Content -LiteralPath (Join-Path $appDir '.built-commit') -Encoding ascii
 	$node = (& $mise x -- node -p 'process.execPath').Trim()
 	if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $node)) { throw 'mise found no node' }
 } catch {
-	# A failed build would leave the page down until the next install, so the old one starts again.
+	# The old page runs on. This start covers the one the second pnpm install stopped.
 	Start-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
 	throw
-} finally { Pop-Location }
+} finally {
+	Remove-Item Env:NEXT_DIST_DIR -ErrorAction SilentlyContinue
+	Pop-Location
+}
 
 Write-Step 'Writing the GitHub token to .env.local'
 Write-TokenFile
 
+Write-Step 'Stopping the old page'
+Stop-Page
+
 # The boot task runs node on Next itself. Through mise and pnpm it hung on a busy
 # PC, or stopped on a mise.toml the task's mise hadn't trusted.
-$startScript = Join-Path $appDir 'start.cmd'
-Set-Content -LiteralPath $startScript -Encoding ascii -Value "@echo off`r`ncd /d `"%~dp0`"`r`n`"$node`" node_modules\next\dist\bin\next start -H 127.0.0.1 -p $port >> dashboard.log 2>&1"
+Set-Content -LiteralPath $startScript -Encoding ascii -Value "@echo off`r`ncd /d `"%~dp0`"`r`nset NEXT_DIST_DIR=$buildDir`r`n`"$node`" node_modules\next\dist\bin\next start -H 127.0.0.1 -p $port >> dashboard.log 2>&1"
+# START.cmd rebuilds when dashboard/ moves past this commit.
+git -C (Split-Path $appDir -Parent) log -1 --format=%H -- dashboard | Set-Content -LiteralPath (Join-Path $appDir '.built-commit') -Encoding ascii
+# The build before this one. pnpm dev keeps its own .next.
+$oldDir = Join-Path $appDir $(if ($buildDir -eq '.next-a') { '.next-b' } else { '.next-a' })
+if (Test-Path -LiteralPath $oldDir) { Remove-Item -LiteralPath $oldDir -Recurse -Force -ErrorAction SilentlyContinue }
 
 Write-Step 'Starting the page at boot'
 # Normal priority, so the page starts on a PC the runners keep busy.

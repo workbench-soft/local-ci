@@ -282,6 +282,9 @@ Every 10 seconds the page server stops runs that no longer ship anything.
   release workflow, stops the releases of the same repo, branch and commit.
 - **Kept** a closed PR, a rerun of the same commit, and `workflow_run` and
   `schedule` runs keep building.
+- **In the queue** a run that waits for a runner stops the same way.
+- **Through an update** the old page keeps cancelling while the new one
+  builds. The update task starts a page that died within 5 minutes.
 - **Refused** a stop GitHub refuses waits 20 s, then 40 s, up to 5 minutes
   before each next try.
 - **History** each cancel is saved to `dashboard\cancel-reasons.jsonl` before
