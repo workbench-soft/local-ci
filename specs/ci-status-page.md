@@ -762,3 +762,22 @@ browser at each logon.
   cause. An app with no release yet shows once a workflow of its repo runs
   after another, which is how every release workflow here starts. A restart
   of the page keeps the reasons, they sit in the file.
+
+### 2026-11-12 Every long list scrolls in its own box, under a pinned header
+
+- **Why** the person asked for each long list in a scroll box, with the
+  header held on top. The Releases and Sites lists and the cancellation
+  history grew the page, so the headline and the tabs scrolled away.
+- **Changes**
+  - **`app/page.tsx`** the headline and the tabs sit in one page head.
+  - **`app/styles.css`** the page head sticks to the top of the window. The
+    Releases and Sites lists and the cancellation history stop at 60% of the
+    window height and scroll, like the job and runner lists. Each card title
+    and toolbar stays above its box, and the runs table keeps its head row
+    pinned.
+  - **`cards/cancellation-history.tsx`** the list gets the scroll class.
+- **Steps**
+  1. This spec.
+  2. The page head, the CSS and the class.
+  3. Changelog.
+- **Docs** `CHANGELOG.md`.
