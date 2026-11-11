@@ -226,7 +226,11 @@ once, from the main checkout:
   Other sites can't frame it, so none can steer a click onto Stop.
 - **Develop and test** in `dashboard`, `mise x -- pnpm dev` serves the page on
   port 4281 and cancels no run. `mise x -- pnpm typecheck` and
-  `mise x -- pnpm test` are the checks.
+  `mise x -- pnpm test` are the checks, and `mise run lint` at the repo root
+  lints the page, the scripts and the Markdown.
+- **Before a push** `.githooks/pre-push` runs `mise run lint` and stops a push
+  that fails it. A new clone turns it on once with
+  `git config core.hooksPath .githooks`.
 - **CI** `.github/workflows/checks.yml` runs those checks, a build, shellcheck,
   shfmt, markdownlint and a parse of each `.ps1` file on `windows-latest`. It
   runs for each push to `main` and each PR.
