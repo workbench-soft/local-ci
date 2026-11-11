@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Long lists scroll in their card** the Releases and Sites lists and the cancellation history stop at 60% of the window and scroll. The headline and the tabs stay on top while the page scrolls.
+
 - **Old builds stop during an update** `dashboard\install.ps1` builds the new page beside the running one and stops the old page only for the swap. On 2026-11-11 the page was down for over an hour of building, and stale memories releases held all 8 runners. The update task also starts a page that died.
 
 - **Deploy site** a Sites card on the Releases tab lists each org repo with a site, its last deploy and a button that starts its deploy workflow on `main`. The page finds the workflow in each repo, so no list is kept by hand.

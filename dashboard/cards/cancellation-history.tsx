@@ -9,7 +9,7 @@ export function CancellationHistory({ entries }: { entries: CancelEntry[] }) {
       <h2>Cancellation history</h2>
       <details>
         <summary>{entries.length} recorded cancellations</summary>
-        <ul>
+        <ul className="history">
           {entries
             .toSorted((a, b) => b.at.localeCompare(a.at))
             .map((entry) => (
