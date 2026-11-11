@@ -1,7 +1,7 @@
 #!/bin/sh
 # gh for the CI jobs on this PC: runner/install.ps1 copies it to ~/actions-runner/bin, first on the jobs' PATH.
 # It runs the real gh and retries when the connection to GitHub failed before the request went out:
-# a TLS handshake timeout or a refused connect. Such a failure stopped skyaltar releases on 2026-11-10.
+# a TLS handshake timeout, a refused connect or a host name that didn't resolve. Such a failure stopped skyaltar releases on 2026-11-10.
 # Any other failure, a 4xx or 5xx included, returns at once, so a POST never runs twice.
 self=$(cd "$(dirname "$0")" && pwd -P)
 real=
@@ -29,7 +29,8 @@ for try in 1 2 3 4; do
   code=$?
   cat "$err" >&2
   [ "$code" = 0 ] && exit 0
-  grep -qE 'TLS handshake timeout|dial tcp|connectex|no such host' "$err" || exit "$code"
+  # gh prints "error connecting to <host>" in place of the DNS error.
+  grep -qE 'TLS handshake timeout|dial tcp|connectex|no such host|^error connecting to ' "$err" || exit "$code"
   [ "$try" = 4 ] && exit "$code"
   echo "gh: no connection to GitHub, try $((try + 1)) of 4 in ${wait}s" >&2
   sleep "$wait"
