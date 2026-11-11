@@ -12,15 +12,22 @@ git clone https://github.com/workbench-soft/local-ci.git
 ./local-ci/install.sh
 ```
 
-On Windows, in PowerShell:
+On Windows, paste this line into PowerShell. It installs Git when it is
+missing, clones this repo to `%USERPROFILE%\workbench-soft` and runs the
+installer:
 
 ```powershell
-git clone https://github.com/workbench-soft/local-ci.git
-.\local-ci\install.ps1
+$d = "$env:USERPROFILE\workbench-soft"; if (-not (Get-Command git -ErrorAction SilentlyContinue)) { winget install --id Git.Git --exact --source winget --silent --accept-source-agreements --accept-package-agreements; $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') }; if (Test-Path "$d\local-ci") { git -C "$d\local-ci" pull --ff-only } else { git clone https://github.com/workbench-soft/local-ci.git "$d\local-ci" }; powershell -NoProfile -ExecutionPolicy Bypass -File "$d\local-ci\install.ps1"
 ```
 
+- **What you get** the tools below, then
+  [git-aliases](https://github.com/workbench-soft/git-aliases) and
+  [agent-skills](https://github.com/workbench-soft/agent-skills) cloned beside
+  this repo and installed: the git aliases, the agent skills, the agent hooks
+  and the spoken turn end.
+- **Questions** the git name and email, a GitHub login, the language of the
+  skills. Answer no to the runner question on a PC that only develops.
 - **Run it again** each script skips the pieces already in place.
-- **Fresh Windows** install Git first: `winget install Git.Git`.
 - **Old name** the `mac-setup` address redirects here.
 
 ## Screenshots

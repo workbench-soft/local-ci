@@ -118,7 +118,7 @@ if (-not (git config --global user.name)) { git config --global user.name (Read-
 if (-not (git config --global user.email)) { git config --global user.email (Read-Host 'git user.email') }
 
 # --- GitHub CLI --------------------------------------------------------------
-# The repos below are private in workbench-soft, so the login goes first.
+# gh clones the repos below, so the login goes first.
 # Windows PowerShell turns native stderr into an error, and Stop would throw it.
 $loggedIn = try { gh auth status *> $null; $LASTEXITCODE -eq 0 } catch { $false }
 if (-not $loggedIn) {
