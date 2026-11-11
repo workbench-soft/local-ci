@@ -6,12 +6,12 @@
 
 - **Release on CI for every app** each app on the Releases tab gets the button, and the hand kept `release-config.ts` is gone. The page takes the workflow whose run published the app's newest release, so a release of the latest `main` starts again even when that commit is already out. Build locally shows for each clone with `scripts/build-apk.sh`.
 
-- **Half installed tools** the job hook removes an npm tool in `C:ci_mise` that has no `node_modules` after 15 minutes, so the job installs it again. A full disk left oxfmt that way and failed lumiere-player. `runner/install.ps1` also puts mise in `_misein`, so the first jobs no longer download it at once.
+- **Half installed tools** the job hook removes an npm tool in `C:\ci\_mise` that has no `node_modules` after 15 minutes, so the job installs it again. A full disk left oxfmt that way and failed lumiere-player. `runner/install.ps1` also puts mise in `_mise\bin`, so the first jobs no longer download it at once.
 
 - **gh retries** bash steps on the Windows runners get `runner/gh` first on PATH. It retries a call that never reached GitHub, a TLS handshake timeout or a refused connect, 4 times. Two skyaltar releases stopped on one such timeout.
 
 - **Jobs keep their own mise** the runners install their tools in
-  `C:ci_mise` from `runner/mise-ci.toml`. A tool a session on the PC held
+  `C:\ci\_mise` from `runner/mise-ci.toml`. A tool a session on the PC held
   or swapped, such as an MCP server, failed CI jobs with "being used by
   another process". Run `runner/install.ps1` again to switch.
 
@@ -116,7 +116,7 @@
   `dashboard\cancel-reasons.jsonl`, from Stop and Purge or from the sweep.
   An app with no release yet shows from its repo's runs.
 - **Clean scripts in step** `AGENTS.md` names what must change in the clean scripts, and a test fails when `runner/install.ps1` moves the work root, the org or the task names without them.
-- **Work folder clean** each Windows runner deletes its old repo checkouts in `C:ci` before a job, and `CLEAN-CI.cmd` empties `C:ci` by hand. `C:ci` had grown to about 200 GB.
+- **Work folder clean** each Windows runner deletes its old repo checkouts in `C:\ci` before a job, and `CLEAN-CI.cmd` empties `C:\ci` by hand. `C:\ci` had grown to about 200 GB.
 - **Root folder** the scripts read the workspace root from `WBS_ROOT`, then `DEV_DIR`, then the folder that holds the clone. No script holds a fixed path.
 
 - **Docs** the README names Bitwarden Secrets Manager as the place for secrets, in place of 1Password.
@@ -211,7 +211,7 @@
   27.1 for every runner before.
 
 - Runners check repos out under `C:\ci\<number>`. Expo release builds
-  failed on a `.bat` path past 260 characters under `~ctions-runner`.
+  failed on a `.bat` path past 260 characters under `~\actions-runner`.
 
 - The Runners card sets the number of runners on this PC and suggests a
   count from the logical processors and the memory. `runner\install.ps1`
