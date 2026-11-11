@@ -51,6 +51,11 @@ test('runner/install.ps1 gives the jobs their own mise, and CLEAN-CI.cmd keeps i
   assert.match(cleanCi, /Where-Object Name -ne '_mise'/);
 });
 
+// A job running mise holds _mise\bin\mise.exe, and a copy over it stopped the whole install.
+test('runner/install.ps1 goes on when a job holds the jobs mise.exe', () => {
+  assert.match(install, /try \{\s*Copy-Item [^\n]*-Destination \$miseExe\s*\} catch \{/);
+});
+
 test('runner/install.ps1 puts the retrying gh first on the jobs PATH', () => {
   assert.match(install, /Copy-Item -Force -LiteralPath \(Join-Path \$PSScriptRoot 'gh'\) -Destination \$ghRetryDir/);
   assert.match(install, /\$dirs = @\(\$ghRetryDir, /);
