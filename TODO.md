@@ -131,3 +131,7 @@ Audit of 2026-11-10:
 - [ ] Set `retention-days` on `actions/upload-artifact` in farnear and suno-download: both hit "Artifact storage quota has been hit" on 2026-11-08 and 2026-11-09
 - [ ] Look at the Dependabot `update_files` failures in app-updater, keeppad, skyaltar, suno-download, tickalot, tripforge, alina-photo, aspirationstyle and chrome-site-sources
 - [ ] Give the merge workflows of aspirationstyle and tickalot a `workflow_dispatch` trigger, their merge job fails without it
+
+## scroll-lists
+
+- [ ] Remove the merged worktree `%WBS_ROOT%\local-ci-scroll-lists` and its local branch `scroll-lists` (PR #134 merged). Auto mode denied the move: run `git -C %WBS_ROOT%\local-ci worktree remove --force %WBS_ROOT%\local-ci-scroll-lists; git -C %WBS_ROOT%\local-ci branch -D scroll-lists`.
