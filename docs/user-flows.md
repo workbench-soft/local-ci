@@ -145,6 +145,8 @@ flowchart TD
    - **Build locally** builds the latest `main` on this PC. Install local
      then sends its APK to the phone.
    - **Rerun build** or **Retry failed jobs** runs an errored release again.
+   - **Deploy site** on the Sites card starts a repo's site deploy workflow
+     on `main`. The row then shows the run as Queued or Deploying.
 10. To free GitHub Actions storage, press **Clean old APK releases &
     artifacts**. The page counts what goes and what stays, then asks to
     confirm. Cleanup runs in small batches with progress. Runs, logs and the
@@ -178,6 +180,7 @@ flowchart TD
   RT -- Install Dev --> DV[install the APK, send the unlock link over adb]
   RT -- Release on CI --> DS[dispatch the app's release workflow on main]
   RT -- Build locally --> LB[build the APK in a temporary clone] --> LI[Install local]
+  RT -- Deploy site --> SD[dispatch the repo's site deploy workflow on main]
   RT -- Clean, confirmed --> CL[delete old artifacts and APK releases in batches]
   H -- Apply runner count --> R[write runner-count, start the count task]
   R --> T[runner/install.ps1 as admin adds or removes runners]

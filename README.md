@@ -262,6 +262,8 @@ The Releases tab of the status page also ships the org's Android apps:
   latest `main` and builds the APK in a temporary clone, with the app's release key when this PC has it.
   **Force stop local build** ends the build and its child processes, and
   **Install local** sends the APK to the phone.
+- **Deploy site** on the Sites card starts the deploy workflow of each org
+  repo with a site, on `main`. The page finds the workflow by itself.
 - **Install Release and Install Dev** put a published APK on the phone. Install
   Dev then opens the app's unlock link, so its developer settings show. It
   needs `WORKBENCH_DEV_KEY` on this PC, and the tab explains how to set it.

@@ -20,7 +20,7 @@ const makers = new Map<string, Promise<number | null>>();
 
 const repoPath = (repo: string) => `/repos/${orgName}/${encodeURIComponent(repo)}/actions`;
 
-function workflowsOf(repo: string): Promise<RepoWorkflow[]> {
+export function workflowsOf(repo: string): Promise<RepoWorkflow[]> {
   const kept = listed.get(repo);
   if (kept && Date.now() - kept.at < ttlMs) return kept.workflows;
   const workflows = callGitHub(`${repoPath(repo)}/workflows?per_page=100`)
@@ -34,7 +34,7 @@ function workflowsOf(repo: string): Promise<RepoWorkflow[]> {
 }
 
 /** The YAML of a workflow on main, read once an hour. */
-function textOf(repo: string, path: string): Promise<string> {
+export function textOf(repo: string, path: string): Promise<string> {
   const key = `${repo}/${path}`;
   const kept = texts.get(key);
   if (kept && Date.now() - kept.at < ttlMs) return kept.text;
@@ -100,7 +100,8 @@ export function pickReleaseWorkflow(workflows: RepoWorkflow[], madeBy: number | 
 }
 
 // GitHub's own workflows, such as pages-build-deployment, sit under dynamic/ and take no dispatch.
-const dispatchable = (workflow: RepoWorkflow) => workflow.state === 'active' && !workflow.path.startsWith('dynamic/');
+export const dispatchable = (workflow: RepoWorkflow) =>
+  workflow.state === 'active' && !workflow.path.startsWith('dynamic/');
 
 async function byText(repo: string, workflows: RepoWorkflow[]): Promise<RepoWorkflow | null> {
   const texts = await Promise.all(workflows.map((workflow) => textOf(repo, workflow.path)));

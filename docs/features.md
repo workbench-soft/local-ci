@@ -317,6 +317,20 @@ Spec: [build-cancellation](../specs/build-cancellation.md).
 
 Spec: [releases](../specs/releases.md).
 
+## Sites
+
+- **Deploy site** the Sites card on the Releases tab lists each org repo with
+  a site and gives it a button that starts its deploy workflow on `main`.
+- **Found by itself** the page reads each repo's workflows once an hour and
+  takes the one with `workflow_dispatch` that runs `wrangler deploy`,
+  `deploy-pages`, `mise run deploy` or a site push. A `deploy` file wins, then
+  `pages`, then `release`.
+- **Last deploy** each row shows the state and age of the workflow's last run.
+  The button stays gray while a deploy is queued or running.
+- **Limits** a deploy kept only in a mise task, with no workflow, doesn't show.
+
+Spec: [site-deploy](../specs/site-deploy.md).
+
 ## Updates by themselves
 
 - **What it gives** the Windows PC installs each release within minutes of the merge. The status page and the runners get the new code with no `git pull` by hand.

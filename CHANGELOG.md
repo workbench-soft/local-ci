@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Deploy site** a Sites card on the Releases tab lists each org repo with a site, its last deploy and a button that starts its deploy workflow on `main`. The page finds the workflow in each repo, so no list is kept by hand.
+
 - **Install while jobs run** `runner\install.ps1` keeps the jobs' `C:\ci\_mise\bin\mise.exe` when a job holds it, in place of stopping before the runners get their new settings.
 
 - **gh retries more, and faster** the CI `gh` wrapper also retries a host name that didn't resolve, runs a call that reads a field from stdin (`-F body=@-`) once, and starts each call about half a second sooner.

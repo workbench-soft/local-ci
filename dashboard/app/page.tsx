@@ -6,6 +6,7 @@ import { LatestRunsTable, type RunRow } from '@/cards/latest-runs-table';
 import { LiveJobsCard } from '@/cards/live-jobs-card';
 import { ReleasesCard } from '@/cards/releases-card';
 import { RunnersCard } from '@/cards/runners-card';
+import { SitesCard, type SiteRow } from '@/cards/sites-card';
 import { StatusDot } from '@/cards/status-dot';
 import { readCancels } from '@/status/cancel-log';
 import { isDevKeyConfigured } from '@/status/dev-key';
@@ -20,6 +21,7 @@ import { releasesByRun } from '@/status/releases';
 import { releaseWorkflowFor } from '@/status/release-workflow';
 import { localBuildOf } from '@/status/local-build-target';
 import { kindsOfRun } from '@/status/runner-kind';
+import { siteWorkflows } from '@/status/site-deploy';
 import { readRunnerCount, readThisPc } from '@/status/this-pc';
 
 // Each visit reads the runner afresh, so Next must not prerender the page.
@@ -87,11 +89,25 @@ export default async function StatusPage({
     tab === 'releases' && org.ok
       ? [(app: string) => releaseWorkflowFor(app, releases), (app: string) => localBuildOf(app)]
       : [];
-  const [releasable = [], buildable = []] = await Promise.all(
-    finders.map(async (find) =>
-      (await Promise.all(apps.map(async ({ app }) => ((await find(app)) ? app : null)))).filter((app) => app !== null),
+  const [[releasable = [], buildable = []], siteFlows] = await Promise.all([
+    Promise.all(
+      finders.map(async (find) =>
+        (await Promise.all(apps.map(async ({ app }) => ((await find(app)) ? app : null)))).filter(
+          (app) => app !== null,
+        ),
+      ),
     ),
-  );
+    tab === 'releases' && org.ok ? siteWorkflows() : [],
+  ]);
+  // Runs come newest first, so the first run of a site's deploy workflow is its last deploy.
+  const sites: SiteRow[] = siteFlows.map(({ repo, workflow, file }) => {
+    const run = runs.find((item) => item.repo === repo && item.workflowId === workflow);
+    return {
+      repo,
+      file,
+      run: run ? { status: run.status, conclusion: run.conclusion, url: run.url, createdAt: run.createdAt } : null,
+    };
+  });
   const building = apps.filter((app) => app.state === 'building' || app.state === 'queued').length;
   const errored = apps.filter((app) => app.state === 'errored').length;
   return (
@@ -126,6 +142,7 @@ export default async function StatusPage({
                 now={now}
                 devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}
               />
+              <SitesCard sites={sites} now={now} />
               <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />
             </>
           ) : (
