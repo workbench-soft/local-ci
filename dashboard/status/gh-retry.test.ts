@@ -57,6 +57,16 @@ test('gh retries a refused connect', { skip: !hasSh }, async () => {
   assert.equal(result.calls, 2);
 });
 
+test(
+  'gh runs once a call that reads a field from stdin, so a retry never sends it empty',
+  { skip: !hasSh },
+  async () => {
+    const result = await runWrapper('dial tcp: connectex: refused', ['api', 'x', '-F', 'body=@-'], 'notes');
+    assert.equal(result.calls, 1);
+    assert.equal(result.stdin, 'notes');
+  },
+);
+
 test('gh returns a 4xx at once', { skip: !hasSh }, async () => {
   const result = await runWrapper('HTTP 422: Validation Failed', ['api', 'x']);
   assert.equal(result.calls, 1);

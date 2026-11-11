@@ -17,9 +17,9 @@ unset IFS
   echo "gh: no gh found on PATH apart from $self" >&2
   exit 127
 }
-# Input from stdin can't be read twice, so such a call runs once.
+# Input from stdin can't be read twice, so such a call runs once: -, --input=- and a field such as body=@-.
 for arg in "$@"; do
-  [ "$arg" = - ] && exec "$real" "$@"
+  case $arg in - | *=- | *@-) exec "$real" "$@" ;; esac
 done
 err=$(mktemp)
 trap 'rm -f "$err"' EXIT
