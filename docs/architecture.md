@@ -409,20 +409,39 @@ sequenceDiagram
   - **Webhooks** GitHub would need a public address that reaches the PC.
 - **Cost to undo** low. `status/org-status.ts`.
 
-### Old runs: the page server cancels them
+### Old runs: GitHub cancels them, the page server sweeps the rest
 
-- **Picked** `status/cancel-superseded.ts` force cancels a run that a newer
-  commit of the same repo, workflow, branch and event replaced.
+- **Picked** two layers stop a run that a newer commit replaced.
+  - **GitHub** Checks and each Release that builds on a push set `concurrency`
+    with `cancel-in-progress: true`. The group is the workflow name with the
+    PR number or the branch, so a newer push cancels the older run at once.
+  - **Sweep** `status/cancel-superseded.ts` force cancels a run that a newer
+    commit of the same repo, workflow, branch and event replaced.
 - **Why** the queue filled with runs of replaced commits and merged PRs.
-  They took runners to build code already replaced. One loop covers every org repo.
-- **Trade-off** a run dies up to 30 seconds late, and only while the page
-  server runs. Runs with unknown commit identities stay. Repeating the same
-  commit keeps the running build. Release also starts only once matching Checks
-  pass, so a stopped dashboard cannot publish an unchecked build.
+  They took runners to build code already replaced. On 2026-11-11 the page
+  was down for an hour and old `memories` releases held all 8 runners, so
+  the cancel now also sits in the workflows and works with the PC off.
+- **Trade-off**
+  - **GitHub** each repo holds the block, from the `repo-ci` templates. A
+    run GitHub cancels has no line in `cancel-reasons.jsonl`, so its row
+    shows no cause. A run by hand on `main` also cancels the push run of the
+    same commit. A workflow with its own group, and the runs of a merged PR,
+    stay for the sweep.
+  - **Sweep** a run dies up to 30 seconds late, and only while the page
+    server runs. Runs with unknown commit identities stay. Repeating the same
+    commit keeps the running build.
+  - **Publication** Release starts only once matching Checks pass, so a
+    stopped dashboard cannot publish an unchecked build.
+- **Kept apart** a Release run from `workflow_run` takes its run id as the
+  group. It publishes one commit, and a newer push leaves it alone. A workflow
+  that uploads or deploys in the run of the push keeps
+  `cancel-in-progress: false`, such as `android.yml` of farnear.
 - **Rejected**
-  - **`concurrency` groups in each workflow** each repo needs the block, and
-    they leave runs of merged PRs alone.
-- **Cost to undo** low. Set `CANCEL_SUPERSEDED=off` in `.env.local`.
+  - **`concurrency` alone** it leaves the runs of merged PRs and the repos
+    without the block.
+  - **The sweep alone** the hour of 2026-11-11 above.
+- **Cost to undo** low. Set `CANCEL_SUPERSEDED=off` in `.env.local`, or drop
+  the block from the templates.
 
 ### Release of this repo: after Checks, through `workflow_run`
 

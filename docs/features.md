@@ -273,7 +273,12 @@ Spec: [ci-status-page](../specs/ci-status-page.md).
 
 ## Build cancellation
 
-Every 10 seconds the page server stops runs that no longer ship anything.
+GitHub cancels the older run of a branch when a newer push starts the same
+workflow. Every 10 seconds the page server stops the runs GitHub leaves.
+
+- **GitHub first** Checks and Release set `concurrency` with
+  `cancel-in-progress: true`, so the cancel works with the PC off. Such a run
+  has no line in the history.
 
 - **Replaced** an unfinished push, dispatch or PR run stops when a newer run
   of the same repo, workflow and branch builds a different commit. Each PR

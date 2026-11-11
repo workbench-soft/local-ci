@@ -193,7 +193,9 @@ once, from the main checkout:
   workflow, or `Retry failed jobs` to rerun only the failed jobs. The Releases
   tab also has `Rerun build` for errored releases. The server's GitHub token
   needs Actions write access, and the browser doesn't get the token.
-- **Replaced builds** the server cancels an active build only when a newer
+- **Replaced builds** GitHub cancels the older run of a workflow and branch
+  through `concurrency` in Checks and Release. The server cancels the rest:
+  an active build only when a newer
   push builds a different commit in the same repo, workflow, branch and event.
   Closing a PR alone keeps the build. Failed Checks stop releases of the same
   commit. The cancellation history links the causing build, commit and PR.

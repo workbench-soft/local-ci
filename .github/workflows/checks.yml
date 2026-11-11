@@ -7,6 +7,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+# A newer push to the same branch or PR cancels this run on GitHub's side.
+# The local-ci page cancels the runs GitHub leaves, such as those of a merged PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 # The repo is public, so jobs run on GitHub runners: a fork PR on the PC runner would run its code there.
 # Each action is pinned to a commit, and Dependabot moves the pin and its version comment.
 permissions:
