@@ -41,6 +41,19 @@
 
 ## app-audit
 
+Audit of 2026-11-11:
+
+- [ ] After the update task installs the next release, read `%USERPROFILE%\.local-ci\update.log`: a `runner\install.ps1` run while jobs use mise should log "Kept C:\ci\_mise\bin\mise.exe" and go on, where it exited with 1 on 2026-11-10 21:12. Tested with a stub exe only.
+- [ ] Decide if Release on CI shows for apps with no release yet, such as local-ci, workspace and agent-skills. On local-ci it starts this repo's own Release, which the update task then installs as admin. The 2026-11-11 spec entry asks for the button, so the audit kept it.
+- [ ] Look at `C:\ci\_mise\installs`: 10 tools that only the PC's own mise config lists, such as gcloud, codex and the MCP servers, showed up there at 2026-11-10 22:13. Something with `MISE_DATA_DIR` set read the PC's config, and the job logs of that time can tell what.
+- Left: `release-workflow.ts:93` takes `release.yml` over `deploy.yml` for property-trends-web when no run is found (the rule the spec chose).
+- Left: the 100 run cap in `release-workflow.ts:58` matched 1 of 54 releases to a PR Checks run (no harm, a narrower filter picks worse).
+- Left: `runner/gh` reruns a whole command whose first request went out: `--paginate` prints pages again, and `release create` makes a second draft when the upload host fails. `gh secret set X < file` retries with empty stdin (each needs a CI run to prove a change).
+- Left: jobs may read `_mise\config.toml` while `runner/install.ps1` copies it (a guess, unseen).
+- Left: `runner/mise-ci.toml` keeps actionlint, pnpm and rust at `latest` (a runner pin change, no failure seen).
+- Left: `release-workflow.ts` makes an extra call per app where `latestReleases` knows the workflow, skips the ETag cache and waits on an expired cache (about 16 calls an hour, effort M).
+- Left: Release on CI says "No release workflow found" when GitHub fails, `release-actions.ts:289` (rare, and the server action has no test harness).
+
 - [ ] Watch the first sweep cancels in `dashboard\dashboard.log` after the install: each line now gives a time and a reason. A new PR's first run should keep building.
 - [ ] Press Install on a real release: it should show on the Release run only. `workbench-soft.github.io` had 0 releases when tested.
 - [ ] On the Mac, run the status page once: the Runners card names `runner/install.sh`. Only Windows ran here.
@@ -82,7 +95,6 @@ Audit of 2026-11-10:
 - Left: `.env.local.new` gets the token before its ACL lock, `gh auth token` has no timeout, `install.sh` pipes curl into a shell for Homebrew (single user PC, dev only, no upstream checksum).
 - Left: GitHub JSON is cast without a check at about 20 sites, and `cloud-usage.json` is cast to its type (a schema library over 10 files, effort L).
 - Left: `noUncheckedIndexedAccess` finds 74 errors and `exactOptionalPropertyTypes` 22 (too big for one pass).
-- Left: no git hook runs the checks before a push (2 new packages, and `prepare` would run in the live checkout).
 - Left: a cold load fires about 150 GitHub calls at once at 25 repos (a guess, the page retries on the next load).
 - Left: pnpm 12.16.1 to 12.18.0 (no measured gain, changes the tool on the live PC).
 - Left: the `speed-camera-map` alias sits in 3 tables, `error instanceof Error` is copied 16 times, the time left line is built twice (moves of code, or a change of visible words).
