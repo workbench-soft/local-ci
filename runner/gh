@@ -3,18 +3,18 @@
 # It runs the real gh and retries when the connection to GitHub failed before the request went out:
 # a TLS handshake timeout, a refused connect or a host name that didn't resolve. Such a failure stopped skyaltar releases on 2026-11-10.
 # Any other failure, a 4xx or 5xx included, returns at once, so a POST never runs twice.
-self=$(cd "$(dirname "$0")" && pwd -P)
 real=
 IFS=:
+# -ef skips this file by identity with no subshell: a cd per PATH folder cost 0.5 s on each call.
+# shellcheck disable=SC3013 # Git Bash and dash both have -ef.
 for dir in $PATH; do
-  [ "$(cd "$dir" 2>/dev/null && pwd -P)" = "$self" ] && continue
   for name in gh.exe gh; do
-    [ -x "$dir/$name" ] && [ ! -d "$dir/$name" ] && real="$dir/$name" && break 2
+    [ -x "$dir/$name" ] && [ ! -d "$dir/$name" ] && [ ! "$dir/$name" -ef "$0" ] && real="$dir/$name" && break 2
   done
 done
 unset IFS
 [ -n "$real" ] || {
-  echo "gh: no gh found on PATH apart from $self" >&2
+  echo "gh: no gh found on PATH apart from $0" >&2
   exit 127
 }
 # Input from stdin can't be read twice, so such a call runs once: -, --input=- and a field such as body=@-.
