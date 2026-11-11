@@ -321,7 +321,14 @@ function Install-CiMise {
 	New-Item -ItemType Directory -Force -Path (Join-Path $miseData 'bin') | Out-Null
 	# mise-action skips its download when _mise\bin holds mise. Jobs that all started on an empty one
 	# downloaded it at once, and all but the first failed on the rename into place.
-	Copy-Item -Force -LiteralPath (Get-Command mise -CommandType Application).Source -Destination (Join-Path $miseData 'bin\mise.exe')
+	# A job's mise holds the file, and Windows refuses to overwrite a running program. The install
+	# stopped there and left the runners unchanged, so the jobs keep the mise they have instead.
+	$miseExe = Join-Path $miseData 'bin\mise.exe'
+	try {
+		Copy-Item -Force -LiteralPath (Get-Command mise -CommandType Application | Select-Object -First 1).Source -Destination $miseExe
+	} catch {
+		Write-Host "Kept $miseExe, a job runs it: $($_.Exception.Message)"
+	}
 	$config = Join-Path $miseData 'config.toml'
 	Copy-Item -Force -LiteralPath (Join-Path $PSScriptRoot 'mise-ci.toml') -Destination $config
 	# A job whose folder sits under the work root reads this file as a local config too.
