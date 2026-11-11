@@ -11,7 +11,8 @@ const install = read('dashboard/install.ps1');
 
 test('dashboard/install.ps1 stops the old page only after the new one is built', () => {
   const build = install.indexOf('pnpm build');
-  const stop = install.indexOf('Stop-ScheduledTask');
+  // The first stop the script runs on its way down. The one inside Stop-Page is indented.
+  const stop = install.search(/^(Stop-Page|Stop-ScheduledTask)\b/m);
   assert.ok(build > 0 && stop > 0);
   assert.ok(build < stop, 'the page stops ahead of the build');
 });
