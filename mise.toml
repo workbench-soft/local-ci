@@ -7,12 +7,17 @@ shfmt = "3.14.1"
 
 [tasks.lint]
 description = "Lint and format check the dashboard and the install scripts"
+depends = ["lint-scripts"]
+run = ["pnpm --dir dashboard lint", "pnpm --dir dashboard format:check"]
+
+# The scripts job of .github/workflows/checks.yml runs this task too, so the file lists live here only.
+# The release, skill, gh and hook scripts keep their own indent, so only shellcheck reads them.
+[tasks.lint-scripts]
+description = "Lint the Markdown and the shell scripts"
 run = [
   "markdownlint-cli2",
-  "pnpm --dir dashboard lint",
-  "pnpm --dir dashboard format:check",
   "shellcheck install.sh runner/install.sh runner/oracle.sh",
-  "shellcheck .github/scripts/next-version.sh .github/scripts/release-notes.sh .agents/skills/fix-stuck-ci/ci-status.sh",
+  "shellcheck .github/scripts/next-version.sh .github/scripts/release-notes.sh .agents/skills/fix-stuck-ci/ci-status.sh runner/gh .githooks/pre-push",
   "shfmt -i 0 -d install.sh runner/install.sh runner/oracle.sh",
 ]
 
