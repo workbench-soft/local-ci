@@ -81,9 +81,14 @@ export default async function StatusPage({
   }));
   const apps = latestReleases(releases, pipelineRuns, cancels, now);
   // Release on CI shows for each app whose release workflow the page can tell, Build locally for each
-  // app whose clone on this PC has a build script.
-  const [releasable, buildable] = await Promise.all(
-    [(app: string) => releaseWorkflowFor(app, releases), (app: string) => localBuildOf(app)].map(async (find) =>
+  // app whose clone on this PC has a build script. Only the Releases tab shows them, so the Status tab
+  // skips the GitHub calls of the lookup.
+  const finders =
+    tab === 'releases' && org.ok
+      ? [(app: string) => releaseWorkflowFor(app, releases), (app: string) => localBuildOf(app)]
+      : [];
+  const [releasable = [], buildable = []] = await Promise.all(
+    finders.map(async (find) =>
       (await Promise.all(apps.map(async ({ app }) => ((await find(app)) ? app : null)))).filter((app) => app !== null),
     ),
   );
