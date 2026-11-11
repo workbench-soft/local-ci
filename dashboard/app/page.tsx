@@ -112,23 +112,25 @@ export default async function StatusPage({
   const errored = apps.filter((app) => app.state === 'errored').length;
   return (
     <main>
-      <header>
-        <h1>
-          <StatusDot tone={headline.tone} />
-          {headline.text}
-        </h1>
-        <AutoRefresh renderedAt={new Date(now).toISOString()} />
-      </header>
-      <nav className="tabs" aria-label="Pages">
-        <Link href="/" aria-current={tab === 'releases' ? 'page' : undefined}>
-          Releases
-          {building > 0 && <span className="count">{building} on the way</span>}
-          {errored > 0 && <span className="count bad">{errored} errored</span>}
-        </Link>
-        <Link href="/?tab=status" aria-current={tab === 'status' ? 'page' : undefined}>
-          Status
-        </Link>
-      </nav>
+      <div className="page-head">
+        <header>
+          <h1>
+            <StatusDot tone={headline.tone} />
+            {headline.text}
+          </h1>
+          <AutoRefresh renderedAt={new Date(now).toISOString()} />
+        </header>
+        <nav className="tabs" aria-label="Pages">
+          <Link href="/" aria-current={tab === 'releases' ? 'page' : undefined}>
+            Releases
+            {building > 0 && <span className="count">{building} on the way</span>}
+            {errored > 0 && <span className="count bad">{errored} errored</span>}
+          </Link>
+          <Link href="/?tab=status" aria-current={tab === 'status' ? 'page' : undefined}>
+            Status
+          </Link>
+        </nav>
+      </div>
       {tab === 'releases' ? (
         <div className="grid">
           {org.ok ? (

@@ -265,6 +265,12 @@ function answer(path: string): unknown {
     const found = runs.find((r) => r.id === Number(parts[5]));
     return { jobs: found ? apiJobs(found) : [] };
   }
+  // Each repo has a deploy workflow, so the Sites card lists them all.
+  if (parts[4] === 'workflows' && parts.length === 5) {
+    return { workflows: [{ id: 900, name: 'Deploy', path: '.github/workflows/deploy.yml', state: 'active' }] };
+  }
+  if (parts[3] === 'contents')
+    return 'on:\n  workflow_dispatch:\njobs:\n  d:\n    steps:\n      - run: mise run deploy\n';
   if (parts[4] === 'workflows') {
     return { workflow_runs: runs.filter((r) => r.repo === parts[2] && r.status === 'completed').map(apiRun) };
   }
@@ -280,7 +286,9 @@ globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) =>
   if (!url.startsWith('https://api.github.com')) return realFetch(input, init);
   // Any write, such as a cancel or a variable, stops here.
   if ((init?.method ?? 'GET') !== 'GET') return new Response(null, { status: 204 });
-  return Response.json(answer(url.slice('https://api.github.com'.length)));
+  const body = answer(url.slice('https://api.github.com'.length));
+  // A workflow file comes back raw, as the contents API sends it.
+  return typeof body === 'string' ? new Response(body) : Response.json(body);
 }) as typeof fetch;
 
 // `gh auth token` and the PowerShell read of the runner tasks and logs.

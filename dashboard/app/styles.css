@@ -411,12 +411,34 @@ h3 {
   margin-top: 3px;
 }
 
-/* A long list scrolls inside its card, so the cards below stay in view. */
+/* A long list scrolls inside its card, so the cards below stay in view.
+   The card title and toolbar sit above the box, so they stay in view too. */
 .jobs,
 .runners {
   max-height: 420px;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.releases,
+.history {
+  max-height: 60vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* The headline and the tabs stay on top while the page scrolls. */
+.page-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: -24px -16px 16px;
+  padding: 16px 16px 0;
+  background: var(--bg);
+}
+
+.page-head .tabs {
+  margin-bottom: 0;
 }
 
 .table-scroll {
