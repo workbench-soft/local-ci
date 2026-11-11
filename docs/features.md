@@ -300,8 +300,9 @@ Spec: [build-cancellation](../specs/build-cancellation.md).
   workflow of any app on `main`, also when that commit is already released.
   The page finds the workflow among the repo's workflows. The button stays gray while that
   release runs, and the server refuses a second dispatch.
-- **Build locally** builds the APK of the latest `main` of a supported
-  Android app on this PC, in a temporary clone, then Install local puts it on
+- **Build locally** builds the APK of the latest `main` on this PC, for each
+  app whose clone has `scripts/build-apk.sh` at its root or in `apps/<app>`.
+  It builds in a temporary clone, then Install local puts it on
   the phone. Force stop and Force stop local build end a release on CI or on
   this PC.
 - **Install Dev** installs the published APK, then sends the app's unlock link
