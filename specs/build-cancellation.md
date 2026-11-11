@@ -6,6 +6,7 @@
 - **Fix** replace builds only within one repo, workflow and branch when a different commit starts that build type.
 - **Checks** app repos build Release beside Checks, and failed Checks stop the releases of that same commit.
 - **History** save each cancellation request, its result and the causing run, commit and PR before stopping a build.
+- **GitHub first** Checks and Release set `concurrency`, so GitHub cancels the older run when a newer push starts, with the PC off too. The sweep stops the runs GitHub leaves.
 - **Stays up** the sweep runs inside the status page, so an update builds the new page beside the running one and swaps them in seconds.
 - **Limits** external cancellations without evidence remain unattributed.
 
@@ -31,10 +32,26 @@ A run that waits for a runner is active too, so a newer run stops it in the
 queue. A `workflow_run` run replaces no build: GitHub stamps it with the
 newest commit of `main`, which can belong to another product of the repo.
 
+## GitHub cancels first
+
+Checks and each Release that builds on a push set a workflow `concurrency`
+with `cancel-in-progress: true`, from the `repo-ci` templates.
+
+- **Group** the workflow name with the PR number or the branch. Release,
+  Shuttrix release and Desktop release of `memories` have 3 groups.
+- **`workflow_run`** such a Release run takes its run id as the group. It
+  publishes its commit, and a newer push leaves it alone.
+- **Left alone** a workflow that uploads or deploys in the run of the push
+  keeps `cancel-in-progress: false`.
+- **No log line** GitHub writes no line to `cancel-reasons.jsonl`, so such a
+  run shows an unknown cause. When the sweep asks first, the line is there.
+- **Sweep** it still stops the runs of a merged PR, the repos without the
+  block and a release whose Checks failed.
+
 ## The sweep stays up
 
 The sweep runs every 10 s inside the production status page. While the page
-is down, no run gets cancelled.
+is down, only GitHub cancels a run.
 
 - **Update** `dashboard\install.ps1` builds the new page into its own folder,
   `.next-a` or `.next-b`, while the old page serves and sweeps. It stops the
@@ -79,3 +96,10 @@ their active commits even past the displayed recent-run limit.
 - **Changes** `dashboard/next.config.ts` reads the build folder from `NEXT_DIST_DIR`. `dashboard/install.ps1` builds into the folder the running page doesn't use, writes it to `start.cmd`, and stops the old page after the build. `windows/update.ps1` starts the page task when the port is silent.
 - **Test** `dashboard/status/install-order.test.ts` fails when the install script stops the page ahead of the build.
 - **Docs** README, architecture, features and changelog.
+
+### 2026-11-12 GitHub cancels the older run too
+
+- **Problem** the fix above keeps the sweep up through an update, but the sweep still needs the PC. The owner wants the cancel in the CI logic.
+- **Changes** the `repo-ci` templates of `agent-skills-private` set `concurrency` with `cancel-in-progress: true` in Checks and in the Release that builds on a push. `farnear`, `memories` and the other org repos take the block. `checks.yml` of this repo takes it too. The sweep code stays as it is.
+- **Test** on 2026-11-11 at 15:07:20 UTC a second push to `farnear` followed the first. GitHub cancelled Release run 43044782163 of the first commit at 15:07:24, and `cancel-reasons.jsonl` has no line for it. Checks run 43044782120 got both: GitHub held the new run as pending, and the sweep sent its own cancel at 15:07:39.
+- **Docs** architecture, features, README and changelog.
