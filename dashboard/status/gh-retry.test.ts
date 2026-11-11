@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import { execFile, execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFile, execFileSync, spawnSync } from 'node:child_process';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { test } from 'node:test';
@@ -70,4 +70,35 @@ test(
 test('gh returns a 4xx at once', { skip: !hasSh }, async () => {
   const result = await runWrapper('HTTP 422: Validation Failed', ['api', 'x']);
   assert.equal(result.calls, 1);
+});
+
+// runner/gh sits first on the jobs' PATH as gh, so it has to find the real gh after itself.
+function runGh(stub: string, args: string[]) {
+  const root = mkdtempSync(join(tmpdir(), 'gh-retry-'));
+  const bin = join(root, 'bin');
+  const real = join(root, 'real');
+  mkdirSync(bin);
+  mkdirSync(real);
+  copyFileSync(wrapper, join(bin, 'gh'));
+  const calls = join(root, 'calls');
+  writeFileSync(join(real, 'gh'), `#!/bin/sh\necho call >> "${calls.replaceAll('\\', '/')}"\n${stub}\n`, {
+    mode: 0o755,
+  });
+  const result = spawnSync('sh', [join(bin, 'gh'), ...args], {
+    encoding: 'utf8',
+    timeout: 10_000,
+    env: { ...process.env, PATH: [bin, real, process.env.PATH].join(delimiter) },
+  });
+  const count = readFileSync(calls, 'utf8').split('\n').filter(Boolean).length;
+  return { code: result.status, out: result.stdout, err: result.stderr, count };
+}
+
+test('runner/gh skips itself on PATH and passes the real answer through', { skip: !hasSh }, () => {
+  const ok = runGh('echo "gh version 2"', ['--version']);
+  assert.deepEqual([ok.code, ok.out.trim(), ok.count], [0, 'gh version 2', 1]);
+});
+
+test('runner/gh runs a call GitHub answered with an error once', { skip: !hasSh }, () => {
+  const missing = runGh('echo "HTTP 404: Not Found" >&2; exit 1', ['api', 'repos/x/y']);
+  assert.deepEqual([missing.code, missing.err.trim(), missing.count], [1, 'HTTP 404: Not Found', 1]);
 });
