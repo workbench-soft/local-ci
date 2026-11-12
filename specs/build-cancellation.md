@@ -43,8 +43,10 @@ with `cancel-in-progress: true`, from the `repo-ci` templates.
   publishes its commit, and a newer push leaves it alone.
 - **Left alone** a workflow that uploads or deploys in the run of the push
   keeps `cancel-in-progress: false`.
-- **No log line** GitHub writes no line to `cancel-reasons.jsonl`, so such a
-  run shows an unknown cause. When the sweep asks first, the line is there.
+- **Log line** the sweep finds a run that ended as cancelled within 5 minutes
+  after a newer commit started the same build. It writes the newer run as
+  the cause, so the row says why. A run a person cancelled in that window
+  gets the same line.
 - **Sweep** it still stops the runs of a merged PR, the repos without the
   block and a release whose Checks failed.
 
@@ -103,3 +105,10 @@ their active commits even past the displayed recent-run limit.
 - **Changes** the `repo-ci` templates of `agent-skills-private` set `concurrency` with `cancel-in-progress: true` in Checks and in the Release that builds on a push. `farnear`, `memories` and the other org repos take the block. `checks.yml` of this repo takes it too. The sweep code stays as it is.
 - **Test** on 2026-11-11 at 15:07:20 UTC a second push to `farnear` followed the first. GitHub cancelled Release run 43044782163 of the first commit at 15:07:24, and `cancel-reasons.jsonl` has no line for it. Checks run 43044782120 got both: GitHub held the new run as pending, and the sweep sent its own cancel at 15:07:39.
 - **Docs** architecture, features, README and changelog.
+
+### 2026-11-12 a run GitHub cancelled gets its cause
+
+- **Problem** a run GitHub cancels through `concurrency` had no line in `cancel-reasons.jsonl`, so its row showed an unknown cause.
+- **Changes** `status/superseded.ts` gets `cancelledByGitHub`: a run that ended as cancelled up to 5 minutes after a newer commit started the same repo, workflow and branch. `status/cancel-superseded.ts` writes one `accepted` line for each such run without a line, with the newer run as the cause. It sends no request to GitHub.
+- **Test** `status/superseded.test.ts` covers the match, the 5 minute window and a run of the same commit.
+- **Docs** architecture, features and changelog.
