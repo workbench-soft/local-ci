@@ -117,6 +117,24 @@ $failed = 0
 # The task leaves a checkout it can't move alone. START.cmd still installs the code on disk.
 if (-not (Update-Checkout) -and -not $FromStart) { exit 0 }
 
+# A full drive prevents action downloads before the per-job clean hook can start.
+# The five-minute updater runs outside the runners, and can clean when they are idle.
+if (-not $FromStart -and $tasks -like 'GitHub Actions runner (*') {
+    $workRoot = if ($env:RUNNER_WORK_ROOT) { $env:RUNNER_WORK_ROOT } else { Join-Path $env:SystemDrive 'ci' }
+    $drive = Get-PSDrive -Name $workRoot.Substring(0, 1) -ErrorAction SilentlyContinue
+    $lastCleanup = Join-Path $stateDir 'last-emergency-disk-clean'
+    $recent = (Test-Path -LiteralPath $lastCleanup) -and (Get-Item -LiteralPath $lastCleanup).LastWriteTime -gt (Get-Date).AddMinutes(-30)
+    if ($drive -and $drive.Free -lt 2GB -and -not $recent) {
+        if (Get-Process Runner.Worker -ErrorAction SilentlyContinue) {
+            Write-Log 'Disk critically low, but builds are active; cleanup deferred'
+        } else {
+            Write-Log 'Disk critically low; cleaning idle CI work folders'
+            Set-Content -LiteralPath $lastCleanup -Encoding ascii -Value (Get-Date -Format 'o')
+            if (-not (Invoke-Installer 'windows\clean-ci.ps1' @('-OnlyWhenIdle'))) { $failed++ }
+        }
+    }
+}
+
 $pageCommit = Get-LastCommit @('dashboard')
 if (($FromStart -or $tasks -contains $pageTask) -and $pageCommit -ne (Read-Mark (Join-Path $root 'dashboard\.built-commit'))) {
 	if (-not (Invoke-Installer 'dashboard\install.ps1' @('-Unattended'))) { $failed++ }
