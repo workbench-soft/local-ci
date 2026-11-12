@@ -21,6 +21,24 @@ ask_git_setting() {
 	fi
 }
 
+# Optional steps that failed. The run goes on, and the list prints at the end.
+# Plain strings, since bash 3.2 of macOS calls an empty array unbound under set -u.
+skipped=""
+
+# A formula or an app already there, such as one installed by hand or by IT,
+# stays as it is. brew refuses a cask whose app sits in /Applications already.
+brew_install() { # [--cask] name...
+	local kind=""
+	if [ "$1" = --cask ]; then
+		kind=--cask
+		shift
+	fi
+	for name in "$@"; do
+		if brew list ${kind:+"$kind"} "$name" >/dev/null 2>&1; then continue; fi
+		brew install ${kind:+"$kind"} "$name" || skipped="$skipped $name"
+	done
+}
+
 copy_if_missing() {
 	if [ ! -f "$2" ]; then
 		step "$3"
@@ -40,10 +58,10 @@ for brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
 done
 
 step "Installing brew formulae"
-brew install git gh mise fzf jq shellcheck shfmt terminal-notifier mkcert agent-browser
+brew_install git gh mise fzf jq shellcheck shfmt terminal-notifier mkcert agent-browser
 
 step "Installing brew casks"
-brew install --cask visual-studio-code docker-desktop maccy claude android-platform-tools
+brew_install --cask visual-studio-code docker-desktop maccy claude android-platform-tools
 
 # --- Oh My Zsh ---------------------------------------------------------------
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -73,7 +91,7 @@ mise use -g github:mozilla/sccache@0.19
 mise set -g RUSTC_WRAPPER=sccache SCCACHE_CACHE_SIZE=20G
 
 step "Installing the Copilot CLI"
-mise exec -- npm install -g @github/copilot
+mise exec -- npm install -g @github/copilot || skipped="$skipped copilot"
 
 # --- Git config --------------------------------------------------------------
 step "Setting git config"
@@ -112,7 +130,7 @@ fi
 # the upkeep LaunchAgent that keeps twg up to date.
 if [ ! -x "$HOME/.local/bin/twg" ]; then
 	step "Installing twg"
-	bash <(curl -fsSL https://teamwork-graph.atlassian.com/cli/install)
+	bash <(curl -fsSL https://teamwork-graph.atlassian.com/cli/install) || skipped="$skipped twg"
 fi
 
 # --- VS Code extensions ------------------------------------------------------
@@ -126,7 +144,9 @@ for extension in \
 	nrwl.angular-console \
 	oleg-chibikov.open-in-remote-repo \
 	orta.vscode-jest; do
-	code --install-extension "$extension" >/dev/null
+	# VS Code installed by hand puts no code command on PATH.
+	command -v code >/dev/null || break
+	code --install-extension "$extension" >/dev/null || skipped="$skipped $extension"
 done
 
 # --- Claude Code memory ------------------------------------------------------
@@ -148,4 +168,7 @@ if [[ $runner_answer =~ ^(y|yes)$ ]]; then
 	"$script_dir/runner/install.sh"
 fi
 
+if [ -n "$skipped" ]; then
+	step "Skipped, already there or failed:$skipped"
+fi
 step "Done. Open a new terminal to pick up the PATH and mise."

@@ -28,6 +28,8 @@ $d = "$env:USERPROFILE\workbench-soft"; if (-not (Get-Command git -ErrorAction S
   hooks and the spoken turn end. A Mac also gets gh-review-notify.
 - **Questions** the git name and email, a GitHub login, the language of the
   skills. Answer no to the runner question on a machine that only develops.
+- **Already there** an app or a tool installed by hand or by IT stays. The
+  run goes on, and its last lines list what it skipped.
 - **Mac** Homebrew asks for the Mac password and needs an admin account. The
   `twg` installer asks you to accept the Atlassian terms.
 - **Run it again** each script skips the pieces already in place.

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Mac setup goes on** an app already in `/Applications`, a failed npm or twg install or a missing `code` command no longer stops `install.sh` before the repos. The last lines list what it skipped.
 - **Voice on a Mac** the README says a Mac gets the spoken turn end of agent-skills too.
 - **One line for a fresh Mac** the README gives one Terminal line too. `install.sh` puts the mise shims on its own PATH, so agent-skills finds node and adds its hooks, and finds brew on an Intel Mac.
 - **One line for a fresh Windows** the README gives one PowerShell line that installs Git when it is missing, clones local-ci and runs the installer, which brings git-aliases and agent-skills with its hooks.
