@@ -4,7 +4,9 @@
 
 `install.sh` gives a Mac the Homebrew tools, mise, Oh My Zsh, the git config,
 the `workbench-soft` repos, the VS Code extensions, the Claude memory and the
-MCP config. A second run skips what is already there.
+MCP config. A second run skips what is already there. A tool or an app installed
+by hand or by IT stays, and the run lists what it skipped at the end. One line
+in the README sets up a fresh Mac or Windows PC.
 
 Spec: [mac-setup](../specs/mac-setup.md), [python-setup](../specs/python-setup.md).
 

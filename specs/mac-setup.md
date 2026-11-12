@@ -29,3 +29,9 @@ the MCP config and the Claude Code notes.
 ## Docs to update
 
 - `README.md`
+
+## 2026-11-12 one line, and the run goes on past what is there
+
+- **Why** the setup of a work Mac stopped on an app already in `/Applications`, before the skills.
+- **Changes** the README opens with one line per system that clones and runs the installer. `install.sh` installs each brew formula and cask alone, skips the ones there, and goes on past a failed npm, twg or VS Code step. It puts the mise shims on its PATH for the agent-skills hooks and finds brew on an Intel Mac.
+- **Docs** `README.md`, `docs/features.md`, `docs/user-flows.md`, `CHANGELOG.md`.

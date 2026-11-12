@@ -2,17 +2,20 @@
 
 ## Set up a new Mac
 
-1. Clone `workbench-soft/local-ci`, with a GitHub token as the password.
-2. Run `./local-ci/install.sh`.
-3. Give the git name and email when the script asks, then log into `gh`.
-4. Say yes or no to the runner question.
+1. Paste the Mac line from the README into Terminal. It installs Homebrew
+   when it is missing, clones `local-ci` to `~/Documents/Dev` and runs
+   `install.sh`.
+2. Give the git name and email when the script asks, then log into `gh`.
+3. Say yes or no to the runner question.
+4. Read the last lines: they list each tool or app the run skipped, such as
+   an app already in `/Applications`.
 
 ```mermaid
 flowchart TD
-  A[git clone local-ci] --> B[install.sh]
+  A[Mac line: Homebrew, git clone local-ci] --> B[install.sh]
   B --> C[Homebrew, mise, Oh My Zsh]
   C --> D[gh auth login]
-  D --> E[clone and install the repos]
+  D --> E[clone and install git-aliases, agent-skills, gh-review-notify]
   E --> F{register a runner?}
   F -- yes --> G[runner/install.sh]
   F -- no --> H[done]
@@ -21,15 +24,15 @@ flowchart TD
 
 ## Set up a new Windows PC
 
-1. Install Git: `winget install Git.Git`.
-2. Clone `workbench-soft/local-ci`, with a GitHub token as the password.
-3. In PowerShell, run `.\local-ci\install.ps1`.
-4. Give the git name and email when the script asks, then log into `gh`.
-5. Say yes or no to the runner question.
+1. Paste the Windows line from the README into PowerShell. It installs Git
+   when it is missing, clones `local-ci` to `%USERPROFILE%\workbench-soft` and
+   runs `install.ps1`.
+2. Give the git name and email when the script asks, then log into `gh`.
+3. Say yes or no to the runner question.
 
 ```mermaid
 flowchart TD
-  A[git clone local-ci] --> B[install.ps1]
+  A[Windows line: Git, git clone local-ci] --> B[install.ps1]
   B --> C[winget, mise, PowerShell profile]
   C --> D[gh auth login]
   D --> E[clone and install git-aliases, agent-skills]
