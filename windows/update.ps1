@@ -114,9 +114,6 @@ if (-not $FromStart) {
 $tasks = @(Get-ScheduledTask -ErrorAction SilentlyContinue | Select-Object -ExpandProperty TaskName)
 $failed = 0
 
-# The task leaves a checkout it can't move alone. START.cmd still installs the code on disk.
-if (-not (Update-Checkout) -and -not $FromStart) { exit 0 }
-
 # A full drive prevents action downloads before the per-job clean hook can start.
 # The five-minute updater runs outside the runners, and can clean when they are idle.
 if (-not $FromStart -and $tasks -like 'GitHub Actions runner (*') {
@@ -134,6 +131,9 @@ if (-not $FromStart -and $tasks -like 'GitHub Actions runner (*') {
         }
     }
 }
+
+# The task leaves a checkout it can't move alone. START.cmd still installs the code on disk.
+if (-not (Update-Checkout) -and -not $FromStart) { exit 0 }
 
 $pageCommit = Get-LastCommit @('dashboard')
 if (($FromStart -or $tasks -contains $pageTask) -and $pageCommit -ne (Read-Mark (Join-Path $root 'dashboard\.built-commit'))) {
