@@ -279,8 +279,8 @@ GitHub cancels the older run of a branch when a newer push starts the same
 workflow. Every 10 seconds the page server stops the runs GitHub leaves.
 
 - **GitHub first** Checks and Release set `concurrency` with
-  `cancel-in-progress: true`, so the cancel works with the PC off. Such a run
-  has no line in the history.
+  `cancel-in-progress: true`, so the cancel works with the PC off. The page
+  server then writes the newer run to the history as the cause.
 
 - **Replaced** an unfinished push, dispatch or PR run stops when a newer run
   of the same repo, workflow and branch builds a different commit. Each PR

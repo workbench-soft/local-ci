@@ -40,6 +40,24 @@ function groupOf(run: RunKey): string {
 
 /** Only a build of a different commit in the same workflow and branch replaces a run. */
 export function replacementRuns<T extends RunKey>(runs: T[]): { run: T; replacement: T }[] {
+  return replaced(runs, (run) => activeStatuses.has(run.status));
+}
+
+const githubCancelWindowMs = 5 * 60_000;
+
+/** Runs GitHub's concurrency stopped: they ended as cancelled soon after a newer commit started the same build. */
+export function cancelledByGitHub<T extends RunKey & Pick<WorkflowRun, 'createdAt' | 'updatedAt'>>(
+  runs: T[],
+): { run: T; replacement: T }[] {
+  return replaced(runs, (run) => run.status === 'completed' && run.conclusion === 'cancelled').filter(
+    ({ run, replacement }) => {
+      const wait = Date.parse(run.updatedAt) - Date.parse(replacement.createdAt);
+      return wait >= 0 && wait <= githubCancelWindowMs;
+    },
+  );
+}
+
+function replaced<T extends RunKey>(runs: T[], stopped: (run: T) => boolean): { run: T; replacement: T }[] {
   const newest = new Map<string, T>();
   for (const run of runs) {
     if (!run.headSha || !replaceableEvents.has(run.event) || run.conclusion === 'skipped') continue;
@@ -48,11 +66,7 @@ export function replacementRuns<T extends RunKey>(runs: T[]): { run: T; replacem
   }
   return runs.flatMap((run) => {
     const replacement = newest.get(groupOf(run));
-    return activeStatuses.has(run.status) &&
-      run.headSha &&
-      replacement &&
-      replacement.id > run.id &&
-      replacement.headSha !== run.headSha
+    return stopped(run) && run.headSha && replacement && replacement.id > run.id && replacement.headSha !== run.headSha
       ? [{ run, replacement }]
       : [];
   });

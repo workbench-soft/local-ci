@@ -4,6 +4,7 @@ import { orgName } from './settings.ts';
 import {
   cancelCause,
   cancelIsDue,
+  cancelledByGitHub,
   failedCheckReleases,
   noteRefusedCancel,
   type RefusedCancels,
@@ -45,6 +46,21 @@ async function cancelSuperseded(): Promise<void> {
           recordCancel(run.repo, run.id, 'Matching checks failed; publication was blocked', {
             cause: cancelCause('checks-failed', replacement),
             outcome: 'blocked',
+          }),
+        ),
+    );
+  }
+  // GitHub cancels through concurrency without a word to the page, so the sweep writes the cause after the fact.
+  const byGitHub = cancelledByGitHub(status.runs);
+  if (byGitHub.length) {
+    const recorded = await readCancels();
+    await Promise.all(
+      byGitHub
+        .filter(({ run }) => !recorded.has(run.id))
+        .map(({ run, replacement }) =>
+          recordCancel(run.repo, run.id, 'A newer commit started the same build, and GitHub cancelled it', {
+            cause: cancelCause('superseded', replacement),
+            outcome: 'accepted',
           }),
         ),
     );

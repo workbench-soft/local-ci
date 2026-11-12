@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import type { WorkflowRun } from './org-status.ts';
 import {
   cancelIsDue,
+  cancelledByGitHub,
   failedCheckReleases,
   noteRefusedCancel,
   type RefusedCancels,
@@ -155,4 +156,16 @@ test('a cancel GitHub refuses waits longer before each try, up to 5 minutes', ()
     noteRefusedCancel(stuck, 1, now);
   }
   assert.equal(tries, 80);
+});
+
+test('a run GitHub cancelled is tied to the newer commit that started within 5 minutes before', () => {
+  const cancelled = { status: 'completed', conclusion: 'cancelled', updatedAt: '2026-11-11T15:07:24Z' };
+  const old = run(1, cancelled);
+  const newer = run(10, { createdAt: '2026-11-11T15:07:22Z' });
+  assert.deepEqual(cancelledByGitHub([old, newer]), [{ run: old, replacement: newer }]);
+  // A run cancelled long after the newer one started, or before it, was stopped by someone else.
+  assert.deepEqual(cancelledByGitHub([run(1, { ...cancelled, updatedAt: '2026-11-11T15:20:00Z' }), newer]), []);
+  assert.deepEqual(cancelledByGitHub([run(1, { ...cancelled, updatedAt: '2026-11-11T15:00:00Z' }), newer]), []);
+  assert.deepEqual(cancelledByGitHub([old, run(10, { createdAt: '2026-11-11T15:07:22Z', headSha: old.headSha })]), []);
+  assert.deepEqual(cancelledByGitHub([run(1), newer]), []);
 });

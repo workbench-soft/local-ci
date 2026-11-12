@@ -422,9 +422,10 @@ sequenceDiagram
   was down for an hour and old `memories` releases held all 8 runners, so
   the cancel now also sits in the workflows and works with the PC off.
 - **Trade-off**
-  - **GitHub** each repo holds the block, from the `repo-ci` templates. A
-    run GitHub cancels has no line in `cancel-reasons.jsonl`, so its row
-    shows no cause. A run by hand on `main` also cancels the push run of the
+  - **GitHub** each repo holds the block, from the `repo-ci` templates. GitHub
+    writes no line to `cancel-reasons.jsonl`. The sweep adds it for a run
+    that ended as cancelled within 5 minutes after a newer commit started
+    the same build. A run by hand on `main` also cancels the push run of the
     same commit. A workflow with its own group, and the runs of a merged PR,
     stay for the sweep.
   - **Sweep** a run dies up to 30 seconds late, and only while the page
