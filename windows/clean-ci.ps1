@@ -1,4 +1,6 @@
 # Empties every runner's work folder at once, for when the disk runs full.
+# -OnlyWhenIdle is used by the periodic updater; it must never stop an active build.
+param([switch]$OnlyWhenIdle)
 # Keep in step with runner/install.ps1: AGENTS.md lists what to change here, and
 # dashboard/status/clean-sync.test.ts checks the shared settings.
 # CLEAN-CI.cmd at the repo root starts it. runner/clean-work.ps1 does the same
@@ -6,7 +8,10 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'boot-task.ps1')
 # Only an admin can stop the runner listeners, which run above normal priority.
-if (-not (Test-IsAdmin)) { exit (Start-AsAdmin $PSCommandPath) }
+if (-not (Test-IsAdmin)) {
+	if ($OnlyWhenIdle) { exit (Start-AsAdmin $PSCommandPath @('-OnlyWhenIdle')) }
+	exit (Start-AsAdmin $PSCommandPath)
+}
 
 $workRoot = if ($env:RUNNER_WORK_ROOT) { $env:RUNNER_WORK_ROOT } else { Join-Path $env:SystemDrive 'ci' }
 $org = if ($env:RUNNER_ORG) { $env:RUNNER_ORG } else { 'workbench-soft' }
@@ -14,14 +19,22 @@ $tasks = @(Get-ScheduledTask | Where-Object TaskName -like "GitHub Actions runne
 $free = { '{0:N0} GB free' -f ((Get-PSDrive $workRoot.Substring(0, 1)).Free / 1GB) }
 Write-Host "$workRoot, $(& $free)"
 
-# A job killed halfway fails, so the stop waits up to 10 minutes for a gap between jobs.
-$deadline = (Get-Date).AddMinutes(10)
-while ((Get-Process Runner.Worker -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
-	Write-Host 'Waiting for the CI jobs to end'
-	Start-Sleep -Seconds 10
+# Manual cleanup waits for jobs. Automatic cleanup never ends a running job.
+if ($OnlyWhenIdle) {
+	if (Get-Process Runner.Worker -ErrorAction SilentlyContinue) {
+		Write-Host 'CI workers are active; cleanup deferred.'
+		exit 0
+	}
+} else {
+	$deadline = (Get-Date).AddMinutes(10)
+	while ((Get-Process Runner.Worker -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
+		Write-Host 'Waiting for the CI jobs to end'
+		Start-Sleep -Seconds 10
+	}
 }
 $tasks | Stop-ScheduledTask -ErrorAction SilentlyContinue
-Get-Process Runner.Worker, Runner.Listener -ErrorAction SilentlyContinue | Stop-Process -Force
+if (-not $OnlyWhenIdle) { Get-Process Runner.Worker -ErrorAction SilentlyContinue | Stop-Process -Force }
+Get-Process Runner.Listener -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 3
 
 # A move on the same drive is instant, so the runners start again with empty folders in seconds.
