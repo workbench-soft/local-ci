@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Voice on a Mac** the README says a Mac gets the spoken turn end of agent-skills too.
 - **One line for a fresh Mac** the README gives one Terminal line too. `install.sh` puts the mise shims on its own PATH, so agent-skills finds node and adds its hooks, and finds brew on an Intel Mac.
 - **One line for a fresh Windows** the README gives one PowerShell line that installs Git when it is missing, clones local-ci and runs the installer, which brings git-aliases and agent-skills with its hooks.
 - **GitHub cancels old runs too** Checks and Release of the org repos set `concurrency` with `cancel-in-progress: true`, so a newer push cancels the older run with the page off. The sweep stays for the runs GitHub leaves, such as those of a merged PR.
