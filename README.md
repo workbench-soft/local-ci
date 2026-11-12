@@ -5,11 +5,12 @@ then make the machine a self-hosted GitHub Actions runner. CI of the
 `workbench-soft` repos then builds there for free. Software that IT manages
 stays out of both.
 
-On a Mac:
+On a Mac, paste this line into Terminal. It installs Homebrew when it is
+missing, which brings Git, clones this repo to `~/Documents/Dev` and runs the
+installer:
 
 ```sh
-git clone https://github.com/workbench-soft/local-ci.git
-./local-ci/install.sh
+d="$HOME/Documents/Dev"; command -v brew >/dev/null || [ -x /opt/homebrew/bin/brew ] || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; mkdir -p "$d"; if [ -d "$d/local-ci" ]; then git -C "$d/local-ci" pull --ff-only; else git clone https://github.com/workbench-soft/local-ci.git "$d/local-ci"; fi; "$d/local-ci/install.sh"
 ```
 
 On Windows, paste this line into PowerShell. It installs Git when it is
@@ -23,10 +24,12 @@ $d = "$env:USERPROFILE\workbench-soft"; if (-not (Get-Command git -ErrorAction S
 - **What you get** the tools below, then
   [git-aliases](https://github.com/workbench-soft/git-aliases) and
   [agent-skills](https://github.com/workbench-soft/agent-skills) cloned beside
-  this repo and installed: the git aliases, the agent skills, the agent hooks
-  and the spoken turn end.
+  this repo and installed: the git aliases, the agent skills and the agent
+  hooks. Windows also gets the spoken turn end, a Mac gets gh-review-notify.
 - **Questions** the git name and email, a GitHub login, the language of the
-  skills. Answer no to the runner question on a PC that only develops.
+  skills. Answer no to the runner question on a machine that only develops.
+- **Mac** Homebrew asks for the Mac password and needs an admin account. The
+  `twg` installer asks you to accept the Atlassian terms.
 - **Run it again** each script skips the pieces already in place.
 - **Old name** the `mac-setup` address redirects here.
 

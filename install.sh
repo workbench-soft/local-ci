@@ -34,7 +34,10 @@ if ! command -v brew >/dev/null 2>&1; then
 	step "Installing Homebrew"
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
-eval "$(/opt/homebrew/bin/brew shellenv)"
+# Apple silicon keeps brew in /opt/homebrew, an Intel Mac in /usr/local.
+for brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+	if [ -x "$brew" ]; then eval "$("$brew" shellenv)" && break; fi
+done
 
 step "Installing brew formulae"
 brew install git gh mise fzf jq shellcheck shfmt terminal-notifier mkcert agent-browser
@@ -60,6 +63,8 @@ append_once "$zshrc" 'eval "$(mise activate zsh)"'
 # --- Node toolchain ----------------------------------------------------------
 step "Installing node, pnpm, yarn and python through mise"
 mise use -g node@22 pnpm@latest yarn@1 python@3.15
+# The repo installers below run node, which this shell reaches through the shims.
+eval "$(mise activate bash --shims)"
 
 # Each worktree starts with an empty target folder. sccache lets it reuse the
 # crates another worktree already compiled.
@@ -78,7 +83,7 @@ ask_git_setting user.name
 ask_git_setting user.email
 
 # --- GitHub CLI --------------------------------------------------------------
-# The repos below are private in workbench-soft, so the login goes first.
+# gh clones the repos below, so the login goes first.
 if ! gh auth status >/dev/null 2>&1; then
 	step "Logging into GitHub"
 	gh auth login
