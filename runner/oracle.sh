@@ -33,7 +33,7 @@ archive="actions-runner-linux-arm64-$version.tar.gz"
 # A fresh VM runs its first updates through cloud-init and holds the apt lock.
 sudo cloud-init status --wait >/dev/null || true
 sudo apt-get -o DPkg::Lock::Timeout=600 update -qq
-sudo apt-get -o DPkg::Lock::Timeout=600 install -y -qq git curl jq unzip zip build-essential pkg-config libssl-dev >/dev/null
+sudo apt-get -o DPkg::Lock::Timeout=600 install -y -qq git gh curl jq unzip zip build-essential pkg-config libssl-dev >/dev/null
 cd "$HOME"
 if [ ! -f "$archive" ]; then
 	curl -fsSL -o "$archive" "https://github.com/actions/runner/releases/download/v$version/$archive"
