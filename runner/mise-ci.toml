@@ -2,9 +2,11 @@
 # runner/install.ps1 copies it to <work root>\_mise\config.toml and points MISE_GLOBAL_CONFIG_FILE there,
 # with MISE_DATA_DIR at <work root>\_mise. The jobs then install and run these tools apart from the PC,
 # whose agent sessions upgrade, prune and run their own tools (MCP servers, sccache) at any time.
+# zstd makes actions/cache save with zstd, as the Linux cloud runners do, so a release built here publishes there.
 # Each repo pins the rest in its own mise.toml. Keep only the tools a job may call without a pin.
 [tools]
 actionlint = "latest"
+"github:facebook/zstd" = "1.5"
 "github:mozilla/sccache" = "0.19"
 java = "temurin-21"
 node = "22"

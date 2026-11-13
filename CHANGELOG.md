@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Releases publish on Oracle again** `runner/mise-ci.toml` gives the CI jobs `zstd`. Without it the PC saved release files with gzip, and the publish job on the Oracle runner looked for a zstd entry and stopped on a cache miss.
 - **Faster runner install** `runner/cache-actions.ps1` reads the 50 newest logs of each runner in place of all of them, which held an install for over an hour.
 - **No missing VS Code extension** the installers drop `oleg-chibikov.open-in-remote-repo`, which no extension store has.
 - **fix-stuck-ci** names where LocalCI Stop sits and says the agent may press it on a stale run, while a runner restart stays with the user.
