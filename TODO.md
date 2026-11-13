@@ -135,3 +135,7 @@ Audit of 2026-11-10:
 ## scroll-lists
 
 - [ ] Remove the merged worktree `%WBS_ROOT%\local-ci-scroll-lists` and its local branch `scroll-lists` (PR #134 merged). Auto mode denied the move: run `git -C %WBS_ROOT%\local-ci worktree remove --force %WBS_ROOT%\local-ci-scroll-lists; git -C %WBS_ROOT%\local-ci branch -D scroll-lists`.
+
+## ci-trends
+
+- [ ] Delete the leftover folder `%WBS_ROOT%\wsgh-local-ci-trends` of the merged site PR workbench-soft/workbench-soft.github.io#149. Git no longer tracks it, and a file in it stayed locked: `cmd /c rmdir /s /q "$env:WBS_ROOT\wsgh-local-ci-trends"` in PowerShell.
