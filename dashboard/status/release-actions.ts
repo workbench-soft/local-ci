@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { callGitHub, fetchOrgStatus, forgetOrgStatus, githubStatus } from './org-status.ts';
-import { releaseWorkflowFor } from './release-workflow.ts';
+import { startMissingChecks } from './release-checks.ts';
+import { releaseWorkflowFor, textOf, workflowsOf } from './release-workflow.ts';
 import { orgName } from './settings.ts';
 import { dispatchSlackMs, dispatchVisibilityMs, hasUnfinishedRelease } from './release-dispatch-guard.ts';
 
@@ -43,6 +44,9 @@ export async function dispatchRelease(app: string): Promise<ReleaseActionResult>
       { ref: 'main' },
     );
     recentlyDispatched.set(app, Date.now());
+    // A tip whose push skipped Checks would leave the build unpublished, so they start too.
+    const path = (await workflowsOf(target.repo)).find((workflow) => workflow.id === target?.workflow)?.path;
+    if (path) await startMissingChecks(target.repo, await textOf(target.repo, path)).catch(() => false);
     return { ok: true };
   } catch (error) {
     const status = githubStatus(error);
