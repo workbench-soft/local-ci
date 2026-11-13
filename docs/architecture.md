@@ -222,6 +222,14 @@ The server renders the page for each request.
   another one. `cards/releases-card.tsx` calls the install action once per
   ticked app, in turn. Each row is `cards/release-item.tsx`, with
   `release-buttons.tsx` and `release-detail.tsx`.
+- **Stop reasons** `status/run-reason.ts` reads the annotations of the
+  failed or cancelled job of each errored or cancelled row, and its log when
+  the annotations name only the exit code. It keeps each job's answer, since
+  a finished job doesn't change. `status/run-failure.ts` sorts the
+  annotations into a kind, such as a shutdown signal or a concurrency cancel,
+  and cuts the log of the failed step up to its first `##[error]`.
+  `status/latest-releases.ts` finds the next run of the same workflow and
+  branch for a cancelled row. `cards/stop-reason.tsx` draws it.
 - **Cancel reasons** `status/cancel-log.ts` appends each force cancel to
   `dashboard/cancel-reasons.jsonl`: repo, run id, the words and the time.
   The sweep writes `A newer commit started the same build` or

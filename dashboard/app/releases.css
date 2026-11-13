@@ -137,6 +137,55 @@
   color: var(--bad);
 }
 
+/* Why a release failed or stopped: the cause, the error line and the log of the step. */
+.stop-reason p {
+  margin: 0;
+}
+
+.stop-reason .reason-head {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.stop-reason .reason-head .muted {
+  font-weight: 400;
+}
+
+.stop-reason .reason-message,
+.stop-reason .reason-log {
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font:
+    12px/1.45 ui-monospace,
+    SFMono-Regular,
+    Consolas,
+    monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.stop-reason .reason-message {
+  color: var(--bad);
+  font-weight: 600;
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+}
+
+.stop-reason .reason-log {
+  max-height: 18em;
+  overflow: auto;
+  background: color-mix(in srgb, var(--muted) 10%, transparent);
+}
+
+.stop-reason details {
+  margin-top: 4px;
+}
+
+.stop-reason summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+
 /* The errored badge on the Releases tab stands out from the building one. */
 .tabs .count.bad {
   background: color-mix(in srgb, var(--bad) 18%, transparent);

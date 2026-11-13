@@ -39,7 +39,8 @@ $d = "$env:USERPROFILE\workbench-soft"; if (-not (Get-Command git -ErrorAction S
 
 <p><img src="docs/screenshots/01-status.png" width="400" alt="What builds now, on this PC and in the cloud">
 <img src="docs/screenshots/02-latest-runs.png" width="400" alt="The latest runs of every repo, with where each one built"></p>
-<p><img src="docs/screenshots/03-releases.png" width="400" alt="The newest release of each app, ready to install on the phone"></p>
+<p><img src="docs/screenshots/03-releases.png" width="400" alt="The newest release of each app, ready to install on the phone">
+<img src="docs/screenshots/04-release-reasons.png" width="400" alt="Why a release failed or stopped, with the error and its log"></p>
 
 `mise run demo` takes them again from `next dev`, with made up runs and runners from `dashboard/demo/fake-github.ts`.
 

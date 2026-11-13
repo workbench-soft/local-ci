@@ -1,4 +1,5 @@
 import type { CancelEntry } from './cancel-log.ts';
+import type { JobReason } from './run-failure.ts';
 import type { RunnerKind } from './runner-kind.ts';
 import { activeStatuses, type Place } from './placement.ts';
 import { typicalDuration } from './progress.ts';
@@ -13,6 +14,7 @@ export type PipelineRun = {
   typicalMs?: number | null;
   title: string;
   branch: string;
+  headSha?: string;
   event: string;
   status: string;
   conclusion: string | null;
@@ -65,6 +67,10 @@ export type AppRelease = {
   wait: RunWait | null;
   /** The words a cancel was logged with, and when. */
   why: CancelEntry | null;
+  /** The newer run of the same workflow and branch, for a cancelled run. */
+  replacedBy?: { id: number; url: string; sha: string | null; sameCommit?: boolean } | null;
+  /** What the annotations and the log of the stopped job say. The page fills it in. */
+  reason?: JobReason | null;
 };
 
 const defaultBranches = new Set(['main', 'master']);
@@ -212,6 +218,7 @@ export function latestReleases(
       // runs after this release: the ones that made the earlier releases sit before it.
       wait: decided && (state === 'building' || state === 'queued') ? waitOf(decided, shipsOf(repo), now) : null,
       why: why ?? null,
+      replacedBy: state === 'cancelled' && decided ? newerRun(decided, runs) : null,
     });
   }
 
@@ -232,6 +239,7 @@ export function latestReleases(
       run: run && state !== 'no-release' ? viewOf(run) : null,
       wait: run && (state === 'building' || state === 'queued') ? waitOf(run, all, now) : null,
       why: why ?? null,
+      replacedBy: state === 'cancelled' && run ? newerRun(run, runs) : null,
     });
   }
 
@@ -261,4 +269,26 @@ function waitOf(run: PipelineRun, ships: PipelineRun[], now: number): RunWait {
         })),
     );
   return { elapsedMs, usualMs };
+}
+
+/** The first run of the same repo, workflow and branch that started after a run. A push and a workflow_run Release of one commit share a concurrency group. */
+function newerRun(run: PipelineRun, runs: PipelineRun[]): AppRelease['replacedBy'] {
+  const next = runs
+    .filter(
+      (item) =>
+        item.repo === run.repo &&
+        item.workflow === run.workflow &&
+        item.branch === run.branch &&
+        item.id !== run.id &&
+        Date.parse(item.createdAt) >= Date.parse(run.createdAt),
+    )
+    .toSorted((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt) || a.id - b.id)[0];
+  return next
+    ? {
+        id: next.id,
+        url: next.url,
+        sha: next.headSha ?? null,
+        sameCommit: !!run.headSha && next.headSha === run.headSha,
+      }
+    : null;
 }

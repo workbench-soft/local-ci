@@ -255,6 +255,13 @@ icon: a white loop arrow round a check on a teal to violet gradient.
   causing run, commit and PR. The reasons come from
   `dashboard\cancel-reasons.jsonl`, where each force cancel lands with its
   words, from Stop and Purge or from the sweep.
+- **Why it stopped** an errored or cancelled row says what happened in one
+  bold line, and its chip names the cause when one word can: PC went off,
+  Replaced, Disk full, Timed out or Stopped by Local CI. A failed step shows
+  the error line and the log of that step up to the error, with a link to
+  the full log. A run GitHub replaced through `concurrency` links the run
+  that took its place. A PC turned off shows the runner and the step it
+  stopped at.
 - **Release list** the tab title counts the apps on their way and the errored
   ones. The newest release of each app sits beside its chip with its age, and
   its notes under Changes. An app with no release yet shows from its repo's

@@ -519,3 +519,26 @@ test('an active release exposes all cloud build platforms with its run', () => {
   assert.equal(app.state, 'building');
   assert.deepEqual(app.run?.machines, ['blacksmith', 'github']);
 });
+
+test('a cancelled release names the next run of its workflow and branch, of the same commit too', () => {
+  const [app] = latestReleases(
+    [tickalotRelease],
+    [
+      madeIt(1, '2026-11-05T08:55:00Z'),
+      run({ id: 2, workflow: 'Release', headSha: 'aaa', conclusion: 'cancelled', createdAt: '2026-11-05T11:00:00Z' }),
+      run({
+        id: 3,
+        workflow: 'Release',
+        headSha: 'aaa',
+        event: 'pull_request',
+        branch: 'other',
+        createdAt: '2026-11-05T11:01:00Z',
+      }),
+      run({ id: 4, workflow: 'Release', headSha: 'aaa', event: 'dynamic', createdAt: '2026-11-05T11:02:00Z' }),
+    ],
+    noCancels,
+    now,
+  );
+  assert.equal(app.state, 'cancelled');
+  assert.deepEqual(app.replacedBy, { id: 4, url: 'https://github.com/run/4', sha: 'aaa', sameCommit: true });
+});

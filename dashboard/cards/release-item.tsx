@@ -26,6 +26,17 @@ const chipOf: Record<ReleaseState, { icon: IconName; text: string; tone: 'ok' | 
   'no-release': { icon: 'package', text: 'No release yet', tone: 'muted' },
 };
 
+/** The chip names the cause of a stop when one word can say it. */
+function chipText({ state, reason, why }: AppRelease): string | null {
+  if (state !== 'errored' && state !== 'cancelled') return null;
+  if (reason?.kind === 'shutdown' || reason?.kind === 'lost-runner') return 'PC went off';
+  if (reason?.kind === 'replaced') return 'Replaced';
+  if (reason?.kind === 'disk-full') return 'Disk full';
+  if (reason?.kind === 'timeout') return 'Timed out';
+  if (state === 'cancelled' && why) return 'Stopped by Local CI';
+  return null;
+}
+
 type ItemProps = {
   app: AppRelease;
   now: number;
@@ -60,7 +71,7 @@ export function AppItem({
   onStopLocal,
 }: ItemProps) {
   const { app, repo, release, state, run, wait, why } = item;
-  const chip = chipOf[state];
+  const chip = { ...chipOf[state], text: chipText(item) ?? chipOf[state].text };
   const hint = run && run.place !== 'done' && state === 'building' ? placeIcons[run.place].hint : undefined;
   return (
     <li>
@@ -104,7 +115,7 @@ export function AppItem({
         {repo !== app && <span className="muted small">from {repo}</span>}
         <OutcomeText outcome={outcome} />
       </div>
-      <Detail state={state} run={run} wait={wait} why={why} now={now} />
+      <Detail state={state} run={run} wait={wait} why={why} now={now} app={item} />
       {(state === 'building' || state === 'queued') && (
         <ReleaseProgress app={app} state={state} jobs={jobs} wait={wait} now={now} />
       )}

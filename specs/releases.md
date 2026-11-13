@@ -170,3 +170,15 @@ settings with the key in `WORKBENCH_DEV_KEY`.
   newest APK in `dist/` beside it. `shuttrix` and `updater` map to the
   memories and app-updater repos. The old list sent media-organizer to a repo
   that no longer exists.
+
+### 2026-11-13 each stopped release says what happened
+
+- **Why** the person wants the cause of a failed or stopped release at first sight: the error and its stack trace, the newer run that replaced it, a stop by Local CI, or a PC turned off mid build.
+- **Error** an errored row shows the failed job and step, the error line in bold and the last log lines of that step up to the error, with a link to the full log. The error line comes from the job annotations, or from the log when the only annotation is the exit code.
+- **Replaced** a run GitHub cancelled through `concurrency` says a newer run of the same workflow replaced it, with links to that run and its commit.
+- **Local CI** a run the page force cancelled names the reason from `cancel-reasons.jsonl`: Force stop on this page, failed Checks of the same commit, or a newer commit.
+- **PC off** a job whose runner got a shutdown signal or lost contact with GitHub says the PC turned off, restarted or lost its network, with the runner and the step.
+- **Other** a timeout, a full disk or a cancel by a person on GitHub get their own line. A run with no annotation says so.
+- **Changes** `status/run-failure.ts` reads the annotations and the log of the failed or cancelled job, once per job. `status/latest-releases.ts` finds the newer run of a replaced build. `cards/release-detail.tsx` draws the reason.
+- **Test** `status/run-failure.test.ts` covers each annotation kind and the log cut on the farnear lint log of run 43329810179.
+- **Docs** `docs/features.md`, `docs/architecture.md` and `CHANGELOG.md`.
