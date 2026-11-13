@@ -27,8 +27,11 @@ Get-ChildItem -Directory -LiteralPath $devDir -ErrorAction SilentlyContinue | Fo
 }
 # The runners log each action they looked for, already resolved to its commit.
 # Only _diag of each runner holds them. A walk of the whole folder also crosses _tool and took 200 s.
-Get-ChildItem -Path (Join-Path $HOME 'actions-runner\*\_diag\Worker_*.log') -ErrorAction SilentlyContinue |
-	Select-String -Pattern "Check if action archive '([\w.-]+/[\w.-]+)@([0-9a-f]{40})'" | ForEach-Object {
+# Reading all 1474 logs (419 MB) held an install for over an hour on 2026-11-01, so each runner
+# gives only its 50 newest. Older jobs' actions sit in the workflows read above or in the cache.
+Get-ChildItem -Directory -Path (Join-Path $HOME 'actions-runner\*\_diag') -ErrorAction SilentlyContinue | ForEach-Object {
+	Get-ChildItem -LiteralPath $_.FullName -Filter 'Worker_*.log' | Sort-Object LastWriteTime -Descending | Select-Object -First 50
+} | Select-String -Pattern "Check if action archive '([\w.-]+/[\w.-]+)@([0-9a-f]{40})'" | ForEach-Object {
 		$m = $_.Matches[0]
 		$wanted["$($m.Groups[1].Value)@$($m.Groups[2].Value)"] = $true
 	}

@@ -462,7 +462,6 @@ bash <(curl -fsSL https://teamwork-graph.atlassian.com/cli/install)
 - [formulahendry.auto-rename-tag](https://marketplace.visualstudio.com/items?itemName=formulahendry.auto-rename-tag)
 - [huizhou.githd](https://marketplace.visualstudio.com/items?itemName=huizhou.githd)
 - [nrwl.angular-console](https://marketplace.visualstudio.com/items?itemName=nrwl.angular-console)
-- [oleg-chibikov.open-in-remote-repo](https://marketplace.visualstudio.com/items?itemName=oleg-chibikov.open-in-remote-repo)
 - [orta.vscode-jest](https://marketplace.visualstudio.com/items?itemName=orta.vscode-jest)
 
 ## MCP servers

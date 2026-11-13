@@ -152,7 +152,6 @@ for extension in \
 	formulahendry.auto-rename-tag \
 	huizhou.githd \
 	nrwl.angular-console \
-	oleg-chibikov.open-in-remote-repo \
 	orta.vscode-jest; do
 	# VS Code installed by hand puts no code command on PATH.
 	command -v code >/dev/null || break

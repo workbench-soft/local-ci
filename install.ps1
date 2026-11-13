@@ -18,7 +18,6 @@ $vscodeExtensions = @(
 	'formulahendry.auto-rename-tag',
 	'huizhou.githd',
 	'nrwl.angular-console',
-	'oleg-chibikov.open-in-remote-repo',
 	'orta.vscode-jest'
 )
 

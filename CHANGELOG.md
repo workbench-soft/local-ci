@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **Faster runner install** `runner/cache-actions.ps1` reads the 50 newest logs of each runner in place of all of them, which held an install for over an hour.
+- **No missing VS Code extension** the installers drop `oleg-chibikov.open-in-remote-repo`, which no extension store has.
+- **fix-stuck-ci** names where LocalCI Stop sits and says the agent may press it on a stale run, while a runner restart stays with the user.
 - **Private skills** `install.ps1` and `install.sh` clone agent-skills-private and run its `install.sh` when the GitHub account can read it.
 - **Metrics in each card** each app on the Releases tab and each site shows its runs, failed share and usual time over 30 days, each run in Latest runs its usual time with a mark when slower than 9 in 10, the Runners card each machine's failures and wait, and the Trends tab link the failed share of the last 7 days.
 - **Trends tab** the status page charts the org's CI for free: runs a day by result, the share that failed, the build time, the wait for a runner, the steps that fail most and each machine, for one repo or all and for 7, 30 or 90 days. The page keeps 90 days of runs in `dashboardun-history.json`.
