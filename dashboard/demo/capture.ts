@@ -32,4 +32,5 @@ await shot(page, '02-latest-runs', `${site}?tab=status`, 'Latest runs');
 await shot(page, '03-releases', site);
 // The errored and cancelled rows say what stopped them.
 await shot(page, '04-release-reasons', site, undefined, '.stop-reason');
+await shot(page, '05-trends', `${site}?tab=trends`);
 await browser.close();

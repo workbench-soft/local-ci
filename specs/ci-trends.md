@@ -11,7 +11,7 @@
 - **History** the first start reads 90 days of runs. Every 10 minutes the page
   adds the runs of the last 3 days. The file keeps 90 days.
 - **Jobs** the jobs of each run tell the machine and the failed step. The page
-  reads them for runs of the last 14 days, at most 60 runs per refresh.
+  reads them for runs of the last 14 days, at most 120 runs per refresh.
 - **Filter** the person picks a repo and 7, 30 or 90 days.
 
 ## What it does for the person
@@ -35,7 +35,8 @@ the data stays on the PC.
 ## How it works: modules, files, data
 
 - **`status/run-history.ts`** reads the finished runs of each org repo with
-  `GET /repos/{repo}/actions/runs?created=>=<date>`, 100 a page. A run keeps
+  `GET /repos/{repo}/actions/runs?created=<from>..<to>`, 100 a page, a week
+  at a time. GitHub answers 1000 runs at most, so a full week splits in two. A run keeps
   its id, attempt, repo, workflow, branch, event, result, created, started
   and ended times. A rerun replaces the earlier attempt.
 - **Jobs** `GET /repos/{repo}/actions/runs/{id}/jobs` gives each run its
@@ -50,7 +51,7 @@ the data stays on the PC.
 - **`status/trends.ts`** turns the runs into the numbers the tab shows. Days
   follow the PC's time zone. The build time counts successful runs only,
   since a failure stops early.
-- **Wait** the time from the run's start to its first job's start.
+- **Wait** the time from the push, or from the rerun, to its first job's start.
 - **`cards/trends/`** the tab's tiles, charts and tables, drawn as SVG on the
   server. A hover shows the day through the SVG `title`.
 
@@ -60,7 +61,10 @@ the data stays on the PC.
 - **Jobs** runs older than 14 days at the first start get no machine and no
   failed step. Their charts of results and build time still count them.
 - **Purge** a run deleted on GitHub stays in the history.
-- **Rate** a refresh costs about 1 call per repo plus up to 60 job calls.
+- **Rate** a refresh costs about 1 call per repo plus up to 120 job calls.
+  The first start reads 13 weeks per repo, about 600 calls.
+- **Fill** the jobs of 14 days, about 3000 runs, take some hours to read, so
+  the Wait chart and the Machines table fill in over that time.
 
 ## Changes
 

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Trends tab** the status page charts the org's CI for free: runs a day by result, the share that failed, the build time, the wait for a runner, the steps that fail most and each machine, for one repo or all and for 7, 30 or 90 days. The page keeps 90 days of runs in `dashboardun-history.json`.
 - **Why a release stopped** each errored or cancelled row on the Releases tab says what happened: the error line and the log of the failed step, the run that replaced it, a stop by Local CI, a PC turned off, a full disk or a timeout.
 - **Oracle VM by script** `runner/oracle-vm.sh` creates the Oracle VM, retries while Sydney has no free host, and installs the runners once it is up. A fresh VM waits for its first apt updates before the runner install. The VM gets `gh` too.
 - **Cause of a GitHub cancel** a run GitHub cancelled for a newer commit now shows that commit as the cause in the cancellation history.

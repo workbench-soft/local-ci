@@ -6,4 +6,6 @@ export async function register() {
   startCancellingSuperseded();
   const { startCloudRouter } = await import('./status/cloud-router.ts');
   startCloudRouter();
+  const { startRunHistory } = await import('./status/run-history.ts');
+  startRunHistory();
 }

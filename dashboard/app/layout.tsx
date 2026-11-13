@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './styles.css';
 import './releases.css';
+import './trends.css';
 
 export const metadata: Metadata = {
   title: 'Local CI',

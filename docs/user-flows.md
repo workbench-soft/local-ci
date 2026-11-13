@@ -191,3 +191,23 @@ flowchart TD
   R --> T[runner/install.ps1 as admin adds or removes runners]
   I & J & P & T --> G
 ```
+
+## See how CI does over time
+
+1. Open `http://localhost:4280` and press Trends.
+2. Read the tiles: runs, the share that failed, the median build and the
+   median wait for a runner, each against the period before.
+3. Hover a day in a chart to read its numbers.
+4. Read Failing steps and click a step to open its last failed job.
+5. Pick a repo in the list, or 7, 30 or 90 days, to narrow the charts.
+
+```mermaid
+flowchart LR
+  A[Status page] --> B[Trends tab]
+  B --> C[Tiles and charts]
+  C --> D{Something got worse?}
+  D -->|yes| E[Failing steps or Workflows]
+  E --> F[Last failed job on GitHub]
+  D -->|narrow it| G[Pick a repo or a period]
+  G --> C
+```

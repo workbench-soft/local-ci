@@ -8,3 +8,5 @@ start.cmd
 .built-commit
 cancel-reasons.jsonl
 cloud-usage.json
+run-history.json
+run-history.json.tmp

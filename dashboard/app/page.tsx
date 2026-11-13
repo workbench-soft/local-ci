@@ -8,6 +8,7 @@ import { ReleasesCard } from '@/cards/releases-card';
 import { RunnersCard } from '@/cards/runners-card';
 import { SitesCard, type SiteRow } from '@/cards/sites-card';
 import { StatusDot } from '@/cards/status-dot';
+import { TrendsView } from '@/cards/trends/trends-view';
 import { readCancels } from '@/status/cancel-log';
 import { isDevKeyConfigured } from '@/status/dev-key';
 import { routerState } from '@/status/cloud-router';
@@ -19,6 +20,7 @@ import { activeLocalBuilds } from '@/status/local-build-runner';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { releasesByRun } from '@/status/releases';
+import { readRunHistory } from '@/status/run-history';
 import { releaseWorkflowFor } from '@/status/release-workflow';
 import { localBuildOf } from '@/status/local-build-target';
 import { kindsOfRun } from '@/status/runner-kind';
@@ -41,7 +43,10 @@ export default async function StatusPage({
     readCancels(),
   ]);
   // Releases is the tab the person opens the page for; Status stays one click away.
-  const tab = query.tab === 'status' ? 'status' : 'releases';
+  const tab = query.tab === 'status' || query.tab === 'trends' ? query.tab : 'releases';
+  const history = tab === 'trends' ? await readRunHistory() : null;
+  const trendDays = [7, 30, 90].includes(Number(query.days)) ? Number(query.days) : 30;
+  const trendRepo = typeof query.repo === 'string' && query.repo ? query.repo : null;
   const now = Date.now();
   const local = localRunnerNames(pc);
   const runs = org.ok ? org.runs : [];
@@ -140,9 +145,14 @@ export default async function StatusPage({
           <Link href="/?tab=status" aria-current={tab === 'status' ? 'page' : undefined}>
             Status
           </Link>
+          <Link href="/?tab=trends" aria-current={tab === 'trends' ? 'page' : undefined}>
+            Trends
+          </Link>
         </nav>
       </div>
-      {tab === 'releases' ? (
+      {history ? (
+        <TrendsView state={history} repo={trendRepo} days={trendDays} now={now} />
+      ) : tab === 'releases' ? (
         <div className="grid">
           {org.ok ? (
             <>

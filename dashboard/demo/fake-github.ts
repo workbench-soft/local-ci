@@ -6,6 +6,7 @@ import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import './fake-history.ts';
 
 const org = 'acme-apps';
 process.env.RUNNER_ORG = org;

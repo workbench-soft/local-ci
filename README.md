@@ -41,6 +41,7 @@ $d = "$env:USERPROFILE\workbench-soft"; if (-not (Get-Command git -ErrorAction S
 <img src="docs/screenshots/02-latest-runs.png" width="400" alt="The latest runs of every repo, with where each one built"></p>
 <p><img src="docs/screenshots/03-releases.png" width="400" alt="The newest release of each app, ready to install on the phone">
 <img src="docs/screenshots/04-release-reasons.png" width="400" alt="Why a release failed or stopped, with the error and its log"></p>
+<p><img src="docs/screenshots/05-trends.png" width="400" alt="Runs a day by result, build time and the wait for a runner"></p>
 
 `mise run demo` takes them again from `next dev`, with made up runs and runners from `dashboard/demo/fake-github.ts`.
 
@@ -233,6 +234,11 @@ once, from the main checkout:
   `dashboard\cancel-reasons.jsonl`. The newest release of each app sits
   beside its state with its notes under Changes. Tick several apps and
   press Install to put their APKs on the phone one after another.
+- **Trends tab** `/?tab=trends` charts the org's CI: runs a day by result,
+  the share that failed, the build time, the wait for a runner, the steps that
+  fail most and each machine. It reads 90 days from the GitHub API once, then
+  the new runs every 10 minutes, into `dashboardun-history.json`. No
+  account or service is needed.
 - **Errors** a failed run names its failed job and step, linked to the log. A
   failed install shows adb's error in a red box under the button.
 - **Links** the branch and the PR of each run open on GitHub.

@@ -285,6 +285,27 @@ sequenceDiagram
   N-->>B: the device, or adb's error
 ```
 
+## How the Trends tab gets its data
+
+- **History** `status/run-history.ts` reads the finished runs of each org
+  repo a week at a time, then the jobs of up to 120 recent runs. The built
+  server does it at start and every 10 minutes, from `instrumentation.ts`.
+- **File** `status/run-history-file.ts` keeps 90 days in
+  `dashboard/run-history.json`. `RUN_HISTORY_FILE` picks another file.
+- **Numbers** `status/trends.ts` turns the runs into days, tiles and tables.
+- **Charts** `cards/trends/` draws them as SVG on the server.
+
+```mermaid
+flowchart LR
+  T[instrumentation.ts every 10 min] --> H[status/run-history.ts]
+  H -->|runs a week at a time, jobs| G[(GitHub API)]
+  H --> F[(run-history.json)]
+  P[Trends tab request] --> R[readRunHistory]
+  R --> F
+  R --> N[status/trends.ts]
+  N --> C[cards/trends SVG]
+```
+
 ## Decisions
 
 ### CI host: self-hosted runners on the PC and the Mac
@@ -404,6 +425,24 @@ sequenceDiagram
     was still setting up.
   - **Pull and install by hand** the steps piled up in `TODO.md`.
 - **Cost to undo** low. `windows/update.ps1` and its task.
+
+### CI charts: drawn by the page from its own history
+
+- **Picked** the status page keeps 90 days of runs in a JSON file and draws
+  the charts itself, as SVG on the server.
+- **Why** the charts had to be free. The page already holds the token and a
+  server that runs from boot.
+- **Trade-off** the history covers this PC's page only, and the charts are
+  plain: a hover shows the day, with no zoom.
+- **Rejected**
+  - **Grafana Cloud free tier** an account, a push of the data from the PC
+    and a second place to look.
+  - **Grafana and Prometheus on the PC** two more services to install, start
+    at boot and update.
+  - **A chart library** the charts are bars and lines over 7 to 90 days, which
+    SVG draws in a few lines with no script in the browser.
+- **Cost to undo** low. `status/run-history*.ts`, `status/trends.ts` and
+  `cards/trends/`.
 
 ### GitHub data: polling with ETags and a shared cache
 

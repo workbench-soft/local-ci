@@ -350,6 +350,23 @@ Spec: [releases](../specs/releases.md).
 
 Spec: [site-deploy](../specs/site-deploy.md).
 
+## CI trends
+
+- **Where** the Trends tab of the status page, `http://localhost:4280/?tab=trends`.
+- **Tiles** runs, the share that failed, the median build time and the median
+  wait for a runner, each against the period before.
+- **Charts** runs a day by result, then the build time and the wait for a
+  runner a day, as the median and the slowest tenth. A hover shows the day.
+- **Tables** each workflow with its failures and build times, each machine,
+  and the steps that fail most, with a link to the last failed job.
+- **Filter** one repo, and 7, 30 or 90 days.
+- **Free** the page reads the GitHub API with its own token and keeps 90 days
+  in `dashboardun-history.json`. No account or service.
+- **Limits** the machine, the failed step and the wait come from the jobs of
+  the last 14 days only.
+
+Spec: [ci-trends](../specs/ci-trends.md).
+
 ## Updates by themselves
 
 - **What it gives** the Windows PC installs each release within minutes of the merge. The status page and the runners get the new code with no `git pull` by hand.
