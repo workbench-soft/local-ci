@@ -30,8 +30,10 @@ ssh "$host" bash -s -- "$org" "$token" "$version" "$sha" "$count" <<'REMOTE'
 set -euo pipefail
 org="$1" token="$2" version="$3" sha="$4" count="$5"
 archive="actions-runner-linux-arm64-$version.tar.gz"
-sudo apt-get update -qq
-sudo apt-get install -y -qq git curl jq unzip zip build-essential pkg-config libssl-dev >/dev/null
+# A fresh VM runs its first updates through cloud-init and holds the apt lock.
+sudo cloud-init status --wait >/dev/null || true
+sudo apt-get -o DPkg::Lock::Timeout=600 update -qq
+sudo apt-get -o DPkg::Lock::Timeout=600 install -y -qq git curl jq unzip zip build-essential pkg-config libssl-dev >/dev/null
 cd "$HOME"
 if [ ! -f "$archive" ]; then
 	curl -fsSL -o "$archive" "https://github.com/actions/runner/releases/download/v$version/$archive"

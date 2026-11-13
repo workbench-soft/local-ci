@@ -3,7 +3,7 @@
 ## Unreleased
 
 - **Why a release stopped** each errored or cancelled row on the Releases tab says what happened: the error line and the log of the failed step, the run that replaced it, a stop by Local CI, a PC turned off, a full disk or a timeout.
-- **Oracle VM by script** `runner/oracle-vm.sh` creates the Oracle VM, retries while Sydney has no free host, and installs the runners once it is up.
+- **Oracle VM by script** `runner/oracle-vm.sh` creates the Oracle VM, retries while Sydney has no free host, and installs the runners once it is up. A fresh VM waits for its first apt updates before the runner install.
 - **Cause of a GitHub cancel** a run GitHub cancelled for a newer commit now shows that commit as the cause in the cancellation history.
 
 - **Mac setup goes on** an app already in `/Applications`, a failed npm or twg install or a missing `code` command no longer stops `install.sh` before the repos. The last lines list what it skipped.
