@@ -781,3 +781,12 @@ browser at each logon.
   2. The page head, the CSS and the class.
   3. Changelog.
 - **Docs** `CHANGELOG.md`.
+
+### 2026-11-13 The page stays in English
+
+- **Why** the org rule asks for 9 languages in each app, and the page shows
+  English only.
+- **Decision** the page stays English. It is a local tool on the owner's PC,
+  with one reader, no store listing and no users. Its text names runner
+  scripts, log lines and GitHub states, which have no translation. A move to
+  catalogs costs each card and each future string 9 copies for no reader.

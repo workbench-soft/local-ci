@@ -451,3 +451,22 @@ machine with several runners builds several jobs at once.
     holds, in place of a red `Rename-Item` error that read like the cause of
     each failed job.
 - **Docs** `README.md`, `CHANGELOG.md`.
+
+### 2026-11-13 The action cache reads only the newest runner logs
+
+- **Why** `runner/cache-actions.ps1` read all 1474 `Worker_*.log` files
+  (419 MB) on each install, which held an install at "Filling the action
+  cache" for over an hour on 2026-11-01 at 100% CPU.
+- **Change** it reads the 50 newest logs of each runner's `_diag`, 400 at 8
+  runners. The workflows under the workspace root still name each action a
+  repo uses today, so the older logs add little.
+
+### 2026-11-13 Why `_pnpm-store` has no clean rule
+
+- **Why** `C:\ci\_pnpm-store` only grows, and `runner/clean-work.ps1` has no
+  rule for it.
+- **Decision** it stays. Every job of every runner reads it at once, so a
+  prune before one job could pull a package from under another. Its copied
+  packages make one more install cheap, and a full disk shows on the page.
+  `CLEAN-CI.cmd` with an empty queue is the place to drop it, once a prune
+  there is needed.

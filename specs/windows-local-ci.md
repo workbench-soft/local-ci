@@ -77,3 +77,10 @@ without `source.properties`, and Platform 37 was missing.
   `node_modules`. `install.ps1` passes `--work` on register and rewrites
   `workFolder` in `.runner` for runners registered before. `RUNNER_WORK_ROOT`
   picks another root.
+
+### 2026-11-13 No `open-in-remote-repo` extension
+
+- **Why** `code --install-extension oleg-chibikov.open-in-remote-repo`
+  fails: the extension is on neither the VS Code Marketplace nor Open VSX.
+- **Change** `install.ps1`, `install.sh` and the README extension list drop
+  it.
