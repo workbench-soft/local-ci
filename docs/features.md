@@ -131,6 +131,8 @@ free minutes last, then on this PC. The PC stays free for work.
 - **Cloud card** on the status page: the runner of each lane, the Blacksmith
   and GitHub minutes used with a bar each, the Oracle runner state, and when
   the router last checked.
+- **Oracle VM** `./runner/oracle-vm.sh` creates the VM and retries every 3
+  minutes while Sydney has no free A1 host, for 72 hours by default.
 - **Oracle setup** `./runner/oracle.sh ubuntu@<vm address>` installs 2
   runners with the `oracle` label on the VM over SSH. The PC asks GitHub for
   the registration token.

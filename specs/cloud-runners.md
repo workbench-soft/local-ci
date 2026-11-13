@@ -136,3 +136,12 @@ GitHub.
   running jobs and the switch to the PC at the stop.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `CHANGELOG.md`.
+
+## 2026-11-13 The Oracle VM gets created by a script
+
+The VM launch of 2026-11-04 ran from a chat session and stopped with it. Sydney had no free A1 host, so no VM came up.
+
+- **Script** `runner/oracle-vm.sh` finds or creates the `ci-runner` VM through the `oci` CLI, then runs `oracle.sh` on it.
+- **Retries** every 3 minutes it asks for 4 OCPU and 24 GB, then 2 OCPU and 12 GB, for 72 hours by default.
+- **Detached** the PC starts it as its own process, so it outlives the session. The log goes to `%TEMP%oracle-vm.log`.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.

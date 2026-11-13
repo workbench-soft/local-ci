@@ -173,8 +173,9 @@ runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}
   [app.blacksmith.sh](https://app.blacksmith.sh). The page stops at 2700 of
   the 3000 free minutes, since Blacksmith bills past 3000.
   `BLACKSMITH_BUDGET` in `dashboard\.env.local` changes the stop.
-- **Oracle** create an Always Free Ampere A1 VM with Ubuntu, then run
-  `./runner/oracle.sh ubuntu@<vm address>` from Git Bash on this PC. Heavy
+- **Oracle** `./runner/oracle-vm.sh` creates the Always Free Ampere A1 VM
+  through the `oci` CLI. It retries until Sydney has a free host, then runs
+  `./runner/oracle.sh ubuntu@<vm address>` on it. Heavy
   and Windows jobs skip it, since Android and Windows don't build on ARM.
 - **GitHub** the org gets 2000 free minutes a month, Windows counted twice
   and macOS 10 times. The page reads every repo from the billing API, adds

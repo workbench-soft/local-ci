@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Oracle VM by script** `runner/oracle-vm.sh` creates the Oracle VM, retries while Sydney has no free host, and installs the runners once it is up.
 - **Cause of a GitHub cancel** a run GitHub cancelled for a newer commit now shows that commit as the cause in the cancellation history.
 
 - **Mac setup goes on** an app already in `/Applications`, a failed npm or twg install or a missing `code` command no longer stops `install.sh` before the repos. The last lines list what it skipped.

@@ -16,9 +16,9 @@ run = ["pnpm --dir dashboard lint", "pnpm --dir dashboard format:check"]
 description = "Lint the Markdown and the shell scripts"
 run = [
   "markdownlint-cli2",
-  "shellcheck install.sh runner/install.sh runner/oracle.sh",
+  "shellcheck install.sh runner/install.sh runner/oracle.sh runner/oracle-vm.sh",
   "shellcheck .github/scripts/next-version.sh .github/scripts/release-notes.sh .agents/skills/fix-stuck-ci/ci-status.sh runner/gh .githooks/pre-push",
-  "shfmt -i 0 -d install.sh runner/install.sh runner/oracle.sh",
+  "shfmt -i 0 -d install.sh runner/install.sh runner/oracle.sh runner/oracle-vm.sh",
 ]
 
 [tasks.format]
