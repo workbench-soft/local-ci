@@ -19,7 +19,7 @@ const cancelFile = join(tmpdir(), 'local-ci-demo-cancel-reasons.jsonl');
 process.env.CANCEL_REASONS_FILE = cancelFile;
 writeFileSync(
   cancelFile,
-  `${JSON.stringify({ repo: 'servohop', runId: 301, words: 'a newer run replaced it', at: ago(22) })}\n`,
+  `${JSON.stringify({ repo: 'servohop', runId: 301, words: 'A newer commit started the same build', at: ago(22), outcome: 'accepted', cause: { kind: 'superseded', runId: 304, url: `https://github.com/${org}/servohop/actions/runs/304`, sha: 'b41c9e07d2' } })}\n`,
 );
 
 // Four runners on this PC, in a home folder of their own.
@@ -154,6 +154,9 @@ const runs: Run[] = [
   run(302, 'servohop', 'Checks', 'feat: 90 day price chart', 'completed:success', 34, 5, 'BUILD-PC-4', local, 10),
   run(303, 'servohop', 'Release', 'feat: the price chart', 'completed:success', 310, 40, 'BUILD-PC', heavy, 11),
   // memoire: the Release run waits for a heavy runner.
+  // pocketbird: the PC turned off while the Release built, so GitHub lost its runner.
+  run(701, 'pocketbird', 'Release', 'feat: bird songs offline', 'completed:failure', 64, 9, 'BUILD-PC-2', heavy, 5, 5),
+  run(703, 'pocketbird', 'Release', 'feat: the bird list', 'completed:success', 400, 40, 'BUILD-PC', heavy, 11),
   run(401, 'memoire', 'Release', 'feat: word pictures for own words', 'queued', 1, 0, null, heavy, -1),
   run(402, 'memoire', 'Checks', 'feat: word pictures for own words', 'completed:success', 18, 6, 'BUILD-PC', local, 10),
   run(403, 'memoire', 'Release', 'feat: a level test in 2 minutes', 'completed:success', 90, 10, 'BUILD-PC', heavy, 11),
@@ -230,6 +233,32 @@ const release = (app: string, name: string, minutes: number) => ({
   body_html: '<ul><li>New: sort the weekly shop by aisle</li></ul>',
 });
 
+const notes: Record<number, string[]> = {
+  2010: ['Process completed with exit code 1.'],
+  3010: ['The run was canceled forcefully by @acme-bot.'],
+  7010: [
+    'The self-hosted runner: BUILD-PC-2 lost communication with the server. Verify the machine is running and has a healthy network connection.',
+  ],
+};
+const logs: Record<number, string> = {
+  2010: [
+    '##[group]Run mise run test',
+    'mise run test',
+    '##[endgroup]',
+    '[test] $ pnpm exec vitest run',
+    ' ✓ src/notes/list.test.ts (12 tests) 41ms',
+    ' ✗ src/notes/move.test.ts > keeps the topic when a note moves',
+    "TypeError: Cannot read properties of undefined (reading 'topic')",
+    '    at moveNote (src/notes/move.ts:28:17)',
+    '    at Object.<anonymous> (src/notes/move.test.ts:14:5)',
+    ' Test Files  1 failed | 11 passed (12)',
+    '[test] ERROR task failed',
+    '##[error]Process completed with exit code 1.',
+  ]
+    .map((line) => `2026-11-02T10:00:00.0000000Z ${line}`)
+    .join('\n'),
+};
+
 function answer(path: string): unknown {
   const url = new URL(path, 'https://api.github.com');
   const parts = url.pathname.split('/').filter(Boolean);
@@ -259,8 +288,12 @@ function answer(path: string): unknown {
       release('memoire', 'Memoire', 80),
       release('servohop', 'ServoHop', 300),
       release('tripforge', 'TripForge', 200),
+      release('pocketbird', 'PocketBird', 360),
     ];
   }
+  // The annotations and the log say why a job failed or stopped.
+  if (url.pathname.endsWith('/annotations')) return (notes[Number(parts[4])] ?? []).map((message) => ({ message }));
+  if (url.pathname.endsWith('/logs')) return logs[Number(parts[5])] ?? '';
   if (url.pathname.endsWith('/jobs')) {
     const found = runs.find((r) => r.id === Number(parts[5]));
     return { jobs: found ? apiJobs(found) : [] };

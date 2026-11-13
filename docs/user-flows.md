@@ -136,6 +136,8 @@ flowchart TD
    the Release column. The button says the device, or shows adb's error in red.
    For several apps, read the Releases tab, the one the page opens on: each
    app says whether its release builds, waits, failed or was cancelled. A
+   failed or cancelled app says why: the error with its log, the run that
+   replaced it, a stop by Local CI, or a PC turned off mid build. A
    building app shows a progress bar and the time left. Read what changed
    under Changes, tick the apps and press Install. Each row says Installed or
    shows adb's error.

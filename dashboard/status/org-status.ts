@@ -57,6 +57,8 @@ export type RunJob = {
   url: string;
   /** The first step that failed, for a failed job. */
   failedStep: string | null;
+  /** The step a cancelled job stopped in. */
+  stoppedStep?: string | null;
   steps: StepCount;
   /** How long this job takes, from the 10 latest finished runs of its workflow. Set only on running jobs. */
   typicalMs: number | null;
@@ -413,6 +415,12 @@ async function listRunJobs(fullName: string, runId: number): Promise<RunJob[]> {
       completedAt: job.completed_at,
       url: job.html_url,
       failedStep: job.steps?.find((step) => failedConclusions.has(step.conclusion ?? ''))?.name ?? null,
+      stoppedStep:
+        job.steps?.find(
+          (step) =>
+            step.conclusion === 'cancelled' ||
+            (step.status !== 'completed' && step.status !== 'queued' && step.status !== 'pending'),
+        )?.name ?? null,
       steps: countSteps(job.steps),
       typicalMs: null,
     }));

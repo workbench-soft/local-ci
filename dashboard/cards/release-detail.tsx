@@ -4,6 +4,7 @@ import type { AppRelease, ReleaseState, RunView } from '@/status/latest-releases
 import { kindNames } from '@/status/runner-kind';
 import { CancelReason } from './cancel-reason';
 import { placeIcons } from './icons';
+import { StopReason } from './stop-reason';
 
 export type Outcome = 'queued' | 'installing' | { ok: boolean; text: string };
 
@@ -14,12 +15,14 @@ export function Detail({
   wait,
   why,
   now,
+  app,
 }: {
   state: ReleaseState;
   run: RunView | null;
   wait: AppRelease['wait'];
   why: AppRelease['why'];
   now: number;
+  app?: AppRelease;
 }) {
   if (state === 'building' || state === 'queued') {
     if (!wait) return null;
@@ -46,14 +49,7 @@ export function Detail({
       </p>
     );
   }
-  if (state === 'errored' && run) {
-    return (
-      <p className="release-detail bad small">
-        {run.workflow} failed{run.failedStep ? ` at ${run.failedStep}` : ''}
-        {run.failedJob && !run.failedStep ? ` in ${run.failedJob}` : ''}
-      </p>
-    );
-  }
+  if ((state === 'errored' || state === 'cancelled') && app && run) return <StopReason app={app} run={run} now={now} />;
   if (state === 'cancelled') {
     return (
       <p className="release-detail bad small">

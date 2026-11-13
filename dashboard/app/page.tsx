@@ -14,6 +14,7 @@ import { routerState } from '@/status/cloud-router';
 import { runDuration } from '@/status/durations';
 import { summarizeCi } from '@/status/headline';
 import { latestReleases, type PipelineRun } from '@/status/latest-releases';
+import { readReason, stoppedJob } from '@/status/run-reason';
 import { activeLocalBuilds } from '@/status/local-build-runner';
 import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
@@ -70,6 +71,7 @@ export default async function StatusPage({
     typicalMs: run.typicalMs,
     title: run.title,
     branch: run.branch,
+    headSha: run.headSha,
     event: run.event,
     status: run.status,
     conclusion: run.conclusion,
@@ -82,6 +84,15 @@ export default async function StatusPage({
     jobs: run.jobs.map((job) => ({ name: job.name, conclusion: job.conclusion, failedStep: job.failedStep })),
   }));
   const apps = latestReleases(releases, pipelineRuns, cancels, now);
+  // A failed or cancelled release says why, from the annotations and the log of its stopped job.
+  if (tab === 'releases')
+    await Promise.all(
+      apps.map(async (app) => {
+        if (!app.run || (app.state !== 'errored' && app.state !== 'cancelled')) return;
+        const job = stoppedJob(runs.find((run) => run.id === app.run?.id)?.jobs ?? []);
+        app.reason = job ? await readReason(app.repo, job) : null;
+      }),
+    );
   // Release on CI shows for each app whose release workflow the page can tell, Build locally for each
   // app whose clone on this PC has a build script. Only the Releases tab shows them, so the Status tab
   // skips the GitHub calls of the lookup.
