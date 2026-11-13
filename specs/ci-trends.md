@@ -13,6 +13,8 @@
 - **Jobs** the jobs of each run tell the machine and the failed step. The page
   reads them for runs of the last 14 days, at most 120 runs per refresh.
 - **Filter** the person picks a repo and 7, 30 or 90 days.
+- **In the cards** each release, site, run and machine also shows its own
+  numbers where it sits, with a link to the Trends tab.
 
 ## What it does for the person
 
@@ -31,6 +33,8 @@ the data stays on the PC.
 5. The tables list each workflow, each machine and the steps that fail most.
    A failed step links its last failed run.
 6. The person picks a repo or a period, and the page shows only that.
+7. On the Releases and Status tabs, each app, site, run and machine shows a
+   line with its own numbers. The line links to the Trends tab of its repo.
 
 ## How it works: modules, files, data
 
@@ -88,3 +92,22 @@ the data stays on the PC.
   4. Docs and the screenshot.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `docs/user-flows.md`, `CHANGELOG.md`.
+
+### 2026-11-13 Each metric also in the card it belongs to
+
+- **Why** the person asked to put the metrics where they are needed, so a
+  glance at a card shows how its subject does over time.
+- **Changes**
+  - **`status/run-stats.ts`** the runs, failures and build times of each
+    workflow over 30 days, and the fail rate of the last 7 days.
+  - **`cards/trends/stats-line.tsx`** one muted line with those numbers and a
+    link to the Trends tab for the repo.
+  - **Releases tab** each app shows the stats of its release workflow.
+  - **Sites card** each site shows the stats of its deploy workflow.
+  - **Latest runs** the Took cell says the usual time of the workflow, and
+    marks a run slower than its p90.
+  - **Runners card** a line per machine: runs, failed share, build and wait
+    over 14 days.
+  - **Trends tab link** shows the fail rate of the last 7 days.
+  - **`app/page.tsx`** reads the history on each tab.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
