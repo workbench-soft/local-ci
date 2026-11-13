@@ -28,7 +28,7 @@ Each one deletes runs or installs an app, so it waits for the person.
 
 ## Clean the PC
 
-- [ ] Free disk on C: (62 GB free on 2026-11-13). The 4 old `_work` folders in `%USERPROFILE%\actions-runner` date from before the move to `C:\ci`. Auto mode denies a folder delete, so in PowerShell:
+- [ ] Free disk on C: (62 GB free on 2026-11-13). The 4 old `_work` folders in `%USERPROFILE%\actions-runner` hold 24 GB and date from before the move to `C:\ci`. Auto mode denies a folder delete, so in PowerShell:
 
   ```powershell
   Remove-Item -Recurse -Force "$env:USERPROFILE\actions-runner\workbench-soft*\_work"; Remove-Item -Recurse -Force "$env:TEMP\local-ci-apk"; mise x -- uv cache clean
