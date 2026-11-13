@@ -118,6 +118,16 @@ for repo in git-aliases agent-skills gh-review-notify; do
 	step "Running $repo/install.sh"
 	"$repo_dir/install.sh"
 done
+# The org's private skills, only for an account that can read them.
+if gh repo view workbench-soft/agent-skills-private --json name >/dev/null 2>&1; then
+	repo_dir="$dev_dir/agent-skills-private"
+	if [ ! -d "$repo_dir" ]; then
+		step "Cloning agent-skills-private"
+		gh repo clone workbench-soft/agent-skills-private "$repo_dir"
+	fi
+	step "Running agent-skills-private/install.sh"
+	"$repo_dir/install.sh"
+fi
 
 # --- gh extensions -----------------------------------------------------------
 if ! gh extension list 2>/dev/null | grep -q gh-stack; then

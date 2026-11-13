@@ -15,7 +15,7 @@ flowchart TD
   A[Mac line: Homebrew, git clone local-ci] --> B[install.sh]
   B --> C[Homebrew, mise, Oh My Zsh]
   C --> D[gh auth login]
-  D --> E[clone and install git-aliases, agent-skills, gh-review-notify]
+  D --> E[clone and install git-aliases, agent-skills, gh-review-notify, agent-skills-private]
   E --> F{register a runner?}
   F -- yes --> G[runner/install.sh]
   F -- no --> H[done]
@@ -35,7 +35,7 @@ flowchart TD
   A[Windows line: Git, git clone local-ci] --> B[install.ps1]
   B --> C[winget, mise, PowerShell profile]
   C --> D[gh auth login]
-  D --> E[clone and install git-aliases, agent-skills]
+  D --> E[clone and install git-aliases, agent-skills, agent-skills-private]
   E --> F{register a runner?}
   F -- yes --> G[runner/install.ps1]
   F -- no --> H[done]

@@ -144,6 +144,18 @@ foreach ($repo in 'git-aliases', 'agent-skills') {
 		& $repoInstaller
 	}
 }
+# The org's private skills, only for an account that can read them. Its install.sh links them beside agent-skills.
+$private = 'agent-skills-private'
+$canRead = try { gh repo view "workbench-soft/$private" --json name *> $null; $LASTEXITCODE -eq 0 } catch { $false }
+if ($canRead) {
+	$repoDir = Join-Path $devDir $private
+	if (-not (Test-Path -LiteralPath $repoDir)) {
+		Write-Step "Cloning $private"
+		gh repo clone "workbench-soft/$private" $repoDir
+	}
+	Write-Step "Running $private\install.sh"
+	& (Join-Path $env:ProgramFiles 'Git\bin\bash.exe') (($repoDir -replace '\\', '/') + '/install.sh')
+}
 
 # --- gh extensions -----------------------------------------------------------
 $ghExtensions = try { gh extension list 2>$null | Out-String } catch { '' }

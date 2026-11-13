@@ -52,7 +52,7 @@ flowchart LR
   ps[install.ps1] --> winget[winget]
   sh & ps --> mise[mise: node, pnpm, yarn]
   sh & ps --> gh[gh: login, clone repos]
-  gh --> repos[git-aliases, agent-skills, gh-review-notify on Mac]
+  gh --> repos[git-aliases, agent-skills, agent-skills-private, gh-review-notify on Mac]
   sh --> rsh[runner/install.sh]
   ps --> rps[runner/install.ps1]
   rps & dps[dashboard/install.ps1] --> boot[windows/boot-task.ps1]

@@ -25,7 +25,8 @@ $d = "$env:USERPROFILE\workbench-soft"; if (-not (Get-Command git -ErrorAction S
   [git-aliases](https://github.com/workbench-soft/git-aliases) and
   [agent-skills](https://github.com/workbench-soft/agent-skills) cloned beside
   this repo and installed: the git aliases, the agent skills, the agent
-  hooks and the spoken turn end. A Mac also gets gh-review-notify.
+  hooks and the spoken turn end. A Mac also gets gh-review-notify, and an
+  account that can read agent-skills-private gets its skills too.
 - **Questions** the git name and email, a GitHub login, the language of the
   skills. Answer no to the runner question on a machine that only develops.
 - **Already there** an app or a tool installed by hand or by IT stays. The
