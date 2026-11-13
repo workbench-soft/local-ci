@@ -360,6 +360,12 @@ Spec: [site-deploy](../specs/site-deploy.md).
 - **Tables** each workflow with its failures and build times, each machine,
   and the steps that fail most, with a link to the last failed job.
 - **Filter** one repo, and 7, 30 or 90 days.
+- **In each card** each app on the Releases tab and each site shows its
+  workflow's runs, failed share and usual time over 30 days. Each run in
+  Latest runs says the usual time and marks one slower than 9 in 10. The
+  Runners card gives each machine's runs, failures, build and wait over 14
+  days. The Trends tab link shows the failed share of the last 7 days. Each
+  line opens the Trends tab of its repo.
 - **Free** the page reads the GitHub API with its own token and keeps 90 days
   in `dashboardun-history.json`. No account or service.
 - **Limits** the machine, the failed step and the wait come from the jobs of

@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { formatAge } from '@/status/headline';
 import { dispatchVisibilityMs } from '@/status/release-dispatch-guard';
 import { dispatchSiteDeploy } from '@/status/site-actions';
+import type { WorkflowStats } from '@/status/run-stats';
 import { Icon, type IconName } from './icons';
+import { StatsLine } from './trends/stats-line';
 
 /** The newest run of a site's deploy workflow among the runs the page reads. */
 export type SiteRun = { status: string; conclusion: string | null; url: string; createdAt: string };
-export type SiteRow = { repo: string; file: string; run: SiteRun | null };
+export type SiteRow = { repo: string; file: string; run: SiteRun | null; stats?: WorkflowStats | null };
 
 type Answer = { busy?: boolean; requestedAt?: number; message?: string; error?: string };
 
@@ -42,7 +44,7 @@ export function SitesCard({ sites, now }: { sites: SiteRow[]; now: number }) {
       </p>
       {sites.length === 0 && <p className="muted small">No repo deploys a site from a workflow.</p>}
       <ul className="releases sites">
-        {sites.map(({ repo, file, run }) => {
+        {sites.map(({ repo, file, run, stats }) => {
           const chip = run && chipOf(run);
           const running = !!run && run.status !== 'completed';
           const answer = answers[repo] ?? {};
@@ -63,6 +65,7 @@ export function SitesCard({ sites, now }: { sites: SiteRow[]; now: number }) {
                 {run && <span className="muted small nowrap">{formatAge(run.createdAt, now)}</span>}
                 <span className="muted small">{file}</span>
               </div>
+              <StatsLine stats={stats} what="deploys" />
               <div className="release-actions">
                 <button
                   type="button"

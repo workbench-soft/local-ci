@@ -4,6 +4,7 @@ import type { RunnerKind } from './runner-kind.ts';
 import { activeStatuses, type Place } from './placement.ts';
 import { typicalDuration } from './progress.ts';
 import { type Release, releasesByRun, releasePrefixes, tagPrefix } from './releases.ts';
+import type { WorkflowStats } from './run-stats.ts';
 
 /** A run of a repo, with the place it builds on and the failure inside it. */
 export type PipelineRun = {
@@ -71,6 +72,8 @@ export type AppRelease = {
   replacedBy?: { id: number; url: string; sha: string | null; sameCommit?: boolean } | null;
   /** What the annotations and the log of the stopped job say. The page fills it in. */
   reason?: JobReason | null;
+  /** How the release workflow did over 30 days. The page fills it in from the run history. */
+  stats?: WorkflowStats | null;
 };
 
 const defaultBranches = new Set(['main', 'master']);

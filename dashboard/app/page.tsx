@@ -21,6 +21,8 @@ import { failureOf, fetchOrgStatus } from '@/status/org-status';
 import { idleWhileQueued, liveJobs, localRunnerNames, placeOfRun, runnerSlots } from '@/status/placement';
 import { releasesByRun } from '@/status/releases';
 import { readRunHistory } from '@/status/run-history';
+import { recentFailRate, statsKey, workflowStats } from '@/status/run-stats';
+import { computeTrends } from '@/status/trends';
 import { releaseWorkflowFor } from '@/status/release-workflow';
 import { localBuildOf } from '@/status/local-build-target';
 import { kindsOfRun } from '@/status/runner-kind';
@@ -44,7 +46,10 @@ export default async function StatusPage({
   ]);
   // Releases is the tab the person opens the page for; Status stays one click away.
   const tab = query.tab === 'status' || query.tab === 'trends' ? query.tab : 'releases';
-  const history = tab === 'trends' ? await readRunHistory() : null;
+  const history = await readRunHistory();
+  // Each card shows how its workflow did, so every tab reads the kept history.
+  const stats = workflowStats(history.history.runs, Date.now());
+  const failRate = recentFailRate(history.history.runs, Date.now());
   const trendDays = [7, 30, 90].includes(Number(query.days)) ? Number(query.days) : 30;
   const trendRepo = typeof query.repo === 'string' && query.repo ? query.repo : null;
   const now = Date.now();
@@ -66,6 +71,7 @@ export default async function StatusPage({
       failure: failureOf(run),
       machines: kindsOfRun(jobs, local),
       cancellation: cancels.get(run.id) ?? null,
+      usual: stats.get(statsKey(run.repo, run.workflow)) ?? null,
     };
   });
   // The release states need the place of each run and the failure inside its jobs.
@@ -89,6 +95,11 @@ export default async function StatusPage({
     jobs: run.jobs.map((job) => ({ name: job.name, conclusion: job.conclusion, failedStep: job.failedStep })),
   }));
   const apps = latestReleases(releases, pipelineRuns, cancels, now);
+  // An app with no release yet names its pipeline only through the run that builds it.
+  for (const app of apps) {
+    const workflow = app.pipeline ?? app.run?.workflow;
+    app.stats = workflow ? (stats.get(statsKey(app.repo, workflow)) ?? null) : null;
+  }
   // A failed or cancelled release says why, from the annotations and the log of its stopped job.
   if (tab === 'releases')
     await Promise.all(
@@ -122,6 +133,7 @@ export default async function StatusPage({
       repo,
       file,
       run: run ? { status: run.status, conclusion: run.conclusion, url: run.url, createdAt: run.createdAt } : null,
+      stats: run ? (stats.get(statsKey(repo, run.workflow)) ?? null) : null,
     };
   });
   const building = apps.filter((app) => app.state === 'building' || app.state === 'queued').length;
@@ -147,10 +159,15 @@ export default async function StatusPage({
           </Link>
           <Link href="/?tab=trends" aria-current={tab === 'trends' ? 'page' : undefined}>
             Trends
+            {failRate !== null && (
+              <span className={`count${failRate >= 0.25 ? ' bad' : ''}`} title="Failed runs of the last 7 days">
+                {Math.round(failRate * 100)}% failed
+              </span>
+            )}
           </Link>
         </nav>
       </div>
-      {history ? (
+      {tab === 'trends' ? (
         <TrendsView state={history} repo={trendRepo} days={trendDays} now={now} />
       ) : tab === 'releases' ? (
         <div className="grid">
@@ -176,7 +193,14 @@ export default async function StatusPage({
         <div className="grid">
           {org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />}
           <CloudCard state={routerState()} now={now} />
-          <RunnersCard pc={pc} org={org} jobs={live} count={count} now={now} />
+          <RunnersCard
+            pc={pc}
+            org={org}
+            jobs={live}
+            count={count}
+            now={now}
+            machines={computeTrends(history.history.runs, { now, days: 14 }).machines}
+          />
           {org.ok && <LatestRunsTable runs={rows} now={now} />}
         </div>
       )}

@@ -6,6 +6,7 @@ import { Icon, placeIcons, type IconName } from './icons';
 import { Detail, OutcomeText, type Outcome } from './release-detail';
 import { ReleaseProgress } from './release-progress';
 import { ReleaseButtons } from './release-buttons';
+import { StatsLine } from './trends/stats-line';
 
 export type LocalAction = {
   busy?: 'dispatch' | 'build' | 'install';
@@ -116,6 +117,7 @@ export function AppItem({
         <OutcomeText outcome={outcome} />
       </div>
       <Detail state={state} run={run} wait={wait} why={why} now={now} app={item} />
+      <StatsLine stats={item.stats} what="release runs" />
       {(state === 'building' || state === 'queued') && (
         <ReleaseProgress app={app} state={state} jobs={jobs} wait={wait} now={now} />
       )}

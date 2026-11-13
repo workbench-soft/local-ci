@@ -238,7 +238,9 @@ once, from the main checkout:
   the share that failed, the build time, the wait for a runner, the steps that
   fail most and each machine. It reads 90 days from the GitHub API once, then
   the new runs every 10 minutes, into `dashboardun-history.json`. No
-  account or service is needed.
+  account or service is needed. The same numbers sit in the cards: each app
+  and site shows its failed share and usual time, each run its usual time,
+  and the Runners card each machine.
 - **Errors** a failed run names its failed job and step, linked to the log. A
   failed install shows adb's error in a red box under the button.
 - **Links** the branch and the PR of each run open on GitHub.

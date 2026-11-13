@@ -1,5 +1,9 @@
+import Link from 'next/link';
 import { formatAge } from '@/status/headline';
 import type { OrgStatus } from '@/status/org-status';
+import { formatDuration } from '@/status/durations';
+import { kindNames } from '@/status/runner-kind';
+import type { MachineRow } from '@/status/trends';
 import type { LiveJob } from '@/status/placement';
 import type { RunnerCountInfo } from '@/status/runner-count';
 import { githubState, mergeRunners, pcState, type RunnerRow } from '@/status/runners';
@@ -14,12 +18,14 @@ export function RunnersCard({
   jobs,
   count,
   now,
+  machines = [],
 }: {
   pc: ThisPcStatus;
   org: OrgStatus;
   jobs: LiveJob[];
   count: RunnerCountInfo;
   now: number;
+  machines?: MachineRow[];
 }) {
   const githubRunners = org.ok ? org.runners : null;
   const rows = mergeRunners(pc.supported ? pc.runners : [], githubRunners);
@@ -48,6 +54,20 @@ export function RunnersCard({
         <p className="muted small">
           The checks of this PC's runners need Windows, so the card shows GitHub's view only.
         </p>
+      )}
+      {machines.length > 0 && (
+        <ul className="machine-stats small">
+          {machines.map((row) => (
+            <li key={row.kind}>
+              <Link href="/?tab=trends" title="Runs of the last 14 days whose jobs the page read">
+                <strong>{kindNames[row.kind]}</strong> 14 days: {row.runs} runs ·{' '}
+                {Math.round((row.failed / row.runs) * 100)}% failed
+                {row.build !== null && ` · build ${formatDuration(row.build)}`}
+                {row.wait !== null && ` · wait ${formatDuration(row.wait)}`}
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
       {!org.ok && <p className="error small">GitHub: {org.error}</p>}
       {org.ok && org.runners === null && (

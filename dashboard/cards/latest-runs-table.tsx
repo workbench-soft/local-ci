@@ -24,6 +24,8 @@ export type RunRow = Omit<WorkflowRun, 'jobs' | 'updatedAt'> & {
   /** The machines of its jobs: where it built, builds, or waits to build. */
   machines: RunnerKind[];
   cancellation?: CancelEntry | null;
+  /** The median and the p90 of the workflow's successful runs over 30 days. */
+  usual?: { medianMs: number | null; p90Ms: number | null } | null;
 };
 
 type SortKey = 'place' | 'machine' | 'repo' | 'workflow' | 'branch' | 'pr' | 'started' | 'took';
@@ -252,6 +254,18 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
             </span>
             {run.tookMs === null ? 'in queue' : formatDuration(run.tookMs)}
           </button>
+          {run.usual?.medianMs != null && (
+            <div className="muted small" title="The median of the workflow's successful runs over 30 days">
+              usually{' '}
+              {run.usual.medianMs < 60_000
+                ? formatDuration(run.usual.medianMs)
+                : `${Math.round(run.usual.medianMs / 60_000)} min`}
+              {run.status === 'completed' &&
+                run.tookMs !== null &&
+                run.usual.p90Ms != null &&
+                run.tookMs > run.usual.p90Ms && <span className="slow-mark"> slower than 9 in 10</span>}
+            </div>
+          )}
         </td>
         <td>
           {run.release && (

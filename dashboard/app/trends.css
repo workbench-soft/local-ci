@@ -174,3 +174,44 @@
 .steps td:first-child {
   overflow-wrap: anywhere;
 }
+
+/* The numbers of a workflow inside its own card, one muted line that opens the Trends tab. */
+.stats-line {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+.stats-line.stats-bad {
+  color: var(--bad);
+}
+
+.slow-mark {
+  color: var(--warn);
+}
+
+.machine-stats {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.machine-stats a {
+  color: var(--muted);
+}
+
+.machine-stats strong {
+  color: var(--text);
+  font-weight: 500;
+}
+
+/* Under a release row the line lines up with the row's other lines, past the checkbox. */
+.releases li > .stats-line {
+  margin-left: 28px;
+}
+
+.releases.sites li > .stats-line {
+  margin-left: 0;
+}
