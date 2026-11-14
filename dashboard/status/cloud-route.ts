@@ -15,6 +15,8 @@ export type Routes = { light: string[]; heavy: string[]; windows: string[]; why:
 
 export const localLight = ['self-hosted', 'local'];
 export const localHeavy = ['self-hosted', 'heavy'];
+/** Any of the PC runners. A Gradle, Cargo or Tauri job on this lane asks for heavy in its own runs-on. */
+export const localWindows = ['self-hosted', 'Windows'];
 export const oracleLight = ['self-hosted', 'oracle'];
 export const blacksmithLight = ['blacksmith-2vcpu-ubuntu-2404'];
 export const blacksmithHeavy = ['blacksmith-4vcpu-ubuntu-2404'];
@@ -42,7 +44,7 @@ export function pickRoutes(state: CloudState): Routes {
   return {
     light: pick(blacksmithLight, oracleLight, githubLinux, localLight),
     heavy: pick(blacksmithHeavy, null, githubLinux, localHeavy),
-    windows: pick(blacksmithWindows, null, githubWindows, localHeavy),
+    windows: pick(blacksmithWindows, null, githubWindows, localWindows),
     why: `${why.join('. ')}.`,
   };
 }

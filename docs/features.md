@@ -112,7 +112,9 @@ free minutes last, then on this PC. The PC stays free for work.
   else to `ubuntu-latest`, else to `[self-hosted, heavy]`. They skip Oracle,
   since Google ships no ARM Linux build tools.
 - **Windows jobs** go to Blacksmith 2 vCPU Windows, else to
-  `windows-latest`, else to `[self-hosted, heavy]`.
+  `windows-latest`, else to `[self-hosted, Windows]`, any of the PC runners.
+  A Tauri or Cargo job on this lane asks for `heavy` itself when the lane
+  points at the PC.
 - **Switch** the status page server sets `CI_RUNNER`, `CI_HEAVY_RUNNER` and
   `CI_WINDOWS_RUNNER` in each private repo when the route changes, and checks
   every repo each 30 minutes. GitHub Free hides org variables from private

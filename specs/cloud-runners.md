@@ -20,7 +20,8 @@ GitHub.
    - **Heavy** Blacksmith 4 vCPU, else `ubuntu-latest`, else
      `[self-hosted, heavy]`. Oracle is skipped: Android doesn't build on ARM.
    - **Windows** Blacksmith 2 vCPU Windows, else `windows-latest`, else
-     `[self-hosted, heavy]`.
+     `[self-hosted, Windows]`. A heavy job on this lane picks
+     `[self-hosted, heavy]` itself when the lane is on the PC.
 3. A job that waits on Blacksmith for over 5 minutes means Blacksmith is
    missing or down. The router turns Blacksmith off for an hour, sends both
    lanes to this PC, cancels the run and starts it again.
@@ -144,4 +145,18 @@ The VM launch of 2026-11-04 ran from a chat session and stopped with it. Sydney 
 - **Script** `runner/oracle-vm.sh` finds or creates the `ci-runner` VM through the `oci` CLI, then runs `oracle.sh` on it.
 - **Retries** every 3 minutes it asks for 4 OCPU and 24 GB, then 2 OCPU and 12 GB, for 72 hours by default.
 - **Detached** the PC starts it as its own process, so it outlives the session. The log goes to `%TEMP%oracle-vm.log`.
+- **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.
+
+## 2026-11-14 Light Windows jobs leave the heavy queue
+
+- **Why** on 2026-11-13 the keeppad JS bundle check waited 197 minutes and
+  the 2 heavy runners queued Gradle releases for up to 270 minutes. The
+  Windows lane fell back to `[self-hosted, heavy]`, so light Windows jobs
+  waited behind the Gradle builds.
+- **Route** the Windows lane falls back to `[self-hosted, Windows]`, any of
+  the PC runners.
+- **Heavy jobs** the Tauri build of memories and the Cargo jobs of
+  reddit-desk ask for `[self-hosted, heavy]` when `CI_WINDOWS_RUNNER` names a
+  self-hosted runner, and take the lane as it is in the cloud.
+- **Test** `cloud-route.test.ts` checks the new PC fallback.
 - **Docs** `README.md`, `docs/features.md`, `CHANGELOG.md`.

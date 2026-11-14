@@ -9,6 +9,7 @@ import {
   githubWindows,
   localHeavy,
   localLight,
+  localWindows,
   oracleLight,
   pickRoutes,
   stuckOnBlacksmith,
@@ -42,7 +43,7 @@ test('Oracle takes only the light lane once Blacksmith runs out', () => {
 test('GitHub runners come next, then this PC', () => {
   assert.deepEqual(lanes({ blacksmithOn: false }), [githubLinux, githubLinux, githubWindows]);
   for (const githubUsed of [1800, null])
-    assert.deepEqual(lanes({ blacksmithOn: false, githubUsed }), [localLight, localHeavy, localHeavy]);
+    assert.deepEqual(lanes({ blacksmithOn: false, githubUsed }), [localLight, localHeavy, localWindows]);
 });
 
 test('only variables with other labels get set', () => {
@@ -147,6 +148,6 @@ test('running GitHub jobs count their minutes so far, weighted, and PC jobs coun
 test('jobs move to the PC labels once billed and running minutes reach the free 2000 less the margin', () => {
   const stop = { blacksmithOn: false, githubBudget: 2000 - 300 };
   assert.deepEqual(lanes({ ...stop, githubUsed: 1699 }), [githubLinux, githubLinux, githubWindows]);
-  assert.deepEqual(lanes({ ...stop, githubUsed: 1700 }), [localLight, localHeavy, localHeavy]);
-  assert.deepEqual(lanes({ ...stop, githubUsed: 1930 }), [localLight, localHeavy, localHeavy]);
+  assert.deepEqual(lanes({ ...stop, githubUsed: 1700 }), [localLight, localHeavy, localWindows]);
+  assert.deepEqual(lanes({ ...stop, githubUsed: 1930 }), [localLight, localHeavy, localWindows]);
 });

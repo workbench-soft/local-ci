@@ -170,7 +170,7 @@ runs-on: ${{ fromJSON(vars.CI_HEAVY_RUNNER || '["self-hosted","heavy"]') }}
 | --- | --- | --- | --- | --- | --- |
 | Light: lint, tests | `CI_RUNNER` | Blacksmith 2 vCPU | Oracle VM | `ubuntu-latest` | `[self-hosted, local]` |
 | Heavy: Gradle, Cargo, Tauri | `CI_HEAVY_RUNNER` | Blacksmith 4 vCPU | | `ubuntu-latest` | `[self-hosted, heavy]` |
-| Windows builds | `CI_WINDOWS_RUNNER` | Blacksmith 2 vCPU Windows | | `windows-latest` | `[self-hosted, heavy]` |
+| Windows builds | `CI_WINDOWS_RUNNER` | Blacksmith 2 vCPU Windows | | `windows-latest` | `[self-hosted, Windows]` |
 
 - **Blacksmith** on once the Blacksmith app is installed in the org at
   [app.blacksmith.sh](https://app.blacksmith.sh). The page stops at 2700 of

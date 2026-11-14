@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Light Windows jobs skip the heavy queue** once the cloud minutes run out, `CI_WINDOWS_RUNNER` points at `[self-hosted, Windows]`, any of the 8 PC runners, in place of the 2 heavy ones. The JS bundle of keeppad and the check of agent-skills-private waited up to 3 hours behind Gradle releases. The Tauri and Cargo jobs of memories and reddit-desk still ask for `heavy` on the PC.
 - **Swift on Windows** `install.ps1` installs `Swift.Toolchain` with winget, so `mise run test:swift` of `spotthecam` runs on a new PC.
 - **Shuttrix releases finish** the sweep no longer cancels a Shuttrix build or its checks once a job has started, so a busy day of pushes to `memories` still ends in a release.
 - **Mac repos in WBS_ROOT** `install.sh` clones `git-aliases`, `agent-skills` and the rest into `WBS_ROOT` when it is set, as `install.ps1` does, so `restore.sh` of `workspace` keeps one copy of each.
