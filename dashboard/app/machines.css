@@ -1,0 +1,60 @@
+/* The machine chips and the color key under the tabs. Each machine chip keeps its machine's color. */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.machine-filter {
+  align-items: center;
+}
+
+.machine-chip.pc {
+  --machine: var(--m-pc);
+}
+
+.machine-chip.oracle {
+  --machine: var(--m-oracle);
+}
+
+.machine-chip.blacksmith {
+  --machine: var(--m-blacksmith);
+}
+
+.machine-chip.github {
+  --machine: var(--m-github);
+}
+
+.machine-chip {
+  border-color: var(--machine);
+  color: var(--machine);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.chip.machine-chip[aria-pressed='true'] {
+  background: var(--machine);
+  border-color: var(--machine);
+  color: var(--card);
+}
+
+.machine-filter .chip {
+  text-decoration: none;
+}
+
+.color-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.color-key strong {
+  color: var(--text);
+  font-weight: 600;
+}

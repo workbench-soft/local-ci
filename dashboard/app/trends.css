@@ -144,7 +144,7 @@
 }
 
 .delta-worse {
-  color: var(--bad);
+  color: var(--warn);
 }
 
 .delta-better {
@@ -183,7 +183,7 @@
 }
 
 .stats-line.stats-bad {
-  color: var(--bad);
+  color: var(--warn);
 }
 
 .slow-mark {

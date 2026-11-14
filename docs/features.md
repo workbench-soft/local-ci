@@ -193,8 +193,18 @@ icon: a white loop arrow round a check on a teal to violet gradient.
 - **Limit** Apply needs a person logged on, and one run of
   `runner\install.ps1` after this change to add the task it starts. Mac
   runners change only through `RUNNER_COUNT`.
-- **Machine** each run names the machines of its jobs: This PC, Oracle,
-  Blacksmith or GitHub, each in its own color. A queued run names the machine
+- **Colors** each color means one thing, and a key under the tabs says it:
+  green worked, red broke, gray stopped or not needed, blue builds, yellow
+  waits or looks worse. Red marks errors only. A released app or a deployed
+  site gets a green row with a solid green chip. A cancelled run reads
+  `stopped` and a skipped one `not needed`, both gray, each with a hover
+  line on why.
+- **Machine filter** chips under the tabs show one machine: This PC, Oracle,
+  Blacksmith or GitHub, or All. The pick sits in `?machine=` and a cookie,
+  so it stays on each tab. Runs, releases, sites, live jobs, runners and
+  trends keep what touched that machine. The headline counts every machine.
+- **Machine** each run names the machines of its jobs: This PC blue, Oracle
+  teal, Blacksmith purple, GitHub pink. A queued run names the machine
   it waits for, and the hover says built, builds or waits. The Cloud filter
   picks runs with a cloud job, and search finds a machine name. The live
   jobs say `Blacksmith: <runner>` or `waits for This PC: self-hosted, heavy`.

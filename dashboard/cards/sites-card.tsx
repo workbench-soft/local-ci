@@ -18,9 +18,11 @@ function chipOf(run: SiteRun): { icon: IconName; text: string; tone: string } {
     return { icon: 'queued', text: 'Queued', tone: 'warn' };
   if (run.status !== 'completed') return { icon: 'running', text: 'Deploying', tone: 'busy' };
   if (run.conclusion === 'success') return { icon: 'success', text: 'Deployed', tone: 'ok' };
-  if (run.conclusion === 'cancelled') return { icon: 'cancelled', text: 'Cancelled', tone: 'bad' };
+  if (run.conclusion === 'cancelled') return { icon: 'cancelled', text: 'Stopped', tone: 'muted' };
   return { icon: 'failure', text: 'Failed', tone: 'bad' };
 }
+
+const rowOf: Record<string, string | undefined> = { ok: 'row-ok', bad: 'row-bad', muted: 'row-muted' };
 
 /** Each org repo with a site, its last deploy, and a button that deploys main again on CI. */
 export function SitesCard({ sites, now }: { sites: SiteRow[]; now: number }) {
@@ -51,11 +53,16 @@ export function SitesCard({ sites, now }: { sites: SiteRow[]; now: number }) {
           // GitHub lists a dispatched run some seconds later, so the button waits that long.
           const justQueued = answer.requestedAt !== undefined && now - answer.requestedAt < dispatchVisibilityMs;
           return (
-            <li key={repo}>
+            <li key={repo} className={chip ? rowOf[chip.tone] : undefined}>
               <div className="release-head">
                 <strong>{repo}</strong>
                 {run && chip ? (
-                  <a className={`state ${chip.tone}`} href={run.url} target="_blank" rel="noreferrer">
+                  <a
+                    className={`state ${chip.tone}${chip.tone === 'ok' ? ' solid' : ''}`}
+                    href={run.url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     <Icon name={chip.icon} />
                     {chip.text}
                   </a>

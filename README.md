@@ -227,10 +227,14 @@ once, from the main checkout:
   Android SDK.
 - **Releases tab** opens by default at `http://localhost:4280`, with Status
   one click away at `/?tab=status`. Each app shows the state of its release:
-  released, building, queued, errored, cancelled, held, or no release yet.
+  released, building, queued, errored, stopped, held, or no release yet. A
+  released app gets a green row, an errored one a red row, a stopped one a
+  gray row. A key under the tabs says what each color means, and red marks
+  errors only. Machine chips there show one machine on every tab: This PC,
+  Oracle, Blacksmith or GitHub.
   Held means the release run skipped, since its gate held it or its Checks
   failed. A building row shows a progress bar, the machine it builds on and
-  the time left, from the usual time of past runs. A cancelled row says why:
+  the time left, from the usual time of past runs. A stopped row says why:
   each force cancel, from the page or from the sweep, writes its reason to
   `dashboard\cancel-reasons.jsonl`. The newest release of each app sits
   beside its state with its notes under Changes. Tick several apps and

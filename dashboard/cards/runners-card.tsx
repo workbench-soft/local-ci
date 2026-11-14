@@ -7,6 +7,7 @@ import type { MachineRow } from '@/status/trends';
 import type { LiveJob } from '@/status/placement';
 import type { RunnerCountInfo } from '@/status/runner-count';
 import { githubState, mergeRunners, pcState, type RunnerRow } from '@/status/runners';
+import { kindOfRunner, type MachinePick } from '@/status/machine-filter';
 import type { ThisPcStatus } from '@/status/this-pc';
 import { RunnerCountForm } from './runner-count-form';
 import { StatusDot } from './status-dot';
@@ -18,6 +19,7 @@ export function RunnersCard({
   jobs,
   count,
   now,
+  machine = null,
   machines = [],
 }: {
   pc: ThisPcStatus;
@@ -25,10 +27,13 @@ export function RunnersCard({
   jobs: LiveJob[];
   count: RunnerCountInfo;
   now: number;
+  machine?: MachinePick | null;
   machines?: MachineRow[];
 }) {
   const githubRunners = org.ok ? org.runners : null;
-  const rows = mergeRunners(pc.supported ? pc.runners : [], githubRunners);
+  const rows = mergeRunners(pc.supported ? pc.runners : [], githubRunners).filter(
+    (row) => !machine || kindOfRunner(row.here !== null, row.github) === machine,
+  );
   return (
     <section className="card wide">
       <h2>Runners</h2>
@@ -45,6 +50,8 @@ export function RunnersCard({
             />
           ))}
         </ul>
+      ) : machine ? (
+        <p className="muted small">No runner of this machine is listed. GitHub and Blacksmith lend one per job.</p>
       ) : (
         <p className="error">
           No runner is installed. Run {pc.supported ? 'runner\\install.ps1' : 'runner/install.sh'}.

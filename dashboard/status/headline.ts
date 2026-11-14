@@ -2,8 +2,8 @@ import type { OrgStatus, WorkflowRun } from './org-status.ts';
 import { activeStatuses, type LiveJob } from './placement.ts';
 import type { ThisPcStatus } from './this-pc.ts';
 
-/** The color of a status dot: green, blue, amber or red. */
-export type Tone = 'ok' | 'busy' | 'warn' | 'bad';
+/** The color of a status dot: green worked, blue builds, amber waits, red broke, gray ended with no result. */
+export type Tone = 'ok' | 'busy' | 'warn' | 'bad' | 'muted';
 
 const waitingStatuses = new Set(['queued', 'waiting', 'pending']);
 
@@ -19,8 +19,9 @@ export function formatAge(iso: string, now: number): string {
 export function toneOfRun({ status, conclusion }: Pick<WorkflowRun, 'status' | 'conclusion'>): Tone {
   if (waitingStatuses.has(status)) return 'warn';
   if (activeStatuses.has(status)) return 'busy';
-  if (conclusion === 'success' || conclusion === 'skipped') return 'ok';
-  if (conclusion === 'cancelled' || conclusion === 'neutral') return 'warn';
+  if (conclusion === 'success') return 'ok';
+  // Stopped or not needed: the run ended with no result, so it is neither good nor broken.
+  if (conclusion === 'cancelled' || conclusion === 'skipped' || conclusion === 'neutral') return 'muted';
   return 'bad';
 }
 

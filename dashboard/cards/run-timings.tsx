@@ -73,6 +73,11 @@ export function RunTimings({
 }
 
 function TimeText({ item }: { item: StepTiming }) {
-  if (item.conclusion === 'skipped') return <span className="timing-time muted">skipped</span>;
+  if (item.conclusion === 'skipped')
+    return (
+      <span className="timing-time muted" title="No need to run it this time">
+        not needed
+      </span>
+    );
   return <span className="timing-time muted">{item.ms === null ? 'waits' : formatDuration(item.ms)}</span>;
 }

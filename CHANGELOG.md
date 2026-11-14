@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Colors read at a glance** red marks errors only, a released app or a deployed site gets a green row, and a key under the tabs says what each color means. A cancelled run reads `stopped` and a skipped one `not needed`, both gray, each with a hover line. Oracle, Blacksmith, GitHub and This PC each keep a color of their own, none red, green, gray or yellow.
+- **Machine filter** chips under the tabs show one machine on every tab: This PC, Oracle, Blacksmith or GitHub.
 - **Light Windows jobs skip the heavy queue** once the cloud minutes run out, `CI_WINDOWS_RUNNER` points at `[self-hosted, Windows]`, any of the 8 PC runners, in place of the 2 heavy ones. The JS bundle of keeppad and the check of agent-skills-private waited up to 3 hours behind Gradle releases. The Tauri and Cargo jobs of memories and reddit-desk still ask for `heavy` on the PC.
 - **Swift on Windows** `install.ps1` installs `Swift.Toolchain` with winget, so `mise run test:swift` of `spotthecam` runs on a new PC.
 - **Shuttrix releases finish** the sweep no longer cancels a Shuttrix build or its checks once a job has started, so a busy day of pushes to `memories` still ends in a release.

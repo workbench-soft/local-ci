@@ -120,7 +120,7 @@ export function StopReason({ app, run, now }: { app: AppRelease; run: RunView; n
   const reason = app.reason ?? null;
   const showMessage = reason?.message && reason.kind !== 'forced' && reason.kind !== 'cancelled-by';
   return (
-    <div className="release-detail stop-reason small">
+    <div className={`release-detail stop-reason small${run.conclusion === 'cancelled' ? ' muted' : ''}`}>
       <p className="reason-head">
         {headline(app, run, reason)}
         {app.why && <span className="muted"> · {formatAge(app.why.at, now)}</span>}

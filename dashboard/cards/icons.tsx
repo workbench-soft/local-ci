@@ -4,6 +4,7 @@ export type IconName =
   | 'success'
   | 'failure'
   | 'cancelled'
+  | 'skipped'
   | 'running'
   | 'queued'
   | 'local'
@@ -20,6 +21,7 @@ const paths: Record<IconName, string[]> = {
   success: ['M20 6 9 17l-5-5'],
   failure: ['M18 6 6 18', 'M6 6l12 12'],
   cancelled: ['M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18', 'M5.6 5.6l12.8 12.8'],
+  skipped: ['M5 5l7 7-7 7', 'M13 5l7 7-7 7'],
   running: ['M21 12a9 9 0 1 1-6.2-8.6'],
   queued: ['M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18', 'M12 7v5l3 2'],
   local: ['M3 4h18v12H3z', 'M8 20h8', 'M12 16v4'],
@@ -73,12 +75,27 @@ export const placeIcons: Record<Exclude<Place, 'done'>, { icon: IconName; text: 
   },
 };
 
-/** The icon and the words for the result of a run. */
-export function resultOf(status: string, conclusion: string | null): { icon: IconName; text: string } {
-  if (status === 'in_progress') return { icon: 'running', text: 'running' };
-  if (status !== 'completed') return { icon: 'queued', text: status.replace('_', ' ') };
-  if (conclusion === 'success') return { icon: 'success', text: 'success' };
-  if (conclusion === 'cancelled' || conclusion === 'skipped' || conclusion === 'neutral')
-    return { icon: 'cancelled', text: conclusion };
-  return { icon: 'failure', text: conclusion ?? 'failed' };
+/** The plain words for each end of a run, with a hover line a new reader understands. */
+const ends: Record<string, { icon: IconName; text: string; hint: string }> = {
+  success: { icon: 'success', text: 'passed', hint: 'It worked. Every job ended well.' },
+  cancelled: {
+    icon: 'cancelled',
+    text: 'stopped',
+    hint: 'Stopped before the end: a newer push took its place, or Stop or Local CI ended it. Nothing broke.',
+  },
+  skipped: {
+    icon: 'skipped',
+    text: 'not needed',
+    hint: 'GitHub started it, but no job had to run, such as a release the gate held. Nothing broke.',
+  },
+  neutral: { icon: 'cancelled', text: 'no result', hint: 'It ended without saying passed or failed.' },
+  timed_out: { icon: 'failure', text: 'timed out', hint: 'It ran too long, so GitHub stopped it. Open the log.' },
+};
+
+/** The icon, the words and the hover line for the result of a run. */
+export function resultOf(status: string, conclusion: string | null): { icon: IconName; text: string; hint: string } {
+  if (status === 'in_progress') return { icon: 'running', text: 'building', hint: 'A runner builds it right now.' };
+  if (status !== 'completed')
+    return { icon: 'queued', text: 'waiting', hint: 'It waits for a free runner with the right labels.' };
+  return ends[conclusion ?? ''] ?? { icon: 'failure', text: 'failed', hint: 'It broke. Open the log to see why.' };
 }

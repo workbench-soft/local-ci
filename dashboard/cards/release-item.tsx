@@ -16,16 +16,19 @@ export type LocalAction = {
   artifact?: { token: string; fileName: string; commit: string };
 };
 
-/** The look and the words of each release state. */
+/** The look and the words of each release state. Red stays for a release that broke. */
 const chipOf: Record<ReleaseState, { icon: IconName; text: string; tone: 'ok' | 'busy' | 'warn' | 'bad' | 'muted' }> = {
   released: { icon: 'success', text: 'Released', tone: 'ok' },
   building: { icon: 'running', text: 'Building', tone: 'busy' },
   queued: { icon: 'queued', text: 'Queued', tone: 'warn' },
   errored: { icon: 'failure', text: 'Errored', tone: 'bad' },
-  cancelled: { icon: 'cancelled', text: 'Cancelled', tone: 'bad' },
+  cancelled: { icon: 'cancelled', text: 'Stopped', tone: 'muted' },
   'gate-held': { icon: 'queued', text: 'Held', tone: 'warn' },
   'no-release': { icon: 'package', text: 'No release yet', tone: 'muted' },
 };
+
+/** A release that worked fills its row with green, one that broke with red, a stopped one with gray. */
+const rowOf: Partial<Record<ReleaseState, string>> = { released: 'row-ok', errored: 'row-bad', cancelled: 'row-muted' };
 
 /** The chip names the cause of a stop when one word can say it. */
 function chipText({ state, reason, why }: AppRelease): string | null {
@@ -75,7 +78,7 @@ export function AppItem({
   const chip = { ...chipOf[state], text: chipText(item) ?? chipOf[state].text };
   const hint = run && run.place !== 'done' && state === 'building' ? placeIcons[run.place].hint : undefined;
   return (
-    <li>
+    <li className={rowOf[state]}>
       <div className="release-head">
         <input
           type="checkbox"
@@ -87,12 +90,18 @@ export function AppItem({
         />
         <strong>{app}</strong>
         {run ? (
-          <a className={`state ${chip.tone}`} href={run.url} target="_blank" rel="noreferrer" title={hint}>
+          <a
+            className={`state ${chip.tone}${state === 'released' ? ' solid' : ''}`}
+            href={run.url}
+            target="_blank"
+            rel="noreferrer"
+            title={hint}
+          >
             <Icon name={chip.icon} />
             {chip.text}
           </a>
         ) : (
-          <span className={`state ${chip.tone}`}>
+          <span className={`state ${chip.tone}${state === 'released' ? ' solid' : ''}`}>
             <Icon name={chip.icon} />
             {chip.text}
           </span>

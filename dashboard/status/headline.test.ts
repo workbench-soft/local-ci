@@ -75,9 +75,9 @@ test('toneOfRun maps status and conclusion to a color', () => {
   for (const status of ['queued', 'waiting', 'pending']) assert.equal(toneOfRun(run(status)), 'warn');
   for (const status of ['in_progress', 'requested']) assert.equal(toneOfRun(run(status)), 'busy');
   assert.equal(toneOfRun(run('completed', 'success')), 'ok');
-  assert.equal(toneOfRun(run('completed', 'skipped')), 'ok');
-  assert.equal(toneOfRun(run('completed', 'cancelled')), 'warn');
-  assert.equal(toneOfRun(run('completed', 'neutral')), 'warn');
+  assert.equal(toneOfRun(run('completed', 'skipped')), 'muted');
+  assert.equal(toneOfRun(run('completed', 'cancelled')), 'muted');
+  assert.equal(toneOfRun(run('completed', 'neutral')), 'muted');
   assert.equal(toneOfRun(run('completed', 'failure')), 'bad');
   assert.equal(toneOfRun(run('completed', 'timed_out')), 'bad');
   assert.equal(toneOfRun(run('completed', null)), 'bad');

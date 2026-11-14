@@ -52,7 +52,7 @@ export function Detail({
   if ((state === 'errored' || state === 'cancelled') && app && run) return <StopReason app={app} run={run} now={now} />;
   if (state === 'cancelled') {
     return (
-      <p className="release-detail bad small">
+      <p className="release-detail muted small">
         {why ? (
           <>
             <CancelReason entry={why} /> · {formatAge(why.at, now)}

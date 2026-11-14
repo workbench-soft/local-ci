@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import './styles.css';
 import './releases.css';
 import './trends.css';
+import './machines.css';
 
 export const metadata: Metadata = {
   title: 'Local CI',

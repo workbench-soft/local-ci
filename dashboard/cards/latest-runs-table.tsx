@@ -186,7 +186,7 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
     <Fragment>
       <tr className={rowClass || undefined} aria-busy={gray || undefined}>
         <td className="nowrap">
-          <span className={`result ${toneOfRun(run)}`}>
+          <span className={`result ${toneOfRun(run)}`} title={result.hint}>
             <Icon name={result.icon} />
             {result.text}
           </span>

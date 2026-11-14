@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { CancellationHistory } from '@/cards/cancellation-history';
 import { AutoRefresh } from '@/cards/auto-refresh';
 import { CloudCard } from '@/cards/cloud-card';
 import { LatestRunsTable, type RunRow } from '@/cards/latest-runs-table';
 import { LiveJobsCard } from '@/cards/live-jobs-card';
+import { ColorKey, MachineFilter } from '@/cards/machine-filter';
 import { ReleasesCard } from '@/cards/releases-card';
 import { RunnersCard } from '@/cards/runners-card';
 import { SitesCard, type SiteRow } from '@/cards/sites-card';
@@ -25,9 +27,16 @@ import { recentFailRate, statsKey, workflowStats } from '@/status/run-stats';
 import { computeTrends } from '@/status/trends';
 import { releaseWorkflowFor } from '@/status/release-workflow';
 import { localBuildOf } from '@/status/local-build-target';
+import { machineCookie, machineOf, touches } from '@/status/machine-filter';
 import { kindsOfRun } from '@/status/runner-kind';
 import { siteWorkflows } from '@/status/site-deploy';
 import { readRunnerCount, readThisPc } from '@/status/this-pc';
+
+/** The tab, repo and period of the address, so a machine chip keeps them. */
+const keptQuery = (query: Record<string, string | string[] | undefined>) =>
+  Object.fromEntries(
+    ['tab', 'repo', 'days'].flatMap((key) => (typeof query[key] === 'string' ? [[key, query[key]]] : [])),
+  ) as Record<string, string>;
 
 // Each visit reads the runner afresh, so Next must not prerender the page.
 export const dynamic = 'force-dynamic';
@@ -37,16 +46,26 @@ export default async function StatusPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [pc, org, count, query, cancels] = await Promise.all([
+  const [pc, org, count, query, cancels, jar] = await Promise.all([
     readThisPc(),
     fetchOrgStatus(),
     readRunnerCount(),
     searchParams,
     readCancels(),
+    cookies(),
   ]);
+  // One machine, or all of them. The headline still counts every machine.
+  const machine = machineOf(query.machine, jar.get(machineCookie)?.value);
   // Releases is the tab the person opens the page for; Status stays one click away.
   const tab = query.tab === 'status' || query.tab === 'trends' ? query.tab : 'releases';
-  const history = await readRunHistory();
+  const fullHistory = await readRunHistory();
+  const history = {
+    ...fullHistory,
+    history: {
+      ...fullHistory.history,
+      runs: fullHistory.history.runs.filter((run) => touches(run.jobs?.kinds, machine)),
+    },
+  };
   // Each card shows how its workflow did, so every tab reads the kept history.
   const stats = workflowStats(history.history.runs, Date.now());
   const failRate = recentFailRate(history.history.runs, Date.now());
@@ -54,13 +73,15 @@ export default async function StatusPage({
   const trendRepo = typeof query.repo === 'string' && query.repo ? query.repo : null;
   const now = Date.now();
   const local = localRunnerNames(pc);
-  const runs = org.ok ? org.runs : [];
+  const allRuns = org.ok ? org.runs : [];
   const releases = org.ok ? org.releases : [];
-  const live = liveJobs(runs, local);
-  const stuck = idleWhileQueued(org.ok ? org.runners : null, local, live, now);
-  const headline = summarizeCi(pc, org, live, stuck);
+  const allLive = liveJobs(allRuns, local);
+  const stuck = idleWhileQueued(org.ok ? org.runners : null, local, allLive, now);
+  const headline = summarizeCi(pc, org, allLive, stuck);
+  const runs = allRuns.filter((run) => touches(kindsOfRun(run.jobs, local), machine));
+  const live = allLive.filter((job) => touches([job.kind], machine));
   // The table runs in the browser, so it gets each run without its jobs.
-  const releaseOf = releasesByRun(runs, releases);
+  const releaseOf = releasesByRun(allRuns, releases);
   const rows: RunRow[] = runs.map((run) => {
     const { jobs, updatedAt, ...row } = run;
     return {
@@ -75,7 +96,7 @@ export default async function StatusPage({
     };
   });
   // The release states need the place of each run and the failure inside its jobs.
-  const pipelineRuns: PipelineRun[] = runs.map((run) => ({
+  const pipelineRuns: PipelineRun[] = allRuns.map((run) => ({
     id: run.id,
     repo: run.repo,
     workflow: run.workflow,
@@ -94,7 +115,10 @@ export default async function StatusPage({
     machines: kindsOfRun(run.jobs, local),
     jobs: run.jobs.map((job) => ({ name: job.name, conclusion: job.conclusion, failedStep: job.failedStep })),
   }));
-  const apps = latestReleases(releases, pipelineRuns, cancels, now);
+  // An app shows under a machine when its current run has a job there.
+  const apps = latestReleases(releases, pipelineRuns, cancels, now).filter((app) =>
+    touches(app.run?.machines, machine),
+  );
   // An app with no release yet names its pipeline only through the run that builds it.
   for (const app of apps) {
     const workflow = app.pipeline ?? app.run?.workflow;
@@ -105,7 +129,7 @@ export default async function StatusPage({
     await Promise.all(
       apps.map(async (app) => {
         if (!app.run || (app.state !== 'errored' && app.state !== 'cancelled')) return;
-        const job = stoppedJob(runs.find((run) => run.id === app.run?.id)?.jobs ?? []);
+        const job = stoppedJob(allRuns.find((run) => run.id === app.run?.id)?.jobs ?? []);
         app.reason = job ? await readReason(app.repo, job) : null;
       }),
     );
@@ -127,8 +151,9 @@ export default async function StatusPage({
     tab === 'releases' && org.ok ? siteWorkflows() : [],
   ]);
   // Runs come newest first, so the first run of a site's deploy workflow is its last deploy.
-  const sites: SiteRow[] = siteFlows.map(({ repo, workflow, file }) => {
-    const run = runs.find((item) => item.repo === repo && item.workflowId === workflow);
+  const sites: SiteRow[] = siteFlows.flatMap(({ repo, workflow, file }) => {
+    const run = allRuns.find((item) => item.repo === repo && item.workflowId === workflow);
+    if (machine && !(run && touches(kindsOfRun(run.jobs, local), machine))) return [];
     return {
       repo,
       file,
@@ -160,12 +185,16 @@ export default async function StatusPage({
           <Link href="/?tab=trends" aria-current={tab === 'trends' ? 'page' : undefined}>
             Trends
             {failRate !== null && (
-              <span className={`count${failRate >= 0.25 ? ' bad' : ''}`} title="Failed runs of the last 7 days">
+              <span className={`count${failRate >= 0.25 ? ' warn' : ''}`} title="Failed runs of the last 7 days">
                 {Math.round(failRate * 100)}% failed
               </span>
             )}
           </Link>
         </nav>
+        <div className="filter-bar">
+          <MachineFilter pick={machine} query={keptQuery(query)} />
+          <ColorKey />
+        </div>
       </div>
       {tab === 'trends' ? (
         <TrendsView state={history} repo={trendRepo} days={trendDays} now={now} />
@@ -199,6 +228,7 @@ export default async function StatusPage({
             jobs={live}
             count={count}
             now={now}
+            machine={machine}
             machines={computeTrends(history.history.runs, { now, days: 14 }).machines}
           />
           {org.ok && <LatestRunsTable runs={rows} now={now} />}

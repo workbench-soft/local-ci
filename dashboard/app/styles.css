@@ -1,4 +1,5 @@
-/* The four tones color the status dots. busy doubles as the link color, bad as the error text.
+/* Each tone means one thing: ok worked, bad broke, muted ended with no result, busy builds, warn waits.
+   bad colors errors only. The machine colors keep clear of all five, so a chip never reads as a state.
    Each tone reaches 4.5:1 on the card and on the page, since it also colors small text. */
 :root {
   --bg: #f6f7f9;
@@ -11,6 +12,10 @@
   --chip-on: #415ed3;
   --warn: #8a6400;
   --bad: #ca2d00;
+  --m-pc: #415ed3;
+  --m-oracle: #0b7a8c;
+  --m-blacksmith: #7c3aed;
+  --m-github: #c0267d;
   color-scheme: light dark;
 }
 
@@ -27,6 +32,10 @@
     --chip-on: #4a68e0;
     --warn: #d9ae27;
     --bad: #ef6749;
+    --m-pc: #6e8ef6;
+    --m-oracle: #3cc3d8;
+    --m-blacksmith: #a78bfa;
+    --m-github: #f472b6;
   }
 }
 
@@ -135,6 +144,10 @@ h1 .dot {
 
 .dot.bad {
   background: var(--bad);
+}
+
+.dot.muted {
+  background: var(--muted);
 }
 
 /* A busy dot pulses, so a running build shows without reading the text. */
@@ -324,6 +337,10 @@ a:hover {
 
 .result.bad {
   color: var(--bad);
+}
+
+.result.muted {
+  color: var(--muted);
 }
 
 .place {
@@ -575,8 +592,9 @@ td .run-controls {
   margin: 0;
 }
 
+/* A button that deletes asks to confirm. It stays out of red, which marks errors only. */
 .action.danger {
-  color: var(--bad);
+  color: var(--warn);
 }
 
 .action:hover:not(:disabled) {
@@ -786,18 +804,21 @@ td .run-controls {
 }
 
 .machine.pc {
-  color: var(--busy);
+  color: var(--m-pc);
 }
 
 .machine.oracle {
-  color: #e5533d;
+  color: var(--m-oracle);
 }
 
 .machine.blacksmith {
-  color: #8b5cf6;
+  color: var(--m-blacksmith);
 }
 
-.machine.github,
+.machine.github {
+  color: var(--m-github);
+}
+
 .machine.other {
   color: var(--muted);
 }
