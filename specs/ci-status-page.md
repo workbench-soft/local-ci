@@ -821,3 +821,20 @@ browser at each logon.
   and `cards/machine-filter.tsx` new, `status/machine-filter.ts` for the
   pick and the filters, `proxy.ts` for the cookie, `app/page.tsx` to apply it.
 - **Docs** `docs/features.md`, `README.md` where they name the colors.
+
+### 2026-11-15 A tab click shows the tab's skeleton at once
+
+- **Why** a click on Releases, Status or Trends left the old page up for
+  about 5 seconds while the server read GitHub and the history, so the page
+  looked frozen.
+- **Changes**
+  - **`cards/tab-switch.tsx`** new. The tab links and the tab body as client
+    parts. A plain click marks the new tab at once through `useOptimistic`
+    and the `onNavigate` of `Link`, and the body shows gray placeholder
+    cards in the new tab's shape until the server's page comes. A Ctrl or
+    middle click still opens the tab in a new browser tab.
+  - **`app/page.tsx`** renders the tabs and the body through it.
+  - **`app/releases.css`** the placeholder cards and their pulse, which
+    stops under reduced motion.
+- **Steps** the spec, then the component, the page and the styles.
+- **Docs** `docs/features.md` and `CHANGELOG.md`.
