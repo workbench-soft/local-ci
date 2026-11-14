@@ -463,7 +463,9 @@ flowchart LR
     with `cancel-in-progress: true`. The group is the workflow name with the
     PR number or the branch, so a newer push cancels the older run at once.
   - **Sweep** `status/cancel-superseded.ts` force cancels a run that a newer
-    commit of the same repo, workflow, branch and event replaced.
+    commit of the same repo, workflow, branch and event replaced. A Shuttrix
+    release or checks run of `memories` that has a started job ends instead,
+    since its 40 minute build never finished on a day of many pushes.
 - **Why** the queue filled with runs of replaced commits and merged PRs.
   They took runners to build code already replaced. On 2026-11-11 the page
   was down for an hour and old `memories` releases held all 8 runners, so

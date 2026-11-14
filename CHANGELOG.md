@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Shuttrix releases finish** the sweep no longer cancels a Shuttrix build or its checks once a job has started, so a busy day of pushes to `memories` still ends in a release.
 - **Mac repos in WBS_ROOT** `install.sh` clones `git-aliases`, `agent-skills` and the rest into `WBS_ROOT` when it is set, as `install.ps1` does, so `restore.sh` of `workspace` keeps one copy of each.
 - **Release button starts missing Checks** a release from the page also starts Checks on main when its tip has none, as after a docs change. Their end then publishes the build. Checks the release job starts itself never publish, since GitHub fires no `workflow_run` for a run the job's token started.
 - **Releases publish on Oracle again** `runner/mise-ci.toml` gives the CI jobs `zstd`. Without it the PC saved release files with gzip, and the publish job on the Oracle runner looked for a zstd entry and stopped on a cache miss.

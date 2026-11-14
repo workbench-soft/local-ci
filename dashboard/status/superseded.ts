@@ -4,7 +4,17 @@ import { activeStatuses } from './placement.ts';
 
 type RunKey = Pick<
   WorkflowRun,
-  'id' | 'repo' | 'workflowId' | 'branch' | 'event' | 'status' | 'headSha' | 'pullRequests' | 'conclusion'
+  | 'id'
+  | 'repo'
+  | 'workflowId'
+  | 'workflow'
+  | 'branch'
+  | 'event'
+  | 'status'
+  | 'headSha'
+  | 'pullRequests'
+  | 'conclusion'
+  | 'jobs'
 >;
 const replaceableEvents = new Set(['push', 'workflow_dispatch', 'pull_request', 'pull_request_target']);
 const prEvents = new Set(['pull_request', 'pull_request_target']);
@@ -22,6 +32,12 @@ const checksOfRelease: Record<string, string> = {
   'memories/Desktop release': 'Desktop checks',
   'memories/Shuttrix release': 'Shuttrix checks',
 };
+// Workflows that set cancel-in-progress: false. A newer commit replaces their run only before a job starts,
+// since a 40 minute Shuttrix build cancelled by each push to main never published a release.
+const finishOnceStarted = new Set(['memories/Shuttrix release', 'memories/Shuttrix checks']);
+const started = (run: Pick<WorkflowRun, 'repo' | 'workflow' | 'jobs'>) =>
+  finishOnceStarted.has(`${run.repo}/${run.workflow}`) &&
+  run.jobs.some((job) => job.status === 'in_progress' || job.status === 'completed');
 const checksOfRepo: Record<string, string> = {
   'agent-skills': 'check',
   'agent-skills-private': 'check',
@@ -40,7 +56,7 @@ function groupOf(run: RunKey): string {
 
 /** Only a build of a different commit in the same workflow and branch replaces a run. */
 export function replacementRuns<T extends RunKey>(runs: T[]): { run: T; replacement: T }[] {
-  return replaced(runs, (run) => activeStatuses.has(run.status));
+  return replaced(runs, (run) => activeStatuses.has(run.status) && !started(run));
 }
 
 const githubCancelWindowMs = 5 * 60_000;

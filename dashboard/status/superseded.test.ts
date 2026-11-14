@@ -83,6 +83,20 @@ test('fork PRs with the same branch name keep their separate scope', () => {
   assert.deepEqual(replacementRuns([old, other]), []);
 });
 
+test('a started Shuttrix build ends, a waiting one gives way to the newer commit', () => {
+  const job = (status: string) => ({ status }) as WorkflowRun['jobs'][number];
+  const camera = { repo: 'memories', workflow: 'Shuttrix release' };
+  const running = run(1, { ...camera, status: 'queued', jobs: [job('in_progress'), job('queued')] });
+  const waiting = run(2, { ...camera, workflowId: 2, status: 'queued', jobs: [job('queued')] });
+  const newer = [run(10, camera), run(11, { ...camera, workflowId: 2 })];
+  assert.deepEqual(
+    replacementRuns([running, waiting, ...newer]).map(({ run }) => run.id),
+    [2],
+  );
+  const other = run(3, { repo: 'memories', workflow: 'Release', jobs: [job('in_progress')] });
+  assert.equal(replacementRuns([other, run(12, { repo: 'memories', workflow: 'Release' })]).length, 1);
+});
+
 test('failed Checks cancel releases only of the same repo, branch and SHA', () => {
   const checks = run(1, { status: 'completed', conclusion: 'failure' });
   const release = run(2, { workflow: 'Release Android', headSha: checks.headSha });

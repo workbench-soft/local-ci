@@ -112,3 +112,10 @@ their active commits even past the displayed recent-run limit.
 - **Changes** `status/superseded.ts` gets `cancelledByGitHub`: a run that ended as cancelled up to 5 minutes after a newer commit started the same repo, workflow and branch. `status/cancel-superseded.ts` writes one `accepted` line for each such run without a line, with the newer run as the cause. It sends no request to GitHub.
 - **Test** `status/superseded.test.ts` covers the match, the 5 minute window and a run of the same commit.
 - **Docs** architecture, features and changelog.
+
+### 2026-11-14 a started Shuttrix build ends
+
+- **Problem** a Shuttrix release takes about 40 minutes, and `memories` gets a push to `main` more often than that. From 2026-11-12 the sweep cancelled each Shuttrix build for the next commit, so no release reached the phone. On 2026-11-14 the release of `e072cb7` lost its running APK job to `83a442a` at 02:27 UTC.
+- **Changes** `status/superseded.ts` gets `finishOnceStarted`: `Shuttrix release` and `Shuttrix checks` of `memories`. A newer commit replaces their run only while no job of it has started. Their workflows set `cancel-in-progress: false`, so GitHub keeps one running build and the newest waiting push.
+- **Test** `status/superseded.test.ts` keeps a run with a started job and cancels a run whose jobs all wait. A started run of another workflow still gets cancelled.
+- **Docs** architecture and changelog.
