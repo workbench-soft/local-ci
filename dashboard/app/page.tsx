@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { CancellationHistory } from '@/cards/cancellation-history';
 import { AutoRefresh } from '@/cards/auto-refresh';
@@ -10,6 +9,7 @@ import { ReleasesCard } from '@/cards/releases-card';
 import { RunnersCard } from '@/cards/runners-card';
 import { SitesCard, type SiteRow } from '@/cards/sites-card';
 import { StatusDot } from '@/cards/status-dot';
+import { TabBody, TabLinks, TabSwitch } from '@/cards/tab-switch';
 import { TrendsView } from '@/cards/trends/trends-view';
 import { readCancels } from '@/status/cancel-log';
 import { isDevKeyConfigured } from '@/status/dev-key';
@@ -164,77 +164,96 @@ export default async function StatusPage({
   const building = apps.filter((app) => app.state === 'building' || app.state === 'queued').length;
   const errored = apps.filter((app) => app.state === 'errored').length;
   return (
-    <main>
-      <div className="page-head">
-        <header>
-          <h1>
-            <StatusDot tone={headline.tone} />
-            {headline.text}
-          </h1>
-          <AutoRefresh renderedAt={new Date(now).toISOString()} />
-        </header>
-        <nav className="tabs" aria-label="Pages">
-          <Link href="/" aria-current={tab === 'releases' ? 'page' : undefined}>
-            Releases
-            {building > 0 && <span className="count">{building} on the way</span>}
-            {errored > 0 && <span className="count bad">{errored} errored</span>}
-          </Link>
-          <Link href="/?tab=status" aria-current={tab === 'status' ? 'page' : undefined}>
-            Status
-          </Link>
-          <Link href="/?tab=trends" aria-current={tab === 'trends' ? 'page' : undefined}>
-            Trends
-            {failRate !== null && (
-              <span className={`count${failRate >= 0.25 ? ' warn' : ''}`} title="Failed runs of the last 7 days">
-                {Math.round(failRate * 100)}% failed
-              </span>
-            )}
-          </Link>
-        </nav>
-        <div className="filter-bar">
-          <MachineFilter pick={machine} query={keptQuery(query)} />
-          <ColorKey />
-        </div>
-      </div>
-      {tab === 'trends' ? (
-        <TrendsView state={history} repo={trendRepo} days={trendDays} now={now} />
-      ) : tab === 'releases' ? (
-        <div className="grid">
-          {org.ok ? (
-            <>
-              <ReleasesCard
-                apps={apps}
-                releasable={releasable}
-                buildable={buildable}
-                localBuilds={activeLocalBuilds()}
-                jobs={live}
-                now={now}
-                devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}
-              />
-              <SitesCard sites={sites} now={now} />
-              <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />
-            </>
-          ) : (
-            <p className="error">{org.error}</p>
-          )}
-        </div>
-      ) : (
-        <div className="grid">
-          {org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />}
-          <CloudCard state={routerState()} now={now} />
-          <RunnersCard
-            pc={pc}
-            org={org}
-            jobs={live}
-            count={count}
-            now={now}
-            machine={machine}
-            machines={computeTrends(history.history.runs, { now, days: 14 }).machines}
+    <TabSwitch tab={tab}>
+      <main>
+        <div className="page-head">
+          <header>
+            <h1>
+              <StatusDot tone={headline.tone} />
+              {headline.text}
+            </h1>
+            <AutoRefresh renderedAt={new Date(now).toISOString()} />
+          </header>
+          <TabLinks
+            links={[
+              {
+                tab: 'releases',
+                href: '/',
+                label: (
+                  <>
+                    Releases
+                    {building > 0 && <span className="count">{building} on the way</span>}
+                    {errored > 0 && <span className="count bad">{errored} errored</span>}
+                  </>
+                ),
+              },
+              { tab: 'status', href: '/?tab=status', label: 'Status' },
+              {
+                tab: 'trends',
+                href: '/?tab=trends',
+                label: (
+                  <>
+                    Trends
+                    {failRate !== null && (
+                      <span
+                        className={`count${failRate >= 0.25 ? ' warn' : ''}`}
+                        title="Failed runs of the last 7 days"
+                      >
+                        {Math.round(failRate * 100)}% failed
+                      </span>
+                    )}
+                  </>
+                ),
+              },
+            ]}
           />
-          {org.ok && <LatestRunsTable runs={rows} now={now} />}
+          <div className="filter-bar">
+            <MachineFilter pick={machine} query={keptQuery(query)} />
+            <ColorKey />
+          </div>
         </div>
-      )}
-      <CancellationHistory entries={[...cancels.values()]} />
-    </main>
+        <TabBody tab={tab}>
+          {tab === 'trends' ? (
+            <TrendsView state={history} repo={trendRepo} days={trendDays} now={now} />
+          ) : tab === 'releases' ? (
+            <div className="grid">
+              {org.ok ? (
+                <>
+                  <ReleasesCard
+                    apps={apps}
+                    releasable={releasable}
+                    buildable={buildable}
+                    localBuilds={activeLocalBuilds()}
+                    jobs={live}
+                    now={now}
+                    devKeyConfigured={isDevKeyConfigured(process.env.WORKBENCH_DEV_KEY)}
+                  />
+                  <SitesCard sites={sites} now={now} />
+                  <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />
+                </>
+              ) : (
+                <p className="error">{org.error}</p>
+              )}
+            </div>
+          ) : (
+            <div className="grid">
+              {org.ok && <LiveJobsCard jobs={live} slots={runnerSlots(pc, live)} stuck={stuck} now={now} />}
+              <CloudCard state={routerState()} now={now} />
+              <RunnersCard
+                pc={pc}
+                org={org}
+                jobs={live}
+                count={count}
+                now={now}
+                machine={machine}
+                machines={computeTrends(history.history.runs, { now, days: 14 }).machines}
+              />
+              {org.ok && <LatestRunsTable runs={rows} now={now} />}
+            </div>
+          )}
+        </TabBody>
+        <CancellationHistory entries={[...cancels.values()]} />
+      </main>
+    </TabSwitch>
   );
 }

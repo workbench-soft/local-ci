@@ -245,6 +245,8 @@ icon: a white loop arrow round a check on a teal to violet gradient.
   headline turns red and says when the page last updated. A stopped server
   shows the browser's error page instead, since Next reloads the tab. A
   hidden tab skips its refreshes.
+- **Instant tabs** a click on Releases, Status or Trends marks the tab and
+  shows gray cards in its shape at once, until the server sends the page.
 - **Localhost only** the page answers on `localhost`, `127.0.0.1` and `[::1]`
   and refuses any other host name with 421. Other sites can't frame it.
 - **Release and Install** the Release column links to the release a run

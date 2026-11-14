@@ -339,3 +339,43 @@ input[type='checkbox'] {
   gap: 4px;
   flex-wrap: wrap;
 }
+
+/* The gray cards a tab shows from the click until its page comes. */
+.skeleton {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 120px;
+}
+
+.skeleton.tall {
+  min-height: 320px;
+}
+
+.skeleton span {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--line);
+  animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.skeleton span:first-child {
+  width: 30%;
+  height: 18px;
+}
+
+.skeleton span:last-child {
+  width: 60%;
+}
+
+@keyframes skeleton-pulse {
+  to {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton span {
+    animation: none;
+  }
+}
