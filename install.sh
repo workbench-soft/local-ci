@@ -3,7 +3,8 @@
 # since each step looks for its piece first. install.ps1 is the Windows version.
 set -euo pipefail
 
-dev_dir="$HOME/Documents/Dev"
+# WBS_ROOT names the workspace root, as in install.ps1. restore.sh of workspace sets it.
+dev_dir="${WBS_ROOT:-${DEV_DIR:-$HOME/Documents/Dev}}"
 script_dir=$(cd "$(dirname "$0")" && pwd)
 
 step() { printf '\n==> %s\n' "$*"; }

@@ -420,7 +420,7 @@ git config --global push.autosetupremote true
 ## My repos
 
 They are private in `workbench-soft`, so the script logs into `gh` first. Then
-`gh repo clone` puts each one in `~/Documents/Dev`, and the repo's own
+`gh repo clone` puts each one in `WBS_ROOT`, or `~/Documents/Dev` when it is unset, and the repo's own
 `install.sh` installs it:
 
 | Repo | What it gives |
