@@ -790,3 +790,34 @@ browser at each logon.
   with one reader, no store listing and no users. Its text names runner
   scripts, log lines and GitHub states, which have no translation. A move to
   catalogs costs each card and each future string 9 copies for no reader.
+
+### 2026-11-15 Colors that read at a glance, and a machine filter on every tab
+
+- **Why** red marked plain facts, such as the Oracle chip and a 76% failed
+  line, so a real error didn't stand out. A good release looked like any
+  other row. Skipped showed green and cancelled yellow with the same icon,
+  and the two words meant nothing to a new reader. Each tab also needs a
+  quick way to see one machine only.
+- **Colors** each color MUST mean one thing, and a key under the tabs MUST
+  say it in plain words:
+  - **Green** it worked. A released app or a deployed site gets a green
+    row, a green bar on its left and a solid green chip.
+  - **Red** it broke and needs a look: a failed run, an errored release, a
+    stopped runner, an install error. Red MUST NOT mark anything else.
+  - **Gray** it ended without a result: `Stopped` for a cancelled run, `Not
+    needed` for a skipped one. Each says why on hover.
+  - **Blue** it builds now. **Yellow** it waits, or a number looks worse,
+    such as a fail share of 25% or more.
+- **Machines** each machine keeps its own color, none of them red, green,
+  gray or yellow: This PC blue, Oracle teal, Blacksmith purple, GitHub pink.
+- **Machine filter** chips under the tabs pick All, This PC, Oracle,
+  Blacksmith or GitHub. The pick sits in `?machine=` and in a cookie, so it
+  stays on each tab and after a refresh. It keeps the runs, releases, sites,
+  live jobs, runners and trends that touch that machine. The headline still
+  counts every machine.
+- **Changes** `app/styles.css`, `app/releases.css`, `app/trends.css` for
+  the tokens and rows, `status/headline.ts` for the gray tone,
+  `cards/icons.tsx` for the words and the skip icon, `cards/color-key.tsx`
+  and `cards/machine-filter.tsx` new, `status/machine-filter.ts` for the
+  pick and the filters, `proxy.ts` for the cookie, `app/page.tsx` to apply it.
+- **Docs** `docs/features.md`, `README.md` where they name the colors.
