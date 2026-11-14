@@ -329,7 +329,9 @@ task runs every 5 minutes and at logon, so a release lands within 5 minutes.
 
 [winget](https://learn.microsoft.com/windows/package-manager/winget/) stands in
 for Homebrew. It installs git, gh, mise, fzf, jq, shellcheck, shfmt, mkcert,
-VS Code, Docker Desktop, Claude and the Android platform tools. npm adds
+VS Code, Docker Desktop, Claude, the Android platform tools and the Swift
+toolchain, which runs the iOS logic tests of `spotthecam` (`mise run test:swift`).
+A Mac gets Swift with Xcode. npm adds
 `agent-browser`.
 
 `install.ps1` leaves out the Mac only pieces:

@@ -9,7 +9,8 @@ $env:GH_PAGER = 'cat'
 $wingetPackages = @(
 	'Git.Git', 'GitHub.cli', 'jdx.mise', 'junegunn.fzf', 'jqlang.jq',
 	'koalaman.shellcheck', 'mvdan.shfmt', 'FiloSottile.mkcert',
-	'Microsoft.VisualStudioCode', 'Docker.DockerDesktop', 'Anthropic.Claude', 'Google.PlatformTools'
+	'Microsoft.VisualStudioCode', 'Docker.DockerDesktop', 'Anthropic.Claude', 'Google.PlatformTools',
+	'Swift.Toolchain'
 )
 $vscodeExtensions = @(
 	'anthropic.claude-code',
