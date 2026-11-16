@@ -131,7 +131,7 @@ GitHub.
   a few 30 minute Gradle builds that start under it still finish. Past it,
   the heavy lane goes to `[self-hosted, heavy]` and the light lane to
   `[self-hosted, local]`. `GITHUB_BUDGET` goes.
-- **Cloud card** shows the billed and running minutes against the free 2000,
+- **Cloud card** shows the minutes of finished and running jobs against the free 2000,
   and the stop.
 - **Test** `cloud-route.test.ts` covers the count with the multipliers, the
   running jobs and the switch to the PC at the stop.

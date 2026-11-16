@@ -36,7 +36,7 @@ export function runningMinutes(runs: Pick<WorkflowRun, 'jobs'>[], now: number): 
     }, 0);
 }
 
-/** The minutes billed this month. The billing API lags by a few hours. */
+/** The minutes of finished jobs this month. The usage API lags by a few hours, and GitHub Free charges none of them. */
 export async function githubMinutes(now = new Date()): Promise<number> {
   const month = `year=${now.getUTCFullYear()}&month=${now.getUTCMonth() + 1}`;
   const response = await callGitHub(`/organizations/${orgName}/settings/billing/usage?${month}`);

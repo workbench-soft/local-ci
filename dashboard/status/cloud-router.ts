@@ -10,7 +10,7 @@ export type RouterState = {
   routes: Routes | null;
   used: number | null;
   budget: number;
-  /** Billed this month, Windows x2 and macOS x10, null until the billing API answers. */
+  /** Minutes of finished jobs this month, Windows x2 and macOS x10, null until the billing API answers. */
   githubUsed: number | null;
   /** The minutes so far of the jobs running on GitHub runners now. */
   githubRunning: number;
