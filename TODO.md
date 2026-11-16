@@ -2,49 +2,37 @@
 
 ## Tests on the live page
 
-Each one deletes runs or installs an app, so it waits for the person.
+Manual checks of buttons the agent can't press: Stop, Purge and Purge all open a browser confirm dialog, which Claude in Chrome can't answer.
 
-- [ ] Purge: on `http://localhost:4280/?tab=status`, press Stop, then Purge, on a throwaway run. Then press Purge all with a filter that matches a few throwaway runs. The rows should gray at once, and older runs should keep going until none match.
-- [ ] Install: once `workbench-soft.github.io` or another app has a release, press Install on it on the Releases tab. It should show on that Release run only.
-- [ ] After the next logon, check that the browser opens `http://localhost:4280` on its own.
-- [ ] After the next Checks rerun that passes, check that its release keeps building. The fix was tested against a fake GitHub only.
+- [ ] Purge (manual test) on `http://localhost:4280/?tab=status`:
+  1. Type `purge-test` in "Search runs" under Latest runs. 5 throwaway Checks runs of local-ci show, made by the agent on 2026-11-17.
+  2. Press Purge on one row, then OK. The row should gray at once and go.
+  3. Press "Purge all", then OK. The other rows should gray, and the page should keep going until none match.
+- [ ] Stop (manual test): press Stop on any run that is building and you want gone, then OK. Its row should say "Stopped from the page".
+- [ ] Install (manual test): once an app has a new release, press Install on it on the Releases tab. It should show on that Release run only.
+- [ ] After the next logon, check that the browser opens `http://localhost:4280` on its own (wait).
 
 ## Mac
 
-- [ ] On the Mac, in Terminal:
+- [ ] On the Mac, in Terminal (no Mac here):
   1. `cd` into the local-ci clone and run `git pull`.
   2. Run `./install.sh`, then `./runner/install.sh`.
   3. Check that `~/actions-runner/install.log` shows "Filling the action cache" end within a few minutes.
   4. Open the status page and check that the Runners card names `runner/install.sh`.
 
-## Decisions
-
-- [ ] Branch rules on `main` of `workbench-soft/local-ci`: it has none. The update task pulls the newest `v*` tag every 5 minutes and runs the installers as admin, so a leaked write token runs code as admin. A rule that asks for a PR also stops the direct pushes agents make. Pick one: require PRs, block force pushes only, or keep it open.
-- [ ] Reset the history to one commit (rewrite-repo step 12)? The rewrite is on `origin/main` already, and 6 commits carry a personal author email. Say yes and an agent runs the `reset-history` skill.
-- [ ] Should Release on CI show for apps with no release yet, such as local-ci, workspace and agent-skills? On local-ci it starts this repo's own Release, which the update task then installs as admin.
-- [ ] Cap the cancellation history? The Releases tab HTML is 1.7 MB on each 15 s refresh, and `cancel-reasons.jsonl` has no size cap. Say a number of rows, such as the last 100.
-- [ ] Fewer runners or more RAM: 8 jobs at once plus local builds and the emulator on 31 GB RAM grew `pagefile.sys` to 82 GB. For 6 runners, set the count to 6 on the Runners card.
-- [ ] `runner/install.ps1` waits for a runner to go idle before a restart, and a busy queue keeps it busy (runners 2 to 4 waited over an hour on 29 Oct). A restart between jobs needs a test on the live runners with the queue empty. Say when the queue may stop for it.
-
 ## Clean the PC
 
-- [ ] Free disk on C: (62 GB free on 2026-11-13). The 4 old `_work` folders in `%USERPROFILE%\actions-runner` hold 24 GB and date from before the move to `C:\ci`. Auto mode denies a folder delete, so in PowerShell:
+- [ ] Free 24 GB on C: (denied). The disk hit 0 GB free on 2026-11-16. The 4 old `_work` folders in `%USERPROFILE%\actions-runner` date from before the move to `C:\ci`, and 4 old APKs (393 MB) sit in `%TEMP%\local-ci-apk`. Auto mode denies a folder delete, so paste this in PowerShell:
 
   ```powershell
   Remove-Item -Recurse -Force "$env:USERPROFILE\actions-runner\workbench-soft*\_work"; Remove-Item -Recurse -Force "$env:TEMP\local-ci-apk"; mise x -- uv cache clean
   ```
 
-  The second part drops 4 old APKs (393 MB). The agent's session sees a copy of `%TEMP%`, so it can't delete them for real.
-- [ ] Run `CLEAN-CI.cmd` once when the queue is empty, and check that the runners start again.
-- [ ] Turn off Surfshark on this PC, or add `C:\ci`, `%USERPROFILE%\actions-runner` and `gh.exe` to its split tunnelling (Bypasser). Its drops on 2026-11-08 to 2026-11-10 lined up with TLS timeouts in CI jobs.
+- [ ] Surfshark on this PC (security setting): open Surfshark, then Settings, then VPN settings, then Bypasser. Add `C:\ci`, `%USERPROFILE%\actions-runner` and `gh.exe`, or turn Surfshark off. Its drops on 2026-11-08 to 2026-11-10 lined up with TLS timeouts in CI jobs.
 
 ## Accounts
 
-- [ ] Dependabot fails in app-updater and aspirationstyle with "Dependabot doesn't have access to" `workbench-soft/ci` (latest runs 2026-11-10 and 2026-11-11):
-  1. Open `https://github.com/organizations/workbench-soft/settings/security_analysis`.
-  2. Under "Grant Dependabot access to private repositories", add `workbench-soft/ci`.
-- [ ] Copy the Memories desktop signing key and password from `%USERPROFILE%\.config\memories` to the password manager. Reinstall the Memories desktop app once with the install command (key rotated 2026-10-30, memories#42).
-- [ ] Delete the old Open Charge Map key of ServoHop. It sits in another Open Charge Map account than the one used on 2026-10-30.
+- [ ] Memories desktop signing key (secret): copy the key and its password from `%USERPROFILE%\.config\memories` into the password manager. Then reinstall the Memories desktop app once with the install command (key rotated 2026-10-30, memories#42).
 
 ## app-audit
 
