@@ -133,8 +133,9 @@ runner. The runner scripts also work alone:
 - **Heavy lane** the first 2 Windows runners also carry `heavy`. A job that
   runs Gradle, Cargo or Tauri asks for `[self-hosted, heavy]`, so at most 2
   such builds share the PC. 8 at once made a 10 minute release take 50.
-  `RUNNER_HEAVY_COUNT` picks another number, and a rerun of the script fixes
-  the labels on GitHub through `gh`.
+  `RUNNER_HEAVY_COUNT`, or a number in `%USERPROFILE%\actions-runner\runner-heavy-count`
+  that the update task keeps, picks another number. This PC runs 3. A rerun
+  of the script fixes the labels on GitHub through `gh`.
 - **Action cache** the runners copy each action's zip from
   `~/actions-runner/_actions-cache` in place of a download, so "Set up job"
   stops fetching `checkout` and the rest for each job. The runner only reads
