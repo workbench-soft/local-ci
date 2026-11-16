@@ -3,7 +3,7 @@ import { readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { loggedCancellation, readCancels, recordCancel } from './cancel-log.ts';
+import { keptLines, loggedCancellation, readCancels, recordCancel } from './cancel-log.ts';
 
 const file = join(tmpdir(), `local-ci-cancel-log-${process.pid}-${Date.now()}.jsonl`);
 process.env.CANCEL_REASONS_FILE = file;
@@ -85,4 +85,13 @@ test('a failed log write prevents cancellation and later requests recover', asyn
   }
   await recordCancel('app', 403, 'Recovered');
   assert.equal((await readCancels()).get(403)?.words, 'Recovered');
+});
+
+test('a log past 1 MB keeps only its newest lines', async () => {
+  const old = JSON.stringify({ repo: 'old', runId: 1, words: 'x'.repeat(500), at: '2026-01-01T00:00:00Z' });
+  await writeFile(file, `${Array.from({ length: 2500 }, () => old).join('\n')}\n`, 'utf8');
+  await recordCancel('tickalot', 999, 'Stopped from the page');
+  const lines = (await readFile(file, 'utf8')).split('\n').filter(Boolean);
+  assert.equal(lines.length, keptLines);
+  assert.equal((await readCancels()).get(999)?.words, 'Stopped from the page');
 });

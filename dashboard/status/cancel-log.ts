@@ -1,4 +1,4 @@
-import { appendFile, mkdir, readFile, stat } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 /** One force cancel of a run, with the words that say why. */
@@ -64,6 +64,18 @@ async function append(entry: CancelEntry): Promise<void> {
   await mkdir(dirname(file), { recursive: true });
   // A crash can leave a partial last line; the next record needs its own line.
   await appendFile(file, `\n${JSON.stringify(entry)}\n`, { encoding: 'utf8', flush: true });
+  // The entry is safe on disk by now, so a failed trim must not block the cancel.
+  await trim(file).catch(() => {});
+}
+
+// The log had no cap and reached 2.5 MB in 3 weeks. Old runs are long done, so their lines can go.
+export const keptLines = 1000;
+const trimAt = 1024 * 1024;
+
+async function trim(file: string): Promise<void> {
+  if ((await stat(file)).size < trimAt) return;
+  const lines = (await readFile(file, 'utf8')).split('\n').filter(Boolean);
+  await writeFile(file, `${lines.slice(-keptLines).join('\n')}\n`, 'utf8');
 }
 
 // The page reads the log on each render and the sweep every 10 s, so an unchanged file is parsed once.

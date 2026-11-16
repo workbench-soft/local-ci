@@ -151,7 +151,10 @@ function Write-RunnerEnvironment([string]$runnerDir, [string[]]$toolDirs, [strin
 function Stop-RunnerWhenIdle($runner) {
 	$ownWorker = { Get-Process Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } }
 	if (& $ownWorker) { Write-Host "$($runner.Name) is running a job, waiting for it to finish" }
-	while (& $ownWorker) { Start-Sleep -Seconds 10 }
+	# A busy queue hands the listener its next job within seconds, so a 10 s poll missed each gap
+	# and runners 2 to 4 waited over an hour on 29 Oct. A 1 s poll catches the gap, and the stop
+	# right after it ends the listener before it takes the next job.
+	while (& $ownWorker) { Start-Sleep -Seconds 1 }
 	Stop-ScheduledTask -TaskName $runner.Task -ErrorAction SilentlyContinue
 	# Stopping the task leaves its listener running.
 	Get-Process Runner.Listener, Runner.Worker -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "$($runner.Dir)\*" } | Stop-Process -Force

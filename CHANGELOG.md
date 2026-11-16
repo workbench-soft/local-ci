@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Restart between jobs** `runner\install.ps1` checks a busy runner every second in place of every 10, so it catches the gap between jobs and restarts it there. The PC keeps 6 runners.
+- **Shorter cancellation history** the card shows the newest 100 cancellations, and the log keeps its newest 1000 lines once it passes 1 MB.
 - **Instant tabs** a click on Releases, Status or Trends shows the tab's skeleton at once, in place of the old page frozen for about 5 seconds while the server reads GitHub.
 - **Colors read at a glance** red marks errors only, a released app or a deployed site gets a green row, and a key under the tabs says what each color means. A cancelled run reads `stopped` and a skipped one `not needed`, both gray, each with a hover line. Oracle, Blacksmith, GitHub and This PC each keep a color of their own, none red, green, gray or yellow.
 - **Machine filter** chips under the tabs show one machine on every tab: This PC, Oracle, Blacksmith or GitHub.
