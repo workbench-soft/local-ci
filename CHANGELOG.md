@@ -3,6 +3,7 @@
 ## Unreleased
 
 - **GitHub minutes read as used, not billed** the cloud card says `in finished jobs` where it said `billed`. GitHub Free charges $0 for them: the billing API shows the whole gross amount as discount, and past the 2000 GitHub cancels jobs in place of charging.
+- **3 heavy runners** `runner/install.ps1` keeps the heavy count in `runner-heavy-count`, so an update no longer drops it back to 2. It also removes empty tool folders a half install left, which mise took as installed.
 - **Restart between jobs** `runner\install.ps1` checks a busy runner every second in place of every 10, so it catches the gap between jobs and restarts it there. The PC keeps 6 runners.
 - **Shorter cancellation history** the card shows the newest 100 cancellations, and the log keeps its newest 1000 lines once it passes 1 MB.
 - **Instant tabs** a click on Releases, Status or Trends shows the tab's skeleton at once, in place of the old page frozen for about 5 seconds while the server reads GitHub.

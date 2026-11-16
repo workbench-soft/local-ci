@@ -14,11 +14,13 @@ Manual checks of buttons the agent can't press: Stop, Purge and Purge all open a
 
 ## Mac
 
-- [ ] On the Mac, in Terminal (no Mac here):
-  1. `cd` into the local-ci clone and run `git pull`.
-  2. Run `./install.sh`, then `./runner/install.sh`.
-  3. Check that `~/actions-runner/install.log` shows "Filling the action cache" end within a few minutes.
-  4. Open the status page and check that the Runners card names `runner/install.sh`.
+- [ ] Register the Mac as a CI runner (login): this PC has no SSH connection to the Mac. On the Mac, in Terminal:
+  1. Run `gh auth status`. If it says you are not logged in, run `gh auth login -s admin:org` and follow it.
+  2. `cd` into the local-ci clone and run `git pull`.
+  3. Run `./install.sh`, then `./runner/install.sh`. The second one registers the Mac runner in workbench-soft.
+  4. Check that `~/actions-runner/install.log` shows "Filling the action cache" end within a few minutes.
+  5. Open `https://github.com/organizations/workbench-soft/settings/actions/runners` and check that the Mac runner shows "Idle".
+- [ ] Watch the PC with 3 heavy runners (wait): if it runs out of memory or the pagefile grows past 40 GB, write `2` in `%USERPROFILE%\actions-runner\runner-heavy-count`. The next runner install picks it up.
 
 ## Clean the PC
 

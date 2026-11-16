@@ -482,3 +482,16 @@ machine with several runners builds several jobs at once.
   The owner picked 6 runners, written to `runner-count`.
 - **Test** the update task reruns `runner\install.ps1` once the tag with this
   change lands, which restarts each runner and removes runners 7 and 8.
+
+### 2026-11-17 3 heavy runners, and no empty tool folders
+
+- **Why** the owner wants to try 3 heavy runners in place of 2. The count
+  came only from `RUNNER_HEAVY_COUNT`, which the update task doesn't set, so
+  each install went back to 2. A half install also left empty `uv\0.13.6` and
+  `python\3.13.18` folders in `C:\ci\_mise\installs`; mise counted them
+  installed, and songfactory and the scraper failed.
+- **Change** `runner/install.ps1` reads `runner-heavy-count` beside
+  `runner-count` when the variable is unset, still capped at the runner
+  count. `Install-CiMise` removes each empty version folder before
+  `mise install`, which then fills it again.
+- **Limits** back to 2 when the PC runs out of memory with 3 heavy builds.

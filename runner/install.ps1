@@ -36,7 +36,10 @@ $countTask = "GitHub Actions runner count ($org)"
 $labels = 'Windows,X64,local'
 # heavy marks the runners that take a Gradle, Cargo or Tauri build. 8 such builds at once
 # starved the PC: a release took 50 minutes where it takes 10 alone. Light jobs run on every runner.
-$heavyCount = if ($env:RUNNER_HEAVY_COUNT) { [int]$env:RUNNER_HEAVY_COUNT } else { [Math]::Min(2, $count) }
+# The update task runs this script without the variable, so runner-heavy-count keeps the pick across installs.
+$heavyFile = Join-Path $HOME 'actions-runner\runner-heavy-count'
+$heavyCount = if ($env:RUNNER_HEAVY_COUNT) { [int]$env:RUNNER_HEAVY_COUNT } elseif (Test-Path -LiteralPath $heavyFile) { [int](Get-Content -LiteralPath $heavyFile -TotalCount 1) } else { 2 }
+$heavyCount = [Math]::Min($heavyCount, $count)
 $env:GH_PAGER = 'cat'
 
 function Write-Step([string]$text) { Write-Host "`n==> $text" }
@@ -321,6 +324,11 @@ Install-AndroidSdk
 
 # The runners install the tools once here, so 8 first jobs don't download them at the same time.
 function Install-CiMise {
+	# A half install left empty uv\0.13.6 and python\3.13.18 folders, and mise counted them
+	# installed, which failed songfactory and the scraper. An empty version folder goes, so the install below refills it.
+	Get-ChildItem -Directory -Path (Join-Path $miseData 'installs\*\*') -ErrorAction SilentlyContinue |
+		Where-Object { -not (Get-ChildItem -Force -LiteralPath $_.FullName | Select-Object -First 1) } |
+		ForEach-Object { Write-Host "Removing the empty install $($_.FullName)"; Remove-Item -Force -LiteralPath $_.FullName }
 	New-Item -ItemType Directory -Force -Path (Join-Path $miseData 'bin') | Out-Null
 	# mise-action skips its download when _mise\bin holds mise. Jobs that all started on an empty one
 	# downloaded it at once, and all but the first failed on the rename into place.
