@@ -77,3 +77,14 @@ installs on the next run.
 - **Steps** this entry, then the lock and the scripts, then the docs.
 - **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
   `docs/user-flows.md`, `CHANGELOG.md`.
+
+### 2026-11-17 Rulesets on `main` and the release tags
+
+- **Why** the update task pulls the newest `v*` tag every 5 minutes and runs
+  the installers as admin, so a rewritten `main` or a moved tag runs code as
+  admin on the PC.
+- **Decision** the owner picked rulesets that block force pushes and
+  deletion of `main`, and the move or deletion of a `v*` tag. Agents keep
+  pushing to `main` directly, so a PR rule stays off.
+- **Change** GitHub rulesets "main: no force push or delete" and "release
+  tags: no move or delete" on `workbench-soft/local-ci`. No file changes.

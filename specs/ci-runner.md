@@ -470,3 +470,15 @@ machine with several runners builds several jobs at once.
   packages make one more install cheap, and a full disk shows on the page.
   `CLEAN-CI.cmd` with an empty queue is the place to drop it, once a prune
   there is needed.
+
+### 2026-11-17 A restart catches the gap between jobs, on 6 runners
+
+- **Why** `Stop-RunnerWhenIdle` in `runner/install.ps1` polled every 10 s.
+  With a busy queue the listener takes its next job within seconds, so the
+  poll missed each gap and runners 2 to 4 waited over an hour on 29 Oct.
+  8 jobs plus local builds and the emulator on 31 GB RAM also grew
+  `pagefile.sys` to 82 GB and filled the disk.
+- **Change** the poll runs every second, and the stop follows at once.
+  The owner picked 6 runners, written to `runner-count`.
+- **Test** the update task reruns `runner\install.ps1` once the tag with this
+  change lands, which restarts each runner and removes runners 7 and 8.

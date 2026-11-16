@@ -838,3 +838,13 @@ browser at each logon.
     stops under reduced motion.
 - **Steps** the spec, then the component, the page and the styles.
 - **Docs** `docs/features.md` and `CHANGELOG.md`.
+
+### 2026-11-17 The cancellation history has a cap
+
+- **Why** 550 runs made 961 KB of HTML on each 15 s refresh, and
+  `cancel-reasons.jsonl` reached 2.5 MB and 13,901 lines with no cap.
+- **Change** the card shows the newest 100 rows and says how many it hides.
+  Past 1 MB, an append trims the log to its newest 1000 lines. A failed trim
+  doesn't block the cancel, since the entry is on disk first.
+- **Release on CI** the owner kept the button for apps with no release yet,
+  as the 2026-11-11 entry asked.
