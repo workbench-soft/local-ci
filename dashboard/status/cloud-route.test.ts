@@ -145,7 +145,7 @@ test('running GitHub jobs count their minutes so far, weighted, and PC jobs coun
   assert.equal(runningMinutes(runs, now), 10 + 5 * 2);
 });
 
-test('jobs move to the PC labels once billed and running minutes reach the free 2000 less the margin', () => {
+test('jobs move to the PC labels once finished and running minutes reach the free 2000 less the margin', () => {
   const stop = { blacksmithOn: false, githubBudget: 2000 - 300 };
   assert.deepEqual(lanes({ ...stop, githubUsed: 1699 }), [githubLinux, githubLinux, githubWindows]);
   assert.deepEqual(lanes({ ...stop, githubUsed: 1700 }), [localLight, localHeavy, localWindows]);

@@ -53,7 +53,7 @@ export function CloudCard({ state, now }: { state: RouterState; now: number }) {
           <dd>
             {githubTotal === null
               ? 'Reading the minutes of this month.'
-              : `${githubTotal} of ${state.githubFree} free minutes used this month: ${state.githubUsed} billed, ` +
+              : `${githubTotal} of ${state.githubFree} free minutes used this month: ${state.githubUsed} in finished jobs, ` +
                 `${state.githubRunning} running now, Windows x2 and macOS x10. Jobs move to this PC at ` +
                 `${state.githubStop}, so a running build finishes before GitHub cancels it.`}
             {githubTotal !== null && (
