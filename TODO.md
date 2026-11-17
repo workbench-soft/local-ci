@@ -35,10 +35,6 @@ Manual checks of buttons the agent can't press: Stop, Purge and Purge all open a
 ## Accounts
 
 - [ ] Memories desktop signing key (secret): copy the key and its password from `%USERPROFILE%\.config\memories` into the password manager. Then reinstall the Memories desktop app once with the install command (key rotated 2026-10-30, memories#42).
-- [ ] Delete the old ServoHop key in Open Charge Map (login). The owner said yes on 2026-11-17:
-  1. Open `https://openchargemap.org/site/profile/applications` in Chrome.
-  2. Log in with the old account, the one that is not used since 2026-10-30.
-  3. Tell the agent "logged in". It deletes the key and checks the list.
 
 ## app-audit
 
