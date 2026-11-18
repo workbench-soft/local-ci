@@ -43,6 +43,13 @@ jobs:
           # The release notes and the next version need every earlier tag and commit.
           fetch-depth: 0
 
+      # A push with no change outside Markdown and docs since the last tag cuts no release. A run by hand ships anyway.
+      - name: Look for changes since the last release
+        id: affected
+        uses: workbench-soft/ci/actions/affected@main
+        with:
+          since: release
+
       # A run by hand looks up Checks of the commit once and stops unless they passed. It doesn't wait.
       - name: Check that Checks passed on this commit
         if: github.event_name == 'workflow_dispatch'
@@ -56,11 +63,13 @@ jobs:
           fi
 
       - name: Pick the next version
+        if: steps.affected.outputs.run == 'true'
         id: version
         run: echo "tag=v$(.github/scripts/next-version.sh)" >> "$GITHUB_OUTPUT"
 
       # A tag pushed with the workflow token doesn't start other workflows.
       - name: Tag the commit and publish the release
+        if: steps.affected.outputs.run == 'true'
         env:
           TAG: ${{ steps.version.outputs.tag }}
         run: |
