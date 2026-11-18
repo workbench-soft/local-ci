@@ -182,3 +182,10 @@ settings with the key in `WORKBENCH_DEV_KEY`.
 - **Changes** `status/run-failure.ts` reads the annotations and the log of the failed or cancelled job, once per job. `status/latest-releases.ts` finds the newer run of a replaced build. `cards/release-detail.tsx` draws the reason.
 - **Test** `status/run-failure.test.ts` covers each annotation kind and the log cut on the farnear lint log of run 43329810179.
 - **Docs** `docs/features.md`, `docs/architecture.md` and `CHANGELOG.md`.
+
+### 2026-11-18 a push that changes no code cuts no release
+
+- **Why** a push of `TODO.md` or another file outside the code still cut a release once Checks passed, and the update task then installed the same code again. The org moves each repo to the shared `affected` step of `workbench-soft/ci`.
+- **Step** `release.yml` runs `workbench-soft/ci/actions/affected@main` with `since: release` after the checkout. It compares the commit with the last `v*` tag, and the version and publish steps run only on `run=true`. A run by hand ships anyway. The repo is one product, so it needs no `.github/affected.json`.
+- **Proof** `mise x -- node ci/scripts/affected.ts --since release` on `4ec3bf5`: base `0631b41`, with only the `TODO.md` commits after it, gives `run=false`. Base `0631b41^`, with the cloud card change of #141, gives `run=true`.
+- **Docs** `CHANGELOG.md`.
