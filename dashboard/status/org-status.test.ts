@@ -291,12 +291,12 @@ test('transient release API errors preserve the last published app inventory and
         : { status: 200, body: [{ tag_name: 'shuttrix-v2026.11.20.1', name: 'Shuttrix', html_url: 'https://release', created_at: '2026-11-20T00:00:00Z', assets: [] }] };
     return healthyOrg(path);
   };
-  const module = await freshModule();
-  const first = await module.fetchOrgStatus();
+  const statusApi = await freshModule();
+  const first = await statusApi.fetchOrgStatus();
   assert.equal(first.ok && first.releases.length, 1);
   broken = true;
-  module.forgetOrgStatus();
-  const second = await module.fetchOrgStatus();
+  statusApi.forgetOrgStatus();
+  const second = await statusApi.fetchOrgStatus();
   assert.equal(second.ok && second.releases[0]?.tag, 'shuttrix-v2026.11.20.1');
   assert.match(second.ok ? second.releasesError ?? '' : '', /503/);
 });
