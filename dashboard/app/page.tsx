@@ -116,9 +116,9 @@ export default async function StatusPage({
     jobs: run.jobs.map((job) => ({ name: job.name, conclusion: job.conclusion, failedStep: job.failedStep })),
   }));
   // An app shows under a machine when its current run has a job there.
-  const apps = latestReleases(releases, pipelineRuns, cancels, now).filter((app) =>
-    touches(app.run?.machines, machine),
-  );
+  // The machine filter applies to run activity, not the inventory: a released app has no active
+  // run or runner to match, and hiding it made the Releases tab appear empty.
+  const apps = latestReleases(releases, pipelineRuns, cancels, now);
   // An app with no release yet names its pipeline only through the run that builds it.
   for (const app of apps) {
     const workflow = app.pipeline ?? app.run?.workflow;
@@ -151,11 +151,16 @@ export default async function StatusPage({
     tab === 'releases' && org.ok ? siteWorkflows() : [],
   ]);
   // Runs come newest first, so the first run of a site's deploy workflow is its last deploy.
-  const sites: SiteRow[] = siteFlows.flatMap(({ repo, workflow, file }) => {
+  // Sites are also an inventory: show them regardless of the selected runner, even when
+  // there has never been a deploy run on that particular machine.
+  const sites: SiteRow[] = siteFlows.map(({ repo, workflow, name, manual, file }) => {
     const run = allRuns.find((item) => item.repo === repo && item.workflowId === workflow);
-    if (machine && !(run && touches(kindsOfRun(run.jobs, local), machine))) return [];
     return {
+      id: `${repo}/${workflow}`,
       repo,
+      workflow,
+      name,
+      manual,
       file,
       run: run ? { status: run.status, conclusion: run.conclusion, url: run.url, createdAt: run.createdAt } : null,
       stats: run ? (stats.get(statsKey(repo, run.workflow)) ?? null) : null,
@@ -219,6 +224,9 @@ export default async function StatusPage({
             <div className="grid">
               {org.ok ? (
                 <>
+                  {org.releasesError && (
+                    <p className="error">Could not refresh published releases: {org.releasesError}. Showing the last known data when available.</p>
+                  )}
                   <ReleasesCard
                     apps={apps}
                     releasable={releasable}
