@@ -60,11 +60,20 @@ test('all site workflows are found, including two sites in one repo and an autom
   const ignored = flow(4, 'checks.yml');
   const discovered = findSiteWorkflows(
     [pages, games, automatic, ignored],
-    [yaml('mise run deploy'), yaml('pnpm exec wrangler deploy'), 'on:\\n  push:\\n  steps:\\n    - run: mise run deploy:web\\n'.replaceAll('\\n', '\n'), yaml('mise run lint')],
+    [
+      yaml('mise run deploy'),
+      yaml('pnpm exec wrangler deploy'),
+      'on:\\n  push:\\n  steps:\\n    - run: mise run deploy:web\\n'.replaceAll('\\n', '\n'),
+      yaml('mise run lint'),
+    ],
   );
   assert.deepEqual(
     discovered.map(({ workflow, manual }) => [workflow.id, manual]),
-    [[1, true], [2, true], [3, false]],
+    [
+      [1, true],
+      [2, true],
+      [3, false],
+    ],
   );
   assert.equal(pickSiteWorkflow([automatic], ['on:\n  push:\n  run: mise run deploy:web']), null);
 });
