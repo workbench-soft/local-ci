@@ -65,7 +65,14 @@ export type RunJob = {
 };
 
 export type OrgStatus =
-  | { ok: true; runners: OrgRunner[] | null; runnersError: string | null; runs: WorkflowRun[]; releases: Release[]; releasesError?: string | null }
+  | {
+      ok: true;
+      runners: OrgRunner[] | null;
+      runnersError: string | null;
+      runs: WorkflowRun[];
+      releases: Release[];
+      releasesError?: string | null;
+    }
   | { ok: false; error: string };
 
 const execFileAsync = promisify(execFile);
@@ -151,8 +158,7 @@ async function loadOrgStatus(): Promise<OrgStatus> {
     // A release API failure must not silently replace a previously valid inventory with zero apps.
     const found = releases.status === 'fulfilled' ? releases.value : (store.lastReleases ?? []);
     if (releases.status === 'fulfilled') store.lastReleases = found;
-    const releasesError =
-      releases.status === 'rejected' ? String(releases.reason?.message ?? releases.reason) : null;
+    const releasesError = releases.status === 'rejected' ? String(releases.reason?.message ?? releases.reason) : null;
     // Runners need admin:org. Without it the runs still show.
     if (runners.status === 'rejected') {
       return {
