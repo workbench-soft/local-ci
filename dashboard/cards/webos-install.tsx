@@ -83,10 +83,7 @@ export function WebosInstall() {
   const latest = status?.release;
   const canInstall = status?.tvs.some(
     (tv) =>
-      tv.state === 'current' ||
-      tv.state === 'outdated' ||
-      tv.state === 'missing' ||
-      tv.state === 'unknown-version',
+      tv.state === 'current' || tv.state === 'outdated' || tv.state === 'missing' || tv.state === 'unknown-version',
   );
   const hasNewer = status?.tvs.some((tv) => tv.state === 'ahead');
 
@@ -134,8 +131,7 @@ export function WebosInstall() {
               <ul className="webos-tv-list" aria-label="Live Lumiere installations by LG TV">
                 {status.tvs.map((tv) => (
                   <li key={tv.ip}>
-                    <strong>{tv.name}</strong> <span className="muted">({tv.ip})</span>:
-                    {' '}
+                    <strong>{tv.name}</strong> <span className="muted">({tv.ip})</span>:{' '}
                     {tv.state === 'missing'
                       ? 'not installed'
                       : tv.installedVersion
@@ -144,11 +140,7 @@ export function WebosInstall() {
                     {' · '}
                     <span
                       className={
-                        tv.state === 'current'
-                          ? 'dev-key-ready'
-                          : tv.state === 'outdated'
-                            ? 'dev-key-missing'
-                            : 'muted'
+                        tv.state === 'current' ? 'dev-key-ready' : tv.state === 'outdated' ? 'dev-key-missing' : 'muted'
                       }
                     >
                       {tvLabel(tv, latest?.version ?? null)}
@@ -177,8 +169,16 @@ export function WebosInstall() {
             </p>
           </>
         )}
-        {result && <p className="install-ok small" role="status">{result}</p>}
-        {error && <p className="install-error small" role="alert">{error}</p>}
+        {result && (
+          <p className="install-ok small" role="status">
+            {result}
+          </p>
+        )}
+        {error && (
+          <p className="install-error small" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );
