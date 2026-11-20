@@ -10,14 +10,7 @@ const publicRepo = 'workbench-soft/workbench-soft.github.io';
 const releasePrefix = 'lumiere-webos-v';
 
 export type WebosRelease = { version: string; fileName: string; url: string };
-export type TvState =
-  | 'current'
-  | 'outdated'
-  | 'ahead'
-  | 'missing'
-  | 'unknown-version'
-  | 'unavailable'
-  | 'unpaired';
+export type TvState = 'current' | 'outdated' | 'ahead' | 'missing' | 'unknown-version' | 'unavailable' | 'unpaired';
 export type WebosTv = {
   name: string;
   ip: string;
