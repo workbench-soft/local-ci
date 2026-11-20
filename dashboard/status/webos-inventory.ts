@@ -113,8 +113,7 @@ export function installedLumiereFromList(output: string): { found: boolean; vers
       }
     }
   }
-  const escapedId = appId.replace(/[.*+?^$()|[\\]{}]/g, '\\$&');
-  const idPattern = new RegExp('(?:^|[^\\w.])(?:id|appId)\\s*[:=]\\s*["\\']?' + escapedId + '(?=["\\',\\s}]|$)', 'im');
+  const idPattern = /(?:^|[^\\w.])(?:id|appId)\\s*[:=]\\s*["']?com\\.workbenchsoft\\.lumiere(?=["',\\s}]|$)/im;
   const lines = output.split(/\\r?\\n/);
   const versionPattern = /\\b(?:version|appVersion)\\s*[:=]\\s*["']?(\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?)/i;
   for (let i = 0; i < lines.length; i++) {
