@@ -81,9 +81,12 @@ export function WebosInstall() {
   };
 
   const latest = status?.release;
-  const canInstall = status?.tvs.some((tv) =>
-    tv.state === 'current' || tv.state === 'outdated' ||
-    tv.state === 'missing' || tv.state === 'unknown-version',
+  const canInstall = status?.tvs.some(
+    (tv) =>
+      tv.state === 'current' ||
+      tv.state === 'outdated' ||
+      tv.state === 'missing' ||
+      tv.state === 'unknown-version',
   );
   const hasNewer = status?.tvs.some((tv) => tv.state === 'ahead');
 
@@ -133,14 +136,18 @@ export function WebosInstall() {
                       ? 'installed v' + tv.installedVersion
                       : 'installed version unknown'}
                     {' · '}
-                    <span className={tv.state === 'current' ? 'dev-key-ready' : tv.state === 'outdated' ? 'dev-key-missing' : 'muted'}>
+                    <span
+                      className={tv.state === 'current' ? 'dev-key-ready' : tv.state === 'outdated' ? 'dev-key-missing' : 'muted'}
+                    >
                       {tvLabel(tv, latest?.version ?? null)}
                     </span>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="muted small">No registered or discovered LG TVs. Turn on the TVs and pair them from this PC.</p>
+              <p className="muted small">
+                No registered or discovered LG TVs. Turn on the TVs and pair them from this PC.
+              </p>
             )}
             {hasNewer && (
               <p className="install-error small">
