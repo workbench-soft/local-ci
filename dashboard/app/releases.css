@@ -421,3 +421,9 @@ input[type='checkbox'] {
   font-size: 13px;
   overflow-wrap: anywhere;
 }
+
+/* Local main sync review remains readable even with long diffs. */
+.local-main-dialog { position: fixed; z-index: 1000; inset: 10% max(16px, 15vw); overflow: auto; background: var(--surface, #181b21); color: var(--text, #f5f5f5); border: 1px solid currentColor; border-radius: 12px; padding: 24px; box-shadow: 0 0 0 100vmax #0009; }
+.local-main-changes { max-height: 45vh; overflow: auto; }
+.local-main-changes pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 25vh; overflow: auto; }
+@media (max-width: 700px) { .local-main-dialog { inset: 4% 12px; padding: 14px; } }
