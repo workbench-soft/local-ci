@@ -19,13 +19,12 @@ test('installed versions are read from ares --listfull plain-text rows', () => {
 });
 
 test('ares --listfull JSON can report installed Lumiere', () => {
-  assert.deepEqual(
-    installedLumiereFromList('Installed apps:\n' + JSON.stringify([
-      { id: 'com.other.app', version: '1.1.1' },
-      { id: 'com.workbenchsoft.lumiere', version: '0.3.100' },
-    ])),
-    { found: true, version: '0.3.100' },
-  );
+  const rows = [
+    { id: 'com.other.app', version: '1.1.1' },
+    { id: 'com.workbenchsoft.lumiere', version: '0.3.100' },
+  ];
+  const output = 'Installed apps:\n' + JSON.stringify(rows);
+  assert.deepEqual(installedLumiereFromList(output), { found: true, version: '0.3.100' });
 });
 
 test('other apps do not imply Lumiere is installed', () => {
