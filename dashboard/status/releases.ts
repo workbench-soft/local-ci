@@ -19,7 +19,7 @@ export const releasesRepo = process.env.RELEASES_REPO || `${orgName}/${orgName}.
 // site of property-trends with its data as property-trends-web.
 export const releasePrefixes: Record<string, string[]> = {
   memories: ['memories-mobile', 'media-organizer', 'shuttrix'],
-  'lumiere-player': ['lumiere'],
+  'lumiere-player': ['lumiere', 'lumiere-webos'],
   spotthecam: ['spotthecam', 'speed-camera-map'],
   'app-updater': ['updater'],
   'property-trends': ['property-trends', 'property-trends-web'],
