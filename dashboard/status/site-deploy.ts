@@ -42,7 +42,9 @@ export function pickSiteWorkflow(workflows: RepoWorkflow[], texts: string[]): Re
   const found = findSiteWorkflows(workflows, texts)
     .filter((item) => item.manual)
     .map((item) => item.workflow);
-  return found.toSorted((a, b) => rankOf(fileOf(a)) - rankOf(fileOf(b)) || fileOf(a).localeCompare(fileOf(b)))[0] ?? null;
+  return (
+    found.toSorted((a, b) => rankOf(fileOf(a)) - rankOf(fileOf(b)) || fileOf(a).localeCompare(fileOf(b)))[0] ?? null
+  );
 }
 
 // The org gains a repo rarely, so its list is read once an hour, like the workflows.
@@ -88,9 +90,9 @@ export async function siteWorkflowsOf(repo: string): Promise<SiteWorkflow[]> {
 export async function siteWorkflowOf(repo: string): Promise<SiteWorkflow | null> {
   const sites = await siteWorkflowsOf(repo);
   return (
-    sites.filter((site) => site.manual).toSorted(
-      (a, b) => rankOf(a.file) - rankOf(b.file) || a.file.localeCompare(b.file),
-    )[0] ?? null
+    sites
+      .filter((site) => site.manual)
+      .toSorted((a, b) => rankOf(a.file) - rankOf(b.file) || a.file.localeCompare(b.file))[0] ?? null
   );
 }
 
@@ -110,7 +112,7 @@ export async function siteWorkflows(): Promise<SiteWorkflow[]> {
       }
     }),
   );
-  return found.flat().toSorted((a, b) =>
-    a.repo.localeCompare(b.repo) || a.name.localeCompare(b.name) || a.workflow - b.workflow
-  );
+  return found
+    .flat()
+    .toSorted((a, b) => a.repo.localeCompare(b.repo) || a.name.localeCompare(b.name) || a.workflow - b.workflow);
 }
