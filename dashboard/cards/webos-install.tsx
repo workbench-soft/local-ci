@@ -7,6 +7,8 @@ import type { WebosInventory, WebosTv } from '@/status/webos-inventory';
 const intervalMs = 30_000;
 
 function tvLabel(tv: WebosTv, latest: string | null): string {
+  if (!latest && tv.state !== 'unpaired' && tv.state !== 'unavailable')
+    return 'Latest installable version unavailable; cannot preview deployment';
   switch (tv.state) {
     case 'current':
       return 'Up to date — will reinstall v' + latest;
@@ -146,9 +148,11 @@ export function WebosInstall() {
               </p>
             )}
             <p className="muted small">
-              {canInstall && !hasNewer
-                ? 'Click installs the shown IPK on every paired, reachable TV (including those already current).'
-                : 'Pair or reconnect the TVs to enable installation.'}
+              {hasNewer
+                ? 'A newer installed TV blocks the all-TV action to prevent downgrades.'
+                : canInstall && latest
+                  ? 'Click installs the shown IPK on every paired, reachable TV (including those already current).'
+                  : 'Pair or reconnect the TVs and confirm a published release to enable installation.'}
               {' · '}
               Checked {new Date(status.checkedAt).toLocaleTimeString()} · refreshes every 30 s
             </p>
