@@ -9,9 +9,7 @@ import { workspaceRoot } from './local-build-target.ts';
 const exec = promisify(execFile);
 const running = { current: false };
 
-export type WebosInstallResult =
-  | { ok: true; message: string }
-  | { ok: false; error: string };
+export type WebosInstallResult = { ok: true; message: string } | { ok: false; error: string };
 
 /** Install the latest published webOS release on every paired LG TV from the LocalCI host PC. */
 export async function installLumiereWebosOnAllTvs(): Promise<WebosInstallResult> {
@@ -36,7 +34,8 @@ export async function installLumiereWebosOnAllTvs(): Promise<WebosInstallResult>
       // attempt an interactive toolchain install during a browser request.
       return {
         ok: false,
-        error: 'webOS CLI is not installed. Double-click INSTALL-LUMIERE-WEBOS-ALL-TVS.cmd once from the Lumiere repository to set up the PC.',
+        error:
+          'webOS CLI is not installed. Double-click INSTALL-LUMIERE-WEBOS-ALL-TVS.cmd once from the Lumiere repository to set up the PC.',
       };
     }
 
@@ -56,7 +55,8 @@ export async function installLumiereWebosOnAllTvs(): Promise<WebosInstallResult>
     if (!updated) {
       return {
         ok: false,
-        error: (stderr + '\n' + stdout).trim().slice(-1500) ||
+        error:
+          (stderr + '\n' + stdout).trim().slice(-1500) ||
           'No LG TV was updated. Check Developer Mode and pairing on each TV.',
       };
     }
