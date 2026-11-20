@@ -74,28 +74,60 @@ export function compareWebosVersions(a: string, b: string): number {
 
 /** ares-install --listfull can return JSON or a row of key:value pairs. */
 export function installedLumiereFromList(output: string): { found: boolean; version: string | null } {
-  const first = output.indexOf('[');
-  const last = output.lastIndexOf(']');
-  if (first >= 0 && last > first) {
-    try {
-      const apps: unknown = JSON.parse(output.slice(first, last + 1));
-      if (Array.isArray(apps)) {
-        const found = apps.find(
-          (item): item is { id: string; version?: string } =>
-            typeof item === 'object' && item !== null && (item as { id?: unknown }).id === appId,
-        );
-        return { found: !!found, version: found && typeof found.version === 'string' ? found.version : null };
+  // webOS CLI output varies by version: JSON arrays, JSON objects, or multiline
+  // records. Do not mistake an unparseable inventory for an uninstalled app.
+  const versionOf = (value: unknown): string | null =>
+    typeof value === 'string' && /^\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?$/.test(value.trim())
+      ? value.trim()
+      : null;
+  const inspect = (value: unknown): { found: boolean; version: string | null } | null => {
+    if (!value || typeof value !== 'object') return null;
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const match = inspect(item);
+        if (match?.found) return match;
       }
-    } catch {
-      // Older webOS CLI versions print plain-text key:value rows instead.
+      return null;
+    }
+    const record = value as Record<string, unknown>;
+    if (record.id === appId || record.appId === appId) {
+      return { found: true, version: versionOf(record.version) ?? versionOf(record.appVersion) };
+    }
+    for (const child of Object.values(record)) {
+      if (typeof child === 'object' && child !== null) {
+        const match = inspect(child);
+        if (match?.found) return match;
+      }
+    }
+    return null;
+  };
+  for (const opening of ['[', '{']) {
+    const first = output.indexOf(opening);
+    const last = output.lastIndexOf(opening === '[' ? ']' : '}');
+    if (first >= 0 && last > first) {
+      try {
+        const found = inspect(JSON.parse(output.slice(first, last + 1)));
+        if (found) return found;
+      } catch {
+        // CLI banners and legacy plain-text listings are handled below.
+      }
     }
   }
-  const row = output
-    .split(/\r?\n/)
-    .find((line) => /(?:^|[,{\s])id\s*:\s*["']?com\.workbenchsoft\.lumiere(?:["',\s}]|$)/i.test(line));
-  if (row) {
-    const match = /\bversion\s*:\s*["']?(\d+\.\d+\.\d+)/i.exec(row);
-    return { found: true, version: match?.[1] ?? null };
+  const idPattern = /(?:^|[^\\w.])(?:id|appId)\\s*[:=]\\s*["']?com\\.workbenchsoft\\.lumiere(?=["',\\s}]|$)/im;
+  const lines = output.split(/\\r?\\n/);
+  const versionPattern = /\\b(?:version|appVersion)\\s*[:=]\\s*["']?(\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?)/i;
+  for (let i = 0; i < lines.length; i++) {
+    if (!idPattern.test(lines[i])) continue;
+    const sameLine = versionPattern.exec(lines[i]);
+    if (sameLine) return { found: true, version: sameLine[1] };
+    // Ares may print each property on its own line. Stop at the next app id.
+    for (let j = i + 1; j < lines.length; j++) {
+      if (/^\\s*(?:id|appId)\\s*[:=]/i.test(lines[j])) break;
+      const version = versionPattern.exec(lines[j]);
+      if (version) return { found: true, version: version[1] };
+      if (!lines[j].trim() && j > i + 1) break;
+    }
+    return { found: true, version: null };
   }
   return { found: false, version: null };
 }
