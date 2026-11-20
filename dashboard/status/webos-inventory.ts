@@ -77,9 +77,7 @@ export function installedLumiereFromList(output: string): { found: boolean; vers
   // webOS CLI output varies by version: JSON arrays, JSON objects, or multiline
   // records. Do not mistake an unparseable inventory for an uninstalled app.
   const versionOf = (value: unknown): string | null =>
-    typeof value === 'string' && /^\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?$/.test(value.trim())
-      ? value.trim()
-      : null;
+    typeof value === 'string' && /^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(value.trim()) ? value.trim() : null;
   const inspect = (value: unknown): { found: boolean; version: string | null } | null => {
     if (!value || typeof value !== 'object') return null;
     if (Array.isArray(value)) {
@@ -113,16 +111,16 @@ export function installedLumiereFromList(output: string): { found: boolean; vers
       }
     }
   }
-  const idPattern = /(?:^|[^\\w.])(?:id|appId)\\s*[:=]\\s*["']?com\\.workbenchsoft\\.lumiere(?=["',\\s}]|$)/im;
-  const lines = output.split(/\\r?\\n/);
-  const versionPattern = /\\b(?:version|appVersion)\\s*[:=]\\s*["']?(\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?)/i;
+  const idPattern = /(?:^|[^\w.])(?:id|appId)\s*[:=]\s*["']?com\.workbenchsoft\.lumiere(?=["',\s}]|$)/im;
+  const lines = output.split(/\r?\n/);
+  const versionPattern = /\b(?:version|appVersion)\s*[:=]\s*["']?(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)/i;
   for (let i = 0; i < lines.length; i++) {
     if (!idPattern.test(lines[i])) continue;
     const sameLine = versionPattern.exec(lines[i]);
     if (sameLine) return { found: true, version: sameLine[1] };
     // Ares may print each property on its own line. Stop at the next app id.
     for (let j = i + 1; j < lines.length; j++) {
-      if (/^\\s*(?:id|appId)\\s*[:=]/i.test(lines[j])) break;
+      if (/^\s*(?:id|appId)\s*[:=]/i.test(lines[j])) break;
       const version = versionPattern.exec(lines[j]);
       if (version) return { found: true, version: version[1] };
       if (!lines[j].trim() && j > i + 1) break;
@@ -140,6 +138,11 @@ function privateIpv4(value: string): boolean {
     (numbers[0] === 172 && numbers[1] >= 16 && numbers[1] <= 31) ||
     (numbers[0] === 192 && numbers[1] === 168)
   );
+}
+
+/** Ares profiles persist between runs; only do multicast discovery on first use or an explicit rescan. */
+export function shouldDiscoverWebosTvs(cachedCount: number, forceDiscovery: boolean): boolean {
+  return forceDiscovery || cachedCount === 0;
 }
 
 function webosRoot(): string {
@@ -191,7 +194,7 @@ function classify(version: string | null, found: boolean, latest: WebosRelease |
 }
 
 /** The scan is intentionally read-only: no new profile, key or installation is created. */
-export async function readLumiereWebosInventory(): Promise<WebosInventory> {
+export async function readLumiereWebosInventory(forceDiscovery = false): Promise<WebosInventory> {
   const result: WebosInventory = {
     checkedAt: new Date().toISOString(),
     release: null,
@@ -217,7 +220,10 @@ export async function readLumiereWebosInventory(): Promise<WebosInventory> {
     return result;
   }
 
-  const [known, found] = await Promise.allSettled([profiles(root), discover(root)]);
+  // Checking installed versions is still live; avoid expensive SSDP scans on every 30s poll.
+  const [known] = await Promise.allSettled([profiles(root)]);
+  const scan = shouldDiscoverWebosTvs(known.status === 'fulfilled' ? known.value.length : 0, forceDiscovery);
+  const [found] = await Promise.allSettled([scan ? discover(root) : Promise.resolve([] as string[])]);
   await releasePromise;
   if (known.status === 'rejected' && found.status === 'rejected') {
     result.error =

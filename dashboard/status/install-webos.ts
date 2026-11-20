@@ -12,8 +12,8 @@ const running = { current: false };
 
 export type WebosInstallResult = { ok: true; message: string } | { ok: false; error: string };
 
-export async function getLumiereWebosStatus(): Promise<WebosInventory> {
-  return readLumiereWebosInventory();
+export async function getLumiereWebosStatus(forceDiscovery = false): Promise<WebosInventory> {
+  return readLumiereWebosInventory(forceDiscovery);
 }
 
 /** Install the latest published webOS release on every paired LG TV from the LocalCI host PC. */

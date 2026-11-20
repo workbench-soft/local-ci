@@ -133,7 +133,9 @@ export function AppItem({
       {(state === 'building' || state === 'queued') && (
         <ReleaseProgress app={app} state={state} jobs={jobs} wait={wait} now={now} />
       )}
-      <div className="release-actions"><LocalMainButton repo={repo} /></div>
+      <div className="release-actions">
+        <LocalMainButton repo={repo} />
+      </div>
       <ReleaseButtons
         app={item}
         showWebosInstall={showWebosInstall}

@@ -34,10 +34,10 @@ export function WebosInstall() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (discoverNew = false) => {
     setChecking(true);
     try {
-      const updated = await getLumiereWebosStatus();
+      const updated = await getLumiereWebosStatus(discoverNew);
       setStatus(updated);
       setError(null);
     } catch (problem) {
@@ -103,8 +103,8 @@ export function WebosInstall() {
         >
           {busy ? 'Installing Lumiere on webOS…' : 'Install Lumiere on webOS'}
         </button>
-        <button type="button" className="action" disabled={busy || checking} onClick={() => void refresh()}>
-          {checking ? 'Checking TVs…' : 'Refresh TVs'}
+        <button type="button" className="action" disabled={busy || checking} onClick={() => void refresh(true)}>
+          {checking ? 'Scanning TVs…' : 'Find new TVs'}
         </button>
       </div>
 

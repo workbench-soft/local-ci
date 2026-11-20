@@ -189,3 +189,11 @@ settings with the key in `WORKBENCH_DEV_KEY`.
 - **Step** `release.yml` runs `workbench-soft/ci/actions/affected@main` with `since: release` after the checkout. It compares the commit with the last `v*` tag, and the version and publish steps run only on `run=true`. A run by hand ships anyway. The repo is one product, so it needs no `.github/affected.json`.
 - **Proof** `mise x -- node ci/scripts/affected.ts --since release` on `4ec3bf5`: base `0631b41`, with only the `TODO.md` commits after it, gives `run=false`. Base `0631b41^`, with the cloud card change of #141, gives `run=true`.
 - **Docs** `CHANGELOG.md`.
+
+### LG webOS TV cache-first status and installation
+
+- LG TV aliases, local IP addresses and developer pairing keys are persisted by the webOS `ares-setup-device` CLI on the Local CI host PC. A cached TV is validated live; merely being saved does not imply it is online.
+- The 30-second Local CI status poll reads those cached profiles and checks installed Lumiere versions directly, **without running SSDP multicast every time**. On first use (no saved profile) SSDP discovers TVs for read-only preview.
+- The **Find new TVs** button explicitly rescans SSDP even when saved profiles exist. New TVs are displayed as unpaired; they must be paired using the Lumiere double-click installer on the PC before browser-triggered installation.
+- The browser installation action delegates to Lumiere's shared `webos/scripts/install-all-tvs.ts` entrypoint. That script uses paired TV profiles before SSDP and can be told to rediscover via `LUMIERE_REFRESH_TVS=1` or the CMD `--refresh-tvs` argument. No passphrase is handled by the dashboard.
+- A stale or unreachable TV is reported as unavailable, not silently considered updated. Cache entries remain stable unless explicitly reconfigured in webOS CLI.
