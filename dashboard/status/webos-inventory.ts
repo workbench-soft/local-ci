@@ -109,10 +109,7 @@ export function installedLumiereFromList(output: string): { found: boolean; vers
 
 function privateIpv4(value: string): boolean {
   const numbers = value.split('.').map(Number);
-  if (
-    numbers.length !== 4 ||
-    numbers.some((n) => !Number.isInteger(n) || n < 0 || n > 255)
-  ) return false;
+  if (numbers.length !== 4 || numbers.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return false;
   return (
     numbers[0] === 10 ||
     (numbers[0] === 172 && numbers[1] >= 16 && numbers[1] <= 31) ||
@@ -185,7 +182,8 @@ export async function readLumiereWebosInventory(): Promise<WebosInventory> {
     await access(join(root, 'scripts', 'discover-lg.ts'));
     await access(join(root, 'node_modules', '@webos-tools', 'cli', 'bin', 'ares-install.js'));
   } catch {
-    result.error = 'Lumiere checkout or webOS CLI is missing on this PC. Run INSTALL-LUMIERE-WEBOS-ALL-TVS.cmd to set up.';
+    result.error =
+      'Lumiere checkout or webOS CLI is missing on this PC. Run INSTALL-LUMIERE-WEBOS-ALL-TVS.cmd to set up.';
     await releasePromise;
     return result;
   }
@@ -193,7 +191,8 @@ export async function readLumiereWebosInventory(): Promise<WebosInventory> {
   const [known, found] = await Promise.allSettled([profiles(root), discover(root)]);
   await releasePromise;
   if (known.status === 'rejected' && found.status === 'rejected') {
-    result.error = 'Cannot read paired TVs or discover LG TVs on the LAN. Check Local CI host networking and webOS CLI.';
+    result.error =
+      'Cannot read paired TVs or discover LG TVs on the LAN. Check Local CI host networking and webOS CLI.';
     return result;
   }
   if (known.status === 'rejected') result.error = 'Cannot read paired webOS TV profiles; showing discovered TVs only.';
