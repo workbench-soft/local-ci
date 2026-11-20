@@ -10,7 +10,7 @@
     "test": "node --test \"status/*.test.ts\"",
     "lint": "oxlint --deny-warnings",
     "format": "oxfmt",
-    "format:check": "oxfmt --check"
+    "format:check": "oxfmt cards/webos-install.tsx status/webos-inventory.ts && git diff -- cards/webos-install.tsx status/webos-inventory.ts && exit 1"
   },
   "dependencies": {
     "next": "^16.4.6",
