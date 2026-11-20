@@ -1,10 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import {
-  compareWebosVersions,
-  installedLumiereFromList,
-  shouldDiscoverWebosTvs,
-} from './webos-inventory.ts';
+import { compareWebosVersions, installedLumiereFromList, shouldDiscoverWebosTvs } from './webos-inventory.ts';
 
 test('webOS versions compare numeric components, not lexicographic strings', () => {
   assert.equal(compareWebosVersions('0.3.100', '0.3.99'), 1);
@@ -47,7 +43,9 @@ test('an installed app with unknown version is not called current', () => {
 
 test('multiline webOS CLI records report the installed version', () => {
   assert.deepEqual(
-    installedLumiereFromList('id: com.workbenchsoft.lumiere\n  title: Lumiere\n  version: 0.3.101\nid: com.other.app\n  version: 2.0.0'),
+    installedLumiereFromList(
+      'id: com.workbenchsoft.lumiere\n  title: Lumiere\n  version: 0.3.101\nid: com.other.app\n  version: 2.0.0',
+    ),
     { found: true, version: '0.3.101' },
   );
 });
