@@ -65,7 +65,7 @@ export type RunJob = {
 };
 
 export type OrgStatus =
-  | { ok: true; runners: OrgRunner[] | null; runnersError: string | null; runs: WorkflowRun[]; releases: Release[] }
+  | { ok: true; runners: OrgRunner[] | null; runnersError: string | null; runs: WorkflowRun[]; releases: Release[]; releasesError?: string | null }
   | { ok: false; error: string };
 
 const execFileAsync = promisify(execFile);
@@ -84,6 +84,8 @@ type Store = {
   etagged: Map<string, { etag: string; body: string }>;
   queuedJobs: Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>;
   finishedJobs: Map<number, { attempt: number; jobs: Promise<RunJob[]> }>;
+  /** Last successful release response; GitHub errors must not erase the inventory. */
+  lastReleases?: Release[];
 };
 
 // Next bundles this module once for the page and once for the sweep. One store on globalThis
@@ -146,8 +148,11 @@ async function loadOrgStatus(): Promise<OrgStatus> {
   try {
     const [runners, runs, releases] = await Promise.allSettled([listRunners(), listLatestRuns(), listReleases()]);
     if (runs.status === 'rejected') throw runs.reason;
-    // Releases only add a column, so the page shows without them.
-    const found = releases.status === 'fulfilled' ? releases.value : [];
+    // A release API failure must not silently replace a previously valid inventory with zero apps.
+    const found = releases.status === 'fulfilled' ? releases.value : (store.lastReleases ?? []);
+    if (releases.status === 'fulfilled') store.lastReleases = found;
+    const releasesError =
+      releases.status === 'rejected' ? String(releases.reason?.message ?? releases.reason) : null;
     // Runners need admin:org. Without it the runs still show.
     if (runners.status === 'rejected') {
       return {
@@ -156,9 +161,10 @@ async function loadOrgStatus(): Promise<OrgStatus> {
         runnersError: String(runners.reason?.message ?? runners.reason),
         runs: runs.value,
         releases: found,
+        releasesError,
       };
     }
-    return { ok: true, runners: runners.value, runnersError: null, runs: runs.value, releases: found };
+    return { ok: true, runners: runners.value, runnersError: null, runs: runs.value, releases: found, releasesError };
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) };
   }
@@ -217,9 +223,14 @@ async function listRunners(): Promise<OrgRunner[]> {
 }
 
 async function listLatestRuns(): Promise<WorkflowRun[]> {
-  const repos = await getJson<{ full_name: string; archived: boolean }[]>(
-    `/orgs/${orgName}/repos?per_page=100&sort=pushed`,
-  );
+  const repos: { full_name: string; archived: boolean }[] = [];
+  for (let page = 1; ; page++) {
+    const batch = await getJson<{ full_name: string; archived: boolean }[]>(
+      `/orgs/${orgName}/repos?per_page=100&sort=pushed&page=${page}`,
+    );
+    repos.push(...batch);
+    if (batch.length < 100) break;
+  }
   const perRepo = await Promise.allSettled(
     repos.filter((repo) => !repo.archived).map((repo) => listRepoRuns(repo.full_name)),
   );
@@ -390,14 +401,20 @@ export function failureOf(run: Pick<WorkflowRun, 'conclusion' | 'jobs'>): RunFai
   return job ? { job: job.name, step: job.failedStep, url: job.url } : null;
 }
 
-// The public repo keeps 3 releases per app, so one page holds them all.
+// GitHub pages results at 100; keep older apps visible as the organisation grows.
 async function listReleases(): Promise<Release[]> {
-  // The full media type adds body_html, the notes as GitHub renders and cleans them.
-  const releases = await getJson<ApiRelease[]>(
-    `/repos/${releasesRepo}/releases?per_page=100`,
-    'application/vnd.github.full+json',
-  );
-  return Array.isArray(releases) ? releases.map(toRelease) : [];
+  const releases: Release[] = [];
+  for (let page = 1; ; page++) {
+    // The full media type adds body_html, the notes as GitHub renders and cleans them.
+    const batch = await getJson<ApiRelease[]>(
+      `/repos/${releasesRepo}/releases?per_page=100&page=${page}`,
+      'application/vnd.github.full+json',
+    );
+    if (!Array.isArray(batch)) throw new Error('GitHub returned an invalid releases list.');
+    releases.push(...batch.map(toRelease));
+    if (batch.length < 100) break;
+  }
+  return releases;
 }
 
 // Only the jobs tell which runner builds a run, and which step failed. A failed call leaves the run without them.
