@@ -23,9 +23,7 @@ export type SyncInspection =
       snapshot: string;
     }
   | { ok: false; error: string };
-export type SyncResult =
-  | { ok: true; commit: string; stash?: string }
-  | { ok: false; error: string; stash?: string };
+export type SyncResult = { ok: true; commit: string; stash?: string } | { ok: false; error: string; stash?: string };
 
 async function git(cwd: string, ...args: string[]) {
   const { stdout } = await exec('git', args, {
@@ -50,7 +48,12 @@ async function directory(repo: string) {
     throw Error('Not a repository checkout.');
   const remote = await git(path, 'remote', 'get-url', 'origin');
   const valid = new RegExp(
-    '^(?:https://github\\.com/|git@github\\.com:|ssh://git@github\\.com/)' + orgName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '/' + repo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?:\\.git)?/?$', 'i',
+    '^(?:https://github\\.com/|git@github\\.com:|ssh://git@github\\.com/)' +
+      orgName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+      '/' +
+      repo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+      '(?:\\.git)?/?$',
+    'i',
   );
   if (!valid.test(remote)) throw Error('Origin does not match the expected organization repository.');
   return path;
@@ -109,7 +112,14 @@ export async function syncLocalMain(repo: string, snapshot: string, stash: boole
       return { ok: false, error: 'Local changes require explicit stash confirmation.' };
     const cwd = await directory(repo);
     if (before.changes.length) {
-      await git(cwd, 'stash', 'push', '--include-untracked', '-m', 'Local CI before main sync ' + new Date().toISOString());
+      await git(
+        cwd,
+        'stash',
+        'push',
+        '--include-untracked',
+        '-m',
+        'Local CI before main sync ' + new Date().toISOString(),
+      );
       stashRef = await git(cwd, 'rev-parse', 'refs/stash');
       if (await git(cwd, 'status', '--porcelain=v1', '-uall'))
         return { ok: false, error: 'Checkout is not clean after stash. Update cancelled.', stash: stashRef };
