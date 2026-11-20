@@ -175,8 +175,12 @@ export async function readLumiereWebosInventory(): Promise<WebosInventory> {
     tvs: [],
   };
   const releasePromise = latestPublishedWebosRelease()
-    .then((release) => { result.release = release; })
-    .catch((error: unknown) => { result.releaseError = String(error instanceof Error ? error.message : error); });
+    .then((release) => {
+      result.release = release;
+    })
+    .catch((error: unknown) => {
+      result.releaseError = String(error instanceof Error ? error.message : error);
+    });
   const root = webosRoot();
   try {
     await access(join(root, 'scripts', 'discover-lg.ts'));
