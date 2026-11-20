@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { compareWebosVersions, installedLumiereFromList, shouldDiscoverWebosTvs } from './webos-inventory.ts';
+import {
+  compareWebosVersions,
+  installedLumiereFromList,
+  shouldDiscoverWebosTvs,
+} from './webos-inventory.ts';
 
 test('webOS versions compare numeric components, not lexicographic strings', () => {
   assert.equal(compareWebosVersions('0.3.100', '0.3.99'), 1);
