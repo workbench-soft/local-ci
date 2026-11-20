@@ -96,7 +96,20 @@ export async function siteWorkflowOf(repo: string): Promise<SiteWorkflow | null>
 
 /** All distinct site deployments across every org repo, including multi-site repos. */
 export async function siteWorkflows(): Promise<SiteWorkflow[]> {
-  const found = await Promise.all((await orgRepos()).map(siteWorkflowsOf));
+  const names = await orgRepos();
+  const found: SiteWorkflow[][] = Array.from({ length: names.length }, () => []);
+  let next = 0;
+  // Spreading one request per repo plus its YAML requests across the whole org at once
+  // trips GitHub's secondary limits and silently leaves sites out. Keep a small pool.
+  await Promise.all(
+    Array.from({ length: Math.min(6, names.length) }, async () => {
+      for (;;) {
+        const index = next++;
+        if (index >= names.length) return;
+        found[index] = await siteWorkflowsOf(names[index]);
+      }
+    }),
+  );
   return found.flat().toSorted((a, b) =>
     a.repo.localeCompare(b.repo) || a.name.localeCompare(b.name) || a.workflow - b.workflow
   );
