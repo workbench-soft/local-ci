@@ -54,7 +54,9 @@ export function SitesCard({ sites, now }: { sites: SiteRow[]; now: number }) {
         Every detected website deployment, including sites deployed automatically and multiple sites from one repo.
         Deploy site is available for workflows that support manual runs.
       </p>
-      {sites.length === 0 && <p className="muted small">No site workflows were found. Check GitHub access if sites are missing.</p>}
+      {sites.length === 0 && (
+        <p className="muted small">No site workflows were found. Check GitHub access if sites are missing.</p>
+      )}
       <ul className="releases sites">
         {sites.map((site) => {
           const { id, repo, name, manual, file, run, stats } = site;
