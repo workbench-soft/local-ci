@@ -16,7 +16,7 @@ export type SyncResult = { ok: true; commit: string; stash?: string } | { ok: fa
 
 async function git(cwd: string, ...args: string[]) {
   const { stdout } = await exec('git', args, { cwd, timeout: 45000, maxBuffer: 4 * 1024 * 1024, windowsHide: true });
-  return stdout.trim();
+  return stdout.trimEnd();
 }
 
 async function directory(repo: string) {
