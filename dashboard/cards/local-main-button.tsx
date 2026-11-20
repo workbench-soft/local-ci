@@ -64,10 +64,23 @@ export function LocalMainButton({ repo }: { repo: string }) {
       >
         {busy ? 'Checking / updating…' : 'Get latest main locally'}
       </button>
-      {result && <span role="status" className="install-ok small">{result}</span>}
-      {error && <pre role="alert" className="install-error">{error}</pre>}
+      {result && (
+        <span role="status" className="install-ok small">
+          {result}
+        </span>
+      )}
+      {error && (
+        <pre role="alert" className="install-error">
+          {error}
+        </pre>
+      )}
       {inspection?.ok && (
-        <div role="dialog" aria-modal="true" aria-label={`Review local changes in ${repo}`} className="local-main-dialog">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Review local changes in ${repo}`}
+          className="local-main-dialog"
+        >
           <h3>Update {repo} from origin/main?</h3>
           <p className="muted small">
             Branch: {inspection.branch} · Local: {inspection.local.slice(0, 8)} · Remote:{' '}
@@ -97,8 +110,8 @@ export function LocalMainButton({ repo }: { repo: string }) {
                 ))}
               </div>
               <p className="muted small">
-                Stash includes untracked files. It is kept after updating and is not automatically reapplied. Ignored files are
-                not stashed.
+                Stash includes untracked files. It is kept after updating and is not automatically reapplied. Ignored
+                files are not stashed.
               </p>
             </>
           ) : (
