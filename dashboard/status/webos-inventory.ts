@@ -142,6 +142,11 @@ function privateIpv4(value: string): boolean {
   );
 }
 
+/** Ares profiles persist between runs; only do multicast discovery on first use or an explicit rescan. */
+export function shouldDiscoverWebosTvs(cachedCount: number, forceDiscovery: boolean): boolean {
+  return forceDiscovery || cachedCount === 0;
+}
+
 function webosRoot(): string {
   return join(workspaceRoot(), 'lumiere-player', 'webos');
 }
@@ -191,7 +196,7 @@ function classify(version: string | null, found: boolean, latest: WebosRelease |
 }
 
 /** The scan is intentionally read-only: no new profile, key or installation is created. */
-export async function readLumiereWebosInventory(): Promise<WebosInventory> {
+export async function readLumiereWebosInventory(forceDiscovery = false): Promise<WebosInventory> {
   const result: WebosInventory = {
     checkedAt: new Date().toISOString(),
     release: null,
@@ -217,7 +222,10 @@ export async function readLumiereWebosInventory(): Promise<WebosInventory> {
     return result;
   }
 
-  const [known, found] = await Promise.allSettled([profiles(root), discover(root)]);
+  // Checking installed versions is still live; avoid expensive SSDP scans on every 30s poll.
+  const [known] = await Promise.allSettled([profiles(root)]);
+  const scan = shouldDiscoverWebosTvs(known.status === 'fulfilled' ? known.value.length : 0, forceDiscovery);
+  const [found] = await Promise.allSettled([scan ? discover(root) : Promise.resolve([] as string[])]);
   await releasePromise;
   if (known.status === 'rejected' && found.status === 'rejected') {
     result.error =
