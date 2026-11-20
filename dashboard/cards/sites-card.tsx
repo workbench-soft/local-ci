@@ -1,4 +1,5 @@
 'use client';
+import { LocalMainButton } from './local-main-button';
 import { useState } from 'react';
 import { formatAge } from '@/status/headline';
 import { dispatchVisibilityMs } from '@/status/release-dispatch-guard';
@@ -88,6 +89,7 @@ export function SitesCard({ sites, now }: { sites: SiteRow[]; now: number }) {
               </div>
               <StatsLine stats={stats} what="deploys" />
               <div className="release-actions">
+                <LocalMainButton repo={repo} />
                 {manual ? (
                   <button
                     type="button"
