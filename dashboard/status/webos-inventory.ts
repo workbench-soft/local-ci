@@ -77,7 +77,7 @@ export function installedLumiereFromList(output: string): { found: boolean; vers
   // webOS CLI output varies by version: JSON arrays, JSON objects, or multiline
   // records. Do not mistake an unparseable inventory for an uninstalled app.
   const versionOf = (value: unknown): string | null =>
-    typeof value === 'string' && /^\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?$/.test(value.trim()) ? value.trim() : null;
+    typeof value === 'string' && /^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(value.trim()) ? value.trim() : null;
   const inspect = (value: unknown): { found: boolean; version: string | null } | null => {
     if (!value || typeof value !== 'object') return null;
     if (Array.isArray(value)) {
@@ -111,16 +111,16 @@ export function installedLumiereFromList(output: string): { found: boolean; vers
       }
     }
   }
-  const idPattern = /(?:^|[^\\w.])(?:id|appId)\\s*[:=]\\s*["']?com\\.workbenchsoft\\.lumiere(?=["',\\s}]|$)/im;
-  const lines = output.split(/\\r?\\n/);
-  const versionPattern = /\\b(?:version|appVersion)\\s*[:=]\\s*["']?(\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?)/i;
+  const idPattern = /(?:^|[^\w.])(?:id|appId)\s*[:=]\s*["']?com\.workbenchsoft\.lumiere(?=["',\s}]|$)/im;
+  const lines = output.split(/\r?\n/);
+  const versionPattern = /\b(?:version|appVersion)\s*[:=]\s*["']?(\d+\.\d+\.\d+(?:[-+][\w.-]+)?)/i;
   for (let i = 0; i < lines.length; i++) {
     if (!idPattern.test(lines[i])) continue;
     const sameLine = versionPattern.exec(lines[i]);
     if (sameLine) return { found: true, version: sameLine[1] };
     // Ares may print each property on its own line. Stop at the next app id.
     for (let j = i + 1; j < lines.length; j++) {
-      if (/^\\s*(?:id|appId)\\s*[:=]/i.test(lines[j])) break;
+      if (/^\s*(?:id|appId)\s*[:=]/i.test(lines[j])) break;
       const version = versionPattern.exec(lines[j]);
       if (version) return { found: true, version: version[1] };
       if (!lines[j].trim() && j > i + 1) break;
