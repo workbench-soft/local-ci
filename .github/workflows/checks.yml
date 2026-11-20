@@ -40,10 +40,7 @@ jobs:
       - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
       - run: mise x -- pnpm install --frozen-lockfile
       - run: mise x -- pnpm lint
-      # Temporary diagnostic: capture formatter changes, then restore strict check before merge.
-      - run: |
-          mise x -- pnpm format
-          git diff -- app/page.tsx cards/sites-card.tsx status/org-status.test.ts status/org-status.ts status/site-deploy.test.ts status/site-deploy.ts
+      - run: mise x -- pnpm format:check
       - run: mise x -- pnpm typecheck
       - run: mise x -- pnpm test
       - run: mise x -- pnpm build
