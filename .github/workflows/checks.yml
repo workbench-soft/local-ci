@@ -73,7 +73,6 @@ jobs:
           exit $bad
 
   format-pr-temporary:
-    # Format only branches of this repository, not untrusted fork code.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     permissions:
@@ -85,11 +84,12 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           persist-credentials: true
       - name: Format touched files and commit
+        working-directory: dashboard
         run: |
-          npm exec --yes --package=oxfmt@0.75.0 -- oxfmt --write dashboard/status/install-webos.ts
+          npm exec --yes --package=oxfmt@0.75.0 -- oxfmt --write status/install-webos.ts
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- dashboard/status/install-webos.ts
+          git add -- status/install-webos.ts
           if ! git diff --cached --quiet; then
             git commit -m 'style: apply oxfmt to installer changes'
             git push origin HEAD:${{ github.event.pull_request.head.ref }}
