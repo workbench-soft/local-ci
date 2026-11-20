@@ -288,7 +288,18 @@ test('transient release API errors preserve the last published app inventory and
     if (path.includes('/workbench-soft.github.io/releases?'))
       return broken
         ? { status: 503 }
-        : { status: 200, body: [{ tag_name: 'shuttrix-v2026.11.20.1', name: 'Shuttrix', html_url: 'https://release', created_at: '2026-11-20T00:00:00Z', assets: [] }] };
+        : {
+            status: 200,
+            body: [
+              {
+                tag_name: 'shuttrix-v2026.11.20.1',
+                name: 'Shuttrix',
+                html_url: 'https://release',
+                created_at: '2026-11-20T00:00:00Z',
+                assets: [],
+              },
+            ],
+          };
     return healthyOrg(path);
   };
   const statusApi = await freshModule();
@@ -298,7 +309,7 @@ test('transient release API errors preserve the last published app inventory and
   statusApi.forgetOrgStatus();
   const second = await statusApi.fetchOrgStatus();
   assert.equal(second.ok && second.releases[0]?.tag, 'shuttrix-v2026.11.20.1');
-  assert.match(second.ok ? second.releasesError ?? '' : '', /503/);
+  assert.match(second.ok ? (second.releasesError ?? '') : '', /503/);
 });
 
 test('all pages of public releases are read, not only the first hundred', async () => {
@@ -311,7 +322,10 @@ test('all pages of public releases are read, not only the first hundred', async 
   });
   route = (path) => {
     if (path.includes('/workbench-soft.github.io/releases?'))
-      return { status: 200, body: path.includes('page=2') ? [release(100)] : Array.from({ length: 100 }, (_, id) => release(id)) };
+      return {
+        status: 200,
+        body: path.includes('page=2') ? [release(100)] : Array.from({ length: 100 }, (_, id) => release(id)),
+      };
     return healthyOrg(path);
   };
   const result = await (await freshModule()).fetchOrgStatus();
