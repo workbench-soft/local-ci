@@ -380,7 +380,6 @@ input[type='checkbox'] {
   }
 }
 
-
 /* The webOS installer belongs to the Lumiere release row, not the global toolbar. */
 .webos-installer {
   flex: 1 1 440px;
