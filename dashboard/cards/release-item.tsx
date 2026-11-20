@@ -1,3 +1,4 @@
+import { LocalMainButton } from './local-main-button';
 import { formatAge } from '@/status/headline';
 import type { AppRelease, ReleaseState } from '@/status/latest-releases';
 import type { LiveJob } from '@/status/placement';
@@ -132,6 +133,7 @@ export function AppItem({
       {(state === 'building' || state === 'queued') && (
         <ReleaseProgress app={app} state={state} jobs={jobs} wait={wait} now={now} />
       )}
+      <div className="release-actions"><LocalMainButton repo={repo} /></div>
       <ReleaseButtons
         app={item}
         showWebosInstall={showWebosInstall}
