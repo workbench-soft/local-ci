@@ -379,3 +379,46 @@ input[type='checkbox'] {
     animation: none;
   }
 }
+
+
+/* The webOS installer belongs to the Lumiere release row, not the global toolbar. */
+.webos-installer {
+  flex: 1 1 440px;
+  min-width: min(100%, 300px);
+  max-width: 900px;
+}
+
+.webos-installer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.webos-installer-status {
+  margin-top: 8px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.webos-installer-status p {
+  margin: 0 0 5px;
+}
+
+.webos-installer-status p:last-child {
+  margin-bottom: 0;
+}
+
+.webos-tv-list {
+  list-style: none;
+  margin: 7px 0;
+  padding: 0;
+}
+
+.webos-tv-list li {
+  padding: 4px 0;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
