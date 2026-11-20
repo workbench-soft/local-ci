@@ -11,7 +11,9 @@ test('webOS versions compare numeric components, not lexicographic strings', () 
 
 test('installed versions are read from ares --listfull plain-text rows', () => {
   assert.deepEqual(
-    installedLumiereFromList('id:com.other.app, version:1.0.0\nid:com.workbenchsoft.lumiere, title:Lumiere, version:0.3.88, type:web'),
+    installedLumiereFromList(
+      'id:com.other.app, version:1.0.0\nid:com.workbenchsoft.lumiere, title:Lumiere, version:0.3.88, type:web',
+    ),
     { found: true, version: '0.3.88' },
   );
 });
