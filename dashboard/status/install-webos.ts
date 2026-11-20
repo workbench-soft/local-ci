@@ -29,7 +29,10 @@ export async function installLumiereWebosOnAllTvs(expectedVersion: string): Prom
     if (newest.version !== expectedVersion)
       return {
         ok: false,
-        error: 'The latest webOS version changed to ' + newest.version + '. Refresh the TV status and review the new target.',
+        error:
+          'The latest webOS version changed to ' +
+          newest.version +
+          '. Refresh the TV status and review the new target.',
       };
     const webos = join(workspaceRoot(), 'lumiere-player', 'webos');
     const script = join(webos, 'scripts', 'install-all-tvs.ts');
@@ -62,7 +65,11 @@ export async function installLumiereWebosOnAllTvs(expectedVersion: string): Prom
       windowsHide: true,
       timeout: 10 * 60_000,
       maxBuffer: 1024 * 1024,
-      env: { ...process.env, LUMIERE_NONINTERACTIVE: '1', LUMIERE_EXPECTED_WEBOS_VERSION: expectedVersion },
+      env: {
+        ...process.env,
+        LUMIERE_NONINTERACTIVE: '1',
+        LUMIERE_EXPECTED_WEBOS_VERSION: expectedVersion,
+      },
     });
     const summary = stdout.match(/Finished: (\d+) TV\(s\) updated, (\d+) failed\./);
     const updated = summary ? Number(summary[1]) : 0;
