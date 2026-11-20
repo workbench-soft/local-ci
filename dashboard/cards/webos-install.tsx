@@ -98,9 +98,11 @@ export function WebosInstall() {
           className="action"
           onClick={() => void install()}
           disabled={busy || checking || !latest || !canInstall || !!hasNewer}
-          title={hasNewer
-            ? 'One or more TVs have a version newer than the newest published IPK. Refusing a downgrade.'
-            : 'Install the previewed GitHub webOS IPK on all paired, reachable LG TVs on this PC’s LAN'}
+          title={
+            hasNewer
+              ? 'One or more TVs have a version newer than the newest published IPK. Refusing a downgrade.'
+              : 'Install the previewed GitHub webOS IPK on all paired, reachable LG TVs on this PC’s LAN'
+          }
         >
           {busy ? 'Installing Lumiere on webOS…' : 'Install Lumiere on webOS'}
         </button>
@@ -118,7 +120,9 @@ export function WebosInstall() {
                 <>
                   Latest installable webOS release: <strong>v{latest.version}</strong>
                   {' · '}
-                  <a href={latest.url} target="_blank" rel="noreferrer">{latest.fileName}</a>
+                  <a href={latest.url} target="_blank" rel="noreferrer">
+                    {latest.fileName}
+                  </a>
                 </>
               ) : (
                 <span className="muted">Latest webOS release unknown</span>
@@ -132,12 +136,20 @@ export function WebosInstall() {
                   <li key={tv.ip}>
                     <strong>{tv.name}</strong> <span className="muted">({tv.ip})</span>:
                     {' '}
-                    {tv.state === 'missing' ? 'not installed' : tv.installedVersion
-                      ? 'installed v' + tv.installedVersion
-                      : 'installed version unknown'}
+                    {tv.state === 'missing'
+                      ? 'not installed'
+                      : tv.installedVersion
+                        ? 'installed v' + tv.installedVersion
+                        : 'installed version unknown'}
                     {' · '}
                     <span
-                      className={tv.state === 'current' ? 'dev-key-ready' : tv.state === 'outdated' ? 'dev-key-missing' : 'muted'}
+                      className={
+                        tv.state === 'current'
+                          ? 'dev-key-ready'
+                          : tv.state === 'outdated'
+                            ? 'dev-key-missing'
+                            : 'muted'
+                      }
                     >
                       {tvLabel(tv, latest?.version ?? null)}
                     </span>
