@@ -225,7 +225,9 @@ export async function readLumiereWebosInventory(forceDiscovery = false): Promise
   // Checking installed versions is still live; avoid expensive SSDP scans on every 30s poll.
   const [known] = await Promise.allSettled([profiles(root)]);
   const scan = shouldDiscoverWebosTvs(known.status === 'fulfilled' ? known.value.length : 0, forceDiscovery);
-  const [found] = await Promise.allSettled([scan ? discover(root) : Promise.resolve([] as string[])]);
+  const [found] = await Promise.allSettled([
+    scan ? discover(root) : Promise.resolve([] as string[]),
+  ]);
   await releasePromise;
   if (known.status === 'rejected' && found.status === 'rejected') {
     result.error =
