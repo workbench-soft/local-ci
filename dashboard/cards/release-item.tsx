@@ -43,6 +43,7 @@ function chipText({ state, reason, why }: AppRelease): string | null {
 
 type ItemProps = {
   app: AppRelease;
+  showWebosInstall: boolean;
   now: number;
   jobs: LiveJob[];
   ticked: boolean;
@@ -60,6 +61,7 @@ type ItemProps = {
 
 export function AppItem({
   app: item,
+  showWebosInstall,
   now,
   jobs,
   ticked,
@@ -132,6 +134,7 @@ export function AppItem({
       )}
       <ReleaseButtons
         app={item}
+        showWebosInstall={showWebosInstall}
         now={now}
         actions={actions}
         hasReleaseWorkflow={hasReleaseWorkflow}
