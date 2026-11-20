@@ -40,7 +40,13 @@ export function ReleaseButtons({
       (release && Date.parse(release.createdAt) >= dispatchedAt));
   const dispatchJustRequested =
     dispatchedAt !== undefined && now - dispatchedAt < dispatchVisibilityMs && !dispatchAcknowledged;
-  if (!(release?.apk || hasReleaseWorkflow || canBuildLocally || showWebosInstall || (run && (state === 'errored' || releaseRunning))))
+  if (
+    !(release?.apk ||
+      hasReleaseWorkflow ||
+      canBuildLocally ||
+      showWebosInstall ||
+      (run && (state === 'errored' || releaseRunning)))
+  )
     return null;
   return (
     <div className="release-actions">
