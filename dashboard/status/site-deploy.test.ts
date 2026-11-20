@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { RepoWorkflow } from './release-workflow.ts';
-import { deploysSite, pickSiteWorkflow } from './site-deploy.ts';
+import { deploysSite, findSiteWorkflows, pickSiteWorkflow } from './site-deploy.ts';
 
 const flow = (id: number, file: string, state = 'active'): RepoWorkflow => ({
   id,
@@ -24,11 +24,12 @@ test('a dispatchable workflow that deploys a site counts', () => {
   assert.ok(deploysSite('on:\n  workflow_dispatch:\njobs:\n  d:\n    steps:\n      - uses: actions/deploy-pages@v4\n'));
 });
 
-test('a workflow with no dispatch, no deploy or only a live call Worker stays out', () => {
-  assert.equal(deploysSite('on:\n  push:\njobs:\n  d:\n    steps:\n      - run: wrangler deploy\n'), false);
+test('automatic-only site workflows are discoverable, but tests and signalling Workers stay out', () => {
+  assert.equal(deploysSite('on:\n  push:\njobs:\n  d:\n    steps:\n      - run: wrangler deploy\n'), true);
   assert.equal(deploysSite(yaml('mise run test')), false);
   assert.equal(deploysSite(yaml('mise run deploy:signal')), false);
   assert.equal(deploysSite(yaml('mise run deploy:worker')), false);
+  assert.equal(deploysSite(yaml('mise run deploy:site')), true);
 });
 
 test('a deploy file wins over pages, release and others', () => {
@@ -50,4 +51,20 @@ test('disabled and dynamic workflows and repos with no deploy pick none', () => 
   };
   assert.equal(pickSiteWorkflow([pages], [site]), null);
   assert.equal(pickSiteWorkflow([flow(1, 'ci.yml')], [yaml('mise run test')]), null);
+});
+
+test('all site workflows are found, including two sites in one repo and an automatic-only deploy', () => {
+  const pages = flow(1, 'pages.yml');
+  const games = flow(2, 'games.yml');
+  const automatic = flow(3, 'automatic.yml');
+  const ignored = flow(4, 'checks.yml');
+  const discovered = findSiteWorkflows(
+    [pages, games, automatic, ignored],
+    [yaml('mise run deploy'), yaml('pnpm exec wrangler deploy'), 'on:\\n  push:\\n  steps:\\n    - run: mise run deploy:web\\n'.replaceAll('\\n', '\n'), yaml('mise run lint')],
+  );
+  assert.deepEqual(
+    discovered.map(({ workflow, manual }) => [workflow.id, manual]),
+    [[1, true], [2, true], [3, false]],
+  );
+  assert.equal(pickSiteWorkflow([automatic], ['on:\n  push:\n  run: mise run deploy:web']), null);
 });
