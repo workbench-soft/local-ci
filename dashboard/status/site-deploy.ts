@@ -3,55 +3,101 @@ import { dispatchable, type RepoWorkflow, textOf, workflowsOf } from './release-
 import { orgName } from './settings.ts';
 
 /** The workflow Deploy site dispatches on main for a repo. */
-export type SiteWorkflow = { repo: string; workflow: number; name: string; file: string };
+export type SiteWorkflow = {
+  repo: string;
+  workflow: number;
+  name: string;
+  file: string;
+  /** Whether GitHub lets us start this deployment from the dashboard. */
+  manual: boolean;
+};
 
 // A Worker that holds live calls, such as deploy:signal, stays out: a redeploy drops the calls.
 const deploysLine =
-  /\bwrangler\b[^\n]*\bdeploy\b|actions\/deploy-pages|mise run deploy(?!:(?:signal|worker))\b|deploy-(?:site|web)\b|-site\.git\b/;
+  /\bwrangler\b[^\n]*\bdeploy\b|actions\/deploy-pages|\bmise\s+run\s+deploy(?!(?::(?:signal|worker)\b))(?::[\w-]+)?\b|deploy-(?:site|web)\b|-site\.git\b/;
 
-/** True for a workflow a person can start that puts a site live. */
+/** True for a workflow that puts a website live, including automatic-only deployments. */
 export function deploysSite(yaml: string): boolean {
-  return /^\s*workflow_dispatch:/m.test(yaml) && deploysLine.test(yaml);
+  return deploysLine.test(yaml);
 }
+
+export const canDispatch = (yaml: string): boolean => /^\s*workflow_dispatch\s*:/m.test(yaml);
 
 const fileOf = (workflow: RepoWorkflow) => workflow.path.split('/').pop() ?? '';
 const rankOf = (file: string) => [/deploy/i, /pages/i, /release/i].findIndex((name) => name.test(file)) >>> 0;
 
-/** Among the workflows that deploy, a deploy file wins, then pages, then release, then the first by name. */
+/** All active website deployments of a repo, not just the first one. */
+export function findSiteWorkflows(
+  workflows: RepoWorkflow[],
+  texts: string[],
+): { workflow: RepoWorkflow; manual: boolean }[] {
+  return workflows.flatMap((workflow, index) => {
+    const yaml = texts[index] ?? '';
+    return dispatchable(workflow) && deploysSite(yaml) ? [{ workflow, manual: canDispatch(yaml) }] : [];
+  });
+}
+
+/** The preferred manually dispatchable site workflow, for legacy callers. */
 export function pickSiteWorkflow(workflows: RepoWorkflow[], texts: string[]): RepoWorkflow | null {
-  const found = workflows.filter((workflow, index) => dispatchable(workflow) && deploysSite(texts[index] ?? ''));
-  return (
-    found.toSorted((a, b) => rankOf(fileOf(a)) - rankOf(fileOf(b)) || fileOf(a).localeCompare(fileOf(b)))[0] ?? null
-  );
+  const found = findSiteWorkflows(workflows, texts)
+    .filter((item) => item.manual)
+    .map((item) => item.workflow);
+  return found.toSorted((a, b) => rankOf(fileOf(a)) - rankOf(fileOf(b)) || fileOf(a).localeCompare(fileOf(b)))[0] ?? null;
 }
 
 // The org gains a repo rarely, so its list is read once an hour, like the workflows.
 const ttlMs = 60 * 60_000;
 let repos: { at: number; names: Promise<string[]> } | null = null;
+let lastRepos: string[] = [];
 
 function orgRepos(): Promise<string[]> {
   if (repos && Date.now() - repos.at < ttlMs) return repos.names;
-  const names = callGitHub(`/orgs/${orgName}/repos?per_page=100`)
-    .then(async (response) => (await response.json()) as { name: string; archived: boolean }[])
-    .then((list) => list.filter((repo) => !repo.archived).map((repo) => repo.name))
-    .catch(() => {
-      repos = null;
-      return [];
-    });
+  const names = (async () => {
+    const names: string[] = [];
+    // The organisation can grow beyond GitHub's 100-repo page.
+    for (let page = 1; ; page++) {
+      const response = await callGitHub(`/orgs/${orgName}/repos?per_page=100&page=${page}`);
+      const batch = (await response.json()) as { name: string; archived: boolean }[];
+      names.push(...batch.filter((repo) => !repo.archived).map((repo) => repo.name));
+      if (batch.length < 100) break;
+    }
+    lastRepos = names;
+    return names;
+  })().catch(() => {
+    repos = null;
+    return lastRepos;
+  });
   repos = { at: Date.now(), names };
   return names;
 }
 
-/** The site deploy workflow of a repo, or null when the repo deploys no site from a workflow. */
-export async function siteWorkflowOf(repo: string): Promise<SiteWorkflow | null> {
+/** Every website workflow in a repository, including ones that deploy only on push. */
+export async function siteWorkflowsOf(repo: string): Promise<SiteWorkflow[]> {
   const workflows = (await workflowsOf(repo)).filter(dispatchable);
   const texts = await Promise.all(workflows.map((workflow) => textOf(repo, workflow.path)));
-  const workflow = pickSiteWorkflow(workflows, texts);
-  return workflow && { repo, workflow: workflow.id, name: workflow.name, file: fileOf(workflow) };
+  return findSiteWorkflows(workflows, texts).map(({ workflow, manual }) => ({
+    repo,
+    workflow: workflow.id,
+    name: workflow.name,
+    file: fileOf(workflow),
+    manual,
+  }));
 }
 
-/** Each org repo with a site and the workflow that deploys it, by repo name. */
+/** The site's preferred manually dispatchable workflow, or null when none exists. */
+export async function siteWorkflowOf(repo: string): Promise<SiteWorkflow | null> {
+  const sites = await siteWorkflowsOf(repo);
+  return (
+    sites.filter((site) => site.manual).toSorted(
+      (a, b) => rankOf(a.file) - rankOf(b.file) || a.file.localeCompare(b.file),
+    )[0] ?? null
+  );
+}
+
+/** All distinct site deployments across every org repo, including multi-site repos. */
 export async function siteWorkflows(): Promise<SiteWorkflow[]> {
-  const found = await Promise.all((await orgRepos()).map(siteWorkflowOf));
-  return found.filter((site) => site !== null).toSorted((a, b) => a.repo.localeCompare(b.repo));
+  const found = await Promise.all((await orgRepos()).map(siteWorkflowsOf));
+  return found.flat().toSorted((a, b) =>
+    a.repo.localeCompare(b.repo) || a.name.localeCompare(b.name) || a.workflow - b.workflow
+  );
 }
