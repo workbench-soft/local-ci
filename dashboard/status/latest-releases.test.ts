@@ -47,6 +47,7 @@ test('the app of a tag drops the version', () => {
   assert.equal(appOfTag('media-organizer-v0.0.17'), 'media-organizer');
   assert.equal(appOfTag('speed-camera-map-v2026.11.07.1'), 'spotthecam');
   assert.equal(appOfTag('spotthecam-v2026.11.07.1'), 'spotthecam');
+  assert.equal(appOfTag('lumiere-webos-v0.3.1'), 'lumiere-webos');
   assert.equal(appOfTag('v2026.10.31.1'), null);
 });
 
