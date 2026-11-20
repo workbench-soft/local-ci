@@ -287,6 +287,7 @@ Each push to `main` that passes Checks gets a release on the
 
 The Releases tab of the status page also ships the org's Android apps:
 
+- **Install Lumiere on all LG TVs** on the Releases tab downloads the latest webOS `.ipk` and installs it on every already-paired LG webOS TV discovered from this PC. The first pairing happens once through Lumiere's `INSTALL-LUMIERE-WEBOS-ALL-TVS.cmd` script, with Developer Mode and Key Server enabled on each TV. The PC must have the Lumiere repository with webOS dependencies installed. Partial failures are reported; the button never uses Android `adb`.
 - **Release on CI** dispatches the app's release workflow on `main`, for
   every app on the tab and also when `main` is already released. The
   button stays gray while that release is queued or running, and the server
