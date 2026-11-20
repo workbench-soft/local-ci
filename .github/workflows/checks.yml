@@ -71,3 +71,26 @@ jobs:
             foreach ($e in $errors) { Write-Host "$($_.Name):$($e.Extent.StartLineNumber) $($e.Message)"; $bad++ }
           }
           exit $bad
+
+  format-pr-temporary:
+    # Format only branches of this repository, not untrusted fork code.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          persist-credentials: true
+      - name: Format touched files and commit
+        run: |
+          npm exec --yes --package=oxfmt@0.75.0 -- oxfmt --write dashboard/status/install-webos.ts
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- dashboard/status/install-webos.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'style: apply oxfmt to installer changes'
+            git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          fi
