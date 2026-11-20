@@ -40,3 +40,17 @@ test('an installed app with unknown version is not called current', () => {
     version: null,
   });
 });
+
+test('multiline webOS CLI records report the installed version', () => {
+  assert.deepEqual(
+    installedLumiereFromList('id: com.workbenchsoft.lumiere\n  title: Lumiere\n  version: 0.3.101\nid: com.other.app\n  version: 2.0.0'),
+    { found: true, version: '0.3.101' },
+  );
+});
+
+test('nested webOS CLI JSON records report the installed version', () => {
+  assert.deepEqual(
+    installedLumiereFromList(JSON.stringify({ apps: [{ appId: 'com.workbenchsoft.lumiere', appVersion: '0.3.102' }] })),
+    { found: true, version: '0.3.102' },
+  );
+});
