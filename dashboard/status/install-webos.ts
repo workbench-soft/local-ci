@@ -5,17 +5,35 @@ import { access } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import { workspaceRoot } from './local-build-target.ts';
+import { latestPublishedWebosRelease, readLumiereWebosInventory, type WebosInventory } from './webos-inventory.ts';
 
 const exec = promisify(execFile);
 const running = { current: false };
 
 export type WebosInstallResult = { ok: true; message: string } | { ok: false; error: string };
 
+export async function getLumiereWebosStatus(): Promise<WebosInventory> {
+  return readLumiereWebosInventory();
+}
+
 /** Install the latest published webOS release on every paired LG TV from the LocalCI host PC. */
-export async function installLumiereWebosOnAllTvs(): Promise<WebosInstallResult> {
+export async function installLumiereWebosOnAllTvs(expectedVersion: string): Promise<WebosInstallResult> {
   if (running.current) return { ok: false, error: 'LG TV installation is already running on this PC.' };
   running.current = true;
   try {
+    if (!/^\d+\.\d+\.\d+$/.test(expectedVersion))
+      return { ok: false, error: 'Refresh the webOS TV status before installing.' };
+    // Refuse stale previews before starting the installer; the installer itself also pins
+    // the version so a release published during deployment cannot silently replace it.
+    const newest = await latestPublishedWebosRelease();
+    if (newest.version !== expectedVersion)
+      return {
+        ok: false,
+        error:
+          'The latest webOS version changed to ' +
+          newest.version +
+          '. Refresh the TV status and review the new target.',
+      };
     const webos = join(workspaceRoot(), 'lumiere-player', 'webos');
     const script = join(webos, 'scripts', 'install-all-tvs.ts');
     try {
@@ -47,7 +65,11 @@ export async function installLumiereWebosOnAllTvs(): Promise<WebosInstallResult>
       windowsHide: true,
       timeout: 10 * 60_000,
       maxBuffer: 1024 * 1024,
-      env: { ...process.env, LUMIERE_NONINTERACTIVE: '1' },
+      env: {
+        ...process.env,
+        LUMIERE_NONINTERACTIVE: '1',
+        LUMIERE_EXPECTED_WEBOS_VERSION: expectedVersion,
+      },
     });
     const summary = stdout.match(/Finished: (\d+) TV\(s\) updated, (\d+) failed\./);
     const updated = summary ? Number(summary[1]) : 0;
@@ -63,8 +85,8 @@ export async function installLumiereWebosOnAllTvs(): Promise<WebosInstallResult>
     return {
       ok: true,
       message: failed
-        ? `Lumiere installed on ${updated} LG TV(s), but ${failed} failed. Check the PC log or rerun the double-click installer to pair the remaining TVs.`
-        : `Lumiere installed and opened on ${updated} LG TV(s).`,
+        ? `Lumiere ${expectedVersion} installed on ${updated} LG TV(s), but ${failed} failed. Check the PC log or rerun the double-click installer to pair the remaining TVs.`
+        : `Lumiere ${expectedVersion} installed and opened on ${updated} LG TV(s).`,
     };
   } catch (error) {
     const problem = error as Error & { stdout?: string; stderr?: string };

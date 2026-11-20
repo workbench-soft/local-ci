@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import { installRelease } from '@/status/install-apk';
-import { installLumiereWebosOnAllTvs } from '@/status/install-webos';
 import { buildLatestMain, cancelLocalBuild, installLocalBuild } from '@/status/local-build';
 import type { AppRelease } from '@/status/latest-releases';
 import type { LiveJob } from '@/status/placement';
@@ -37,12 +36,16 @@ export function ReleasesCard({
   const [outcomes, setOutcomes] = useState<Record<string, Outcome>>({});
   const [localActions, setLocalActions] = useState<Record<string, LocalAction>>({});
   const [running, setRunning] = useState(false);
-  const [webosBusy, setWebosBusy] = useState(false);
-  const [webosResult, setWebosResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [cancellingLocal, setCancellingLocal] = useState<ReadonlySet<string>>(new Set());
   const withApk = apps.filter((app) => app.release?.apk);
   const chosen = withApk.filter((app) => ticked.has(app.app));
   const allTicked = withApk.length > 0 && chosen.length === withApk.length;
+  // The webOS release is a separate tag, but its installer belongs beside Lumiere
+  // Player, falling back to its own release row if the Android tag is not present.
+  const lumiereRow =
+    apps.find((app) => app.app === 'lumiere')?.app ??
+    apps.find((app) => app.app === 'lumiere-webos')?.app ??
+    apps.find((app) => app.repo === 'lumiere-player')?.app;
 
   const toggle = (app: string) =>
     setTicked((current) => new Set(current.has(app) ? [...current].filter((item) => item !== app) : [...current, app]));
@@ -97,22 +100,6 @@ export function ReleasesCard({
     setCancellingLocal((current) => new Set([...current].filter((item) => item !== app)));
   };
 
-  const installWebos = async () => {
-    setWebosBusy(true);
-    setWebosResult(null);
-    try {
-      const answer = await installLumiereWebosOnAllTvs();
-      setWebosResult(answer.ok ? { ok: true, text: answer.message } : { ok: false, text: answer.error });
-    } catch (error) {
-      setWebosResult({
-        ok: false,
-        text: error instanceof Error ? error.message : 'Could not install Lumiere on LG TVs.',
-      });
-    } finally {
-      setWebosBusy(false);
-    }
-  };
-
   const installChosen = async () => {
     setRunning(true);
     const chosenTags = chosen.flatMap((app) => (app.release ? [{ app: app.app, tag: app.release.tag }] : []));
@@ -154,20 +141,6 @@ export function ReleasesCard({
           <Icon name="phone" />
           {running ? 'Installing' : `Install ${chosen.length || ''}`.trim()}
         </button>
-        <button
-          type="button"
-          className="action"
-          disabled={webosBusy}
-          onClick={installWebos}
-          title="Install the latest Lumiere webOS GitHub release on every paired LG TV on this PC's LAN"
-        >
-          {webosBusy ? 'Installing on LG TVs…' : 'Install Lumiere on all LG TVs'}
-        </button>
-        {webosResult && (
-          <span className={webosResult.ok ? 'install-ok small' : 'install-error'} role="status">
-            {webosResult.text}
-          </span>
-        )}
       </div>
       <StorageCleanupButton />
       <ul className="releases">
@@ -175,6 +148,7 @@ export function ReleasesCard({
           <AppItem
             key={app.app}
             app={app}
+            showWebosInstall={app.app === lumiereRow}
             now={now}
             jobs={app.run ? jobs.filter((job) => job.runId === app.run?.id) : []}
             ticked={ticked.has(app.app)}
