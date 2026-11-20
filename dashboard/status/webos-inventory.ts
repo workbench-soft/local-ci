@@ -77,9 +77,7 @@ export function installedLumiereFromList(output: string): { found: boolean; vers
   // webOS CLI output varies by version: JSON arrays, JSON objects, or multiline
   // records. Do not mistake an unparseable inventory for an uninstalled app.
   const versionOf = (value: unknown): string | null =>
-    typeof value === 'string' && /^\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?$/.test(value.trim())
-      ? value.trim()
-      : null;
+    typeof value === 'string' && /^\\d+\\.\\d+\\.\\d+(?:[-+][\\w.-]+)?$/.test(value.trim()) ? value.trim() : null;
   const inspect = (value: unknown): { found: boolean; version: string | null } | null => {
     if (!value || typeof value !== 'object') return null;
     if (Array.isArray(value)) {
@@ -225,9 +223,7 @@ export async function readLumiereWebosInventory(forceDiscovery = false): Promise
   // Checking installed versions is still live; avoid expensive SSDP scans on every 30s poll.
   const [known] = await Promise.allSettled([profiles(root)]);
   const scan = shouldDiscoverWebosTvs(known.status === 'fulfilled' ? known.value.length : 0, forceDiscovery);
-  const [found] = await Promise.allSettled([
-    scan ? discover(root) : Promise.resolve([] as string[]),
-  ]);
+  const [found] = await Promise.allSettled([scan ? discover(root) : Promise.resolve([] as string[])]);
   await releasePromise;
   if (known.status === 'rejected' && found.status === 'rejected') {
     result.error =
