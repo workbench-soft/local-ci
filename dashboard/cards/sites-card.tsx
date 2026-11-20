@@ -9,7 +9,16 @@ import { StatsLine } from './trends/stats-line';
 
 /** The newest run of a site's deploy workflow among the runs the page reads. */
 export type SiteRun = { status: string; conclusion: string | null; url: string; createdAt: string };
-export type SiteRow = { repo: string; file: string; run: SiteRun | null; stats?: WorkflowStats | null };
+export type SiteRow = {
+  id: string;
+  repo: string;
+  workflow: number;
+  name: string;
+  manual: boolean;
+  file: string;
+  run: SiteRun | null;
+  stats?: WorkflowStats | null;
+};
 
 type Answer = { busy?: boolean; requestedAt?: number; message?: string; error?: string };
 
@@ -27,35 +36,38 @@ const rowOf: Record<string, string | undefined> = { ok: 'row-ok', bad: 'row-bad'
 /** Each org repo with a site, its last deploy, and a button that deploys main again on CI. */
 export function SitesCard({ sites, now }: { sites: SiteRow[]; now: number }) {
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
-  const deploy = async (repo: string) => {
-    setAnswers((current) => ({ ...current, [repo]: { busy: true } }));
-    const answer = await dispatchSiteDeploy(repo).catch((error: Error) => ({
+  const deploy = async (site: SiteRow) => {
+    setAnswers((current) => ({ ...current, [site.id]: { busy: true } }));
+    const answer = await dispatchSiteDeploy(site.repo, site.workflow).catch((error: Error) => ({
       ok: false as const,
       error: error.message,
     }));
     setAnswers((current) => ({
       ...current,
-      [repo]: answer.ok ? { message: 'Deploy queued on CI.', requestedAt: Date.now() } : { error: answer.error },
+      [site.id]: answer.ok ? { message: 'Deploy queued on CI.', requestedAt: Date.now() } : { error: answer.error },
     }));
   };
   return (
     <section className="card wide">
       <h2>Sites</h2>
       <p className="muted small">
-        Each repo with a site. Deploy site starts its deploy workflow on main, on the org runners.
+        Every detected website deployment, including sites deployed automatically and multiple sites from one repo.
+        Deploy site is available for workflows that support manual runs.
       </p>
-      {sites.length === 0 && <p className="muted small">No repo deploys a site from a workflow.</p>}
+      {sites.length === 0 && <p className="muted small">No site workflows were found. Check GitHub access if sites are missing.</p>}
       <ul className="releases sites">
-        {sites.map(({ repo, file, run, stats }) => {
+        {sites.map((site) => {
+          const { id, repo, name, manual, file, run, stats } = site;
           const chip = run && chipOf(run);
           const running = !!run && run.status !== 'completed';
-          const answer = answers[repo] ?? {};
+          const answer = answers[id] ?? {};
           // GitHub lists a dispatched run some seconds later, so the button waits that long.
           const justQueued = answer.requestedAt !== undefined && now - answer.requestedAt < dispatchVisibilityMs;
           return (
-            <li key={repo} className={chip ? rowOf[chip.tone] : undefined}>
+            <li key={id} className={chip ? rowOf[chip.tone] : undefined}>
               <div className="release-head">
                 <strong>{repo}</strong>
+                <span className="muted small">{name}</span>
                 {run && chip ? (
                   <a
                     className={`state ${chip.tone}${chip.tone === 'ok' ? ' solid' : ''}`}
@@ -74,16 +86,20 @@ export function SitesCard({ sites, now }: { sites: SiteRow[]; now: number }) {
               </div>
               <StatsLine stats={stats} what="deploys" />
               <div className="release-actions">
-                <button
-                  type="button"
-                  className="action"
-                  disabled={answer.busy || running || justQueued}
-                  title={running ? 'Wait for the current deploy to finish' : undefined}
-                  aria-label={`${answer.busy ? 'Queueing' : 'Deploy site'}: ${repo}`}
-                  onClick={() => deploy(repo)}
-                >
-                  {answer.busy ? 'Queueing' : 'Deploy site'}
-                </button>
+                {manual ? (
+                  <button
+                    type="button"
+                    className="action"
+                    disabled={answer.busy || running || justQueued}
+                    title={running ? 'Wait for the current deploy to finish' : undefined}
+                    aria-label={`${answer.busy ? 'Queueing' : 'Deploy site'}: ${repo} / ${name}`}
+                    onClick={() => deploy(site)}
+                  >
+                    {answer.busy ? 'Queueing' : 'Deploy site'}
+                  </button>
+                ) : (
+                  <span className="muted small">Automatic deployment only</span>
+                )}
                 {answer.message && (
                   <span className="install-ok small" role="status">
                     {answer.message}
