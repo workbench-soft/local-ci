@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { compareWebosVersions, installedLumiereFromList } from './webos-inventory.ts';
+import { compareWebosVersions, installedLumiereFromList, shouldDiscoverWebosTvs } from './webos-inventory.ts';
 
 test('webOS versions compare numeric components, not lexicographic strings', () => {
   assert.equal(compareWebosVersions('0.3.100', '0.3.99'), 1);
@@ -53,4 +53,14 @@ test('nested webOS CLI JSON records report the installed version', () => {
     installedLumiereFromList(JSON.stringify({ apps: [{ appId: 'com.workbenchsoft.lumiere', appVersion: '0.3.102' }] })),
     { found: true, version: '0.3.102' },
   );
+});
+
+test('saved LG TV profiles avoid SSDP during periodic status polls', () => {
+  assert.equal(shouldDiscoverWebosTvs(2, false), false);
+  assert.equal(shouldDiscoverWebosTvs(1, false), false);
+  assert.equal(shouldDiscoverWebosTvs(0, false), true);
+});
+
+test('manual Find new TVs rescans even when profiles are cached', () => {
+  assert.equal(shouldDiscoverWebosTvs(2, true), true);
 });
