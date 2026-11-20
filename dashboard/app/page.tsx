@@ -225,7 +225,10 @@ export default async function StatusPage({
               {org.ok ? (
                 <>
                   {org.releasesError && (
-                    <p className="error">Could not refresh published releases: {org.releasesError}. Showing the last known data when available.</p>
+                    <p className="error">
+                      Could not refresh published releases: {org.releasesError}. Showing the last known data when
+                      available.
+                    </p>
                   )}
                   <ReleasesCard
                     apps={apps}
