@@ -38,6 +38,7 @@ const repos = [
 const healthyOrg: Route = (path) => {
   if (path.includes('/actions/runners')) return { status: 200, body: { runners: [] } };
   if (path.includes('/orgs/workbench-soft/repos')) return { status: 200, body: repos };
+  if (path.includes('/workbench-soft.github.io/releases?')) return { status: 200, body: [] };
   return { status: 200, body: { workflow_runs: [apiRun(1)] } };
 };
 
@@ -74,7 +75,7 @@ test('a failing repo list still makes the whole status fail', async () => {
   assert.deepEqual(status, {
     ok: false,
     error:
-      'GitHub answered 401 to GET /orgs/workbench-soft/repos?per_page=100&sort=pushed. The token was refused. Run gh auth login, then dashboard\\install.ps1.',
+      'GitHub answered 401 to GET /orgs/workbench-soft/repos?per_page=100&sort=pushed&page=1. The token was refused. Run gh auth login, then dashboard\\install.ps1.',
   });
 });
 
@@ -279,4 +280,55 @@ test('a second load sends the ETag back, and a 304 answer reuses the runs read b
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test('transient release API errors preserve the last published app inventory and report the failure', async () => {
+  let broken = false;
+  route = (path) => {
+    if (path.includes('/workbench-soft.github.io/releases?'))
+      return broken
+        ? { status: 503 }
+        : {
+            status: 200,
+            body: [
+              {
+                tag_name: 'shuttrix-v2026.11.20.1',
+                name: 'Shuttrix',
+                html_url: 'https://release',
+                created_at: '2026-11-20T00:00:00Z',
+                assets: [],
+              },
+            ],
+          };
+    return healthyOrg(path);
+  };
+  const statusApi = await freshModule();
+  const first = await statusApi.fetchOrgStatus();
+  assert.equal(first.ok && first.releases.length, 1);
+  broken = true;
+  statusApi.forgetOrgStatus();
+  const second = await statusApi.fetchOrgStatus();
+  assert.equal(second.ok && second.releases[0]?.tag, 'shuttrix-v2026.11.20.1');
+  assert.match(second.ok ? (second.releasesError ?? '') : '', /503/);
+});
+
+test('all pages of public releases are read, not only the first hundred', async () => {
+  const release = (id: number) => ({
+    tag_name: `sample${id}-v2026.11.20.1`,
+    name: `Sample ${id}`,
+    html_url: `https://release/${id}`,
+    created_at: '2026-11-20T00:00:00Z',
+    assets: [],
+  });
+  route = (path) => {
+    if (path.includes('/workbench-soft.github.io/releases?'))
+      return {
+        status: 200,
+        body: path.includes('page=2') ? [release(100)] : Array.from({ length: 100 }, (_, id) => release(id)),
+      };
+    return healthyOrg(path);
+  };
+  const result = await (await freshModule()).fetchOrgStatus();
+  assert.equal(result.ok && result.releases.length, 101);
+  assert.equal(result.ok && result.releasesError, null);
 });
