@@ -3,10 +3,12 @@ import { dispatchSlackMs, dispatchVisibilityMs } from '@/status/release-dispatch
 import { InstallButton } from './install-button';
 import type { LocalAction } from './release-item';
 import { RetryRunButtons } from './retry-run-buttons';
+import { WebosInstall } from './webos-install';
 import { RunControls } from './run-controls';
 
 type Props = {
   app: AppRelease;
+  showWebosInstall: boolean;
   now: number;
   actions: LocalAction;
   hasReleaseWorkflow: boolean;
@@ -20,6 +22,7 @@ type Props = {
 /** Retry, stop, install, release on CI and the local build of one app. */
 export function ReleaseButtons({
   app: { app, repo, release, state, run },
+  showWebosInstall,
   now,
   actions,
   hasReleaseWorkflow,
@@ -37,7 +40,7 @@ export function ReleaseButtons({
       (release && Date.parse(release.createdAt) >= dispatchedAt));
   const dispatchJustRequested =
     dispatchedAt !== undefined && now - dispatchedAt < dispatchVisibilityMs && !dispatchAcknowledged;
-  if (!(release?.apk || hasReleaseWorkflow || canBuildLocally || (run && (state === 'errored' || releaseRunning))))
+  if (!(release?.apk || hasReleaseWorkflow || canBuildLocally || showWebosInstall || (run && (state === 'errored' || releaseRunning))))
     return null;
   return (
     <div className="release-actions">
@@ -53,6 +56,7 @@ export function ReleaseButtons({
         />
       )}
       {release?.apk && <InstallButton tag={release.tag} name={app} />}
+      {showWebosInstall && <WebosInstall />}
       {hasReleaseWorkflow && (
         <button
           type="button"
