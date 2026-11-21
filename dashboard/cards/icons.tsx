@@ -1,4 +1,5 @@
 import type { Place } from '@/status/placement';
+import { Check, X, Ban, ChevronsRight, LoaderCircle, Clock, Monitor, Cloud, Server, Square, RotateCcw, Trash2, Smartphone, Package } from 'lucide-react';
 
 export type IconName =
   | 'success'
@@ -16,44 +17,26 @@ export type IconName =
   | 'phone'
   | 'package';
 
-// Feather-style 24 px strokes, so every icon takes the text color of its tone.
-const paths: Record<IconName, string[]> = {
-  success: ['M20 6 9 17l-5-5'],
-  failure: ['M18 6 6 18', 'M6 6l12 12'],
-  cancelled: ['M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18', 'M5.6 5.6l12.8 12.8'],
-  skipped: ['M5 5l7 7-7 7', 'M13 5l7 7-7 7'],
-  running: ['M21 12a9 9 0 1 1-6.2-8.6'],
-  queued: ['M12 3a9 9 0 1 0 0 18 9 9 0 1 0 0-18', 'M12 7v5l3 2'],
-  local: ['M3 4h18v12H3z', 'M8 20h8', 'M12 16v4'],
-  cloud: ['M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.3 12.5 3.5 3.5 0 0 0 6.5 19z'],
-  server: ['M3 3h18v7H3z', 'M3 14h18v7H3z', 'M7 6.5h.01', 'M7 17.5h.01'],
-  stop: ['M6 6h12v12H6z'],
-  retry: ['M3 12a9 9 0 1 0 3-6.7', 'M3 4v6h6'],
-  phone: ['M7 2h10v20H7z', 'M11 18h2'],
-  package: ['M21 8 12 3 3 8v8l9 5 9-5z', 'M3 8l9 5 9-5', 'M12 13v8'],
-  trash: ['M3 6h18', 'M8 6V4h8v2', 'M19 6l-1 14H6L5 6', 'M10 11v6', 'M14 11v6'],
-};
+const icons = {
+  success: Check,
+  failure: X,
+  cancelled: Ban,
+  skipped: ChevronsRight,
+  running: LoaderCircle,
+  queued: Clock,
+  local: Monitor,
+  cloud: Cloud,
+  server: Server,
+  stop: Square,
+  retry: RotateCcw,
+  trash: Trash2,
+  phone: Smartphone,
+  package: Package,
+} as const;
 
 export function Icon({ name, label, className = '' }: { name: IconName; label?: string; className?: string }) {
-  return (
-    <svg
-      className={`icon ${name} ${className}`}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      role={label ? 'img' : undefined}
-      aria-label={label}
-      aria-hidden={label ? undefined : true}
-    >
-      {label && <title>{label}</title>}
-      {paths[name].map((d) => (
-        <path key={d} d={d} />
-      ))}
-    </svg>
-  );
+  const Component = icons[name];
+  return <Component className={`icon ${name} ${className}`} size={24} strokeWidth={2.2} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} />;
 }
 
 /** The label of each place, and a hint on who builds the job there. A finished run has no place. */
