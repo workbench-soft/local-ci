@@ -24,7 +24,7 @@ Manual checks of buttons the agent can't press: Stop, Purge and Purge all open a
 
 ## Clean the PC
 
-- [ ] Free 24 GB on C: (denied). The disk hit 0 GB free on 2026-11-16. The 4 old `_work` folders in `%USERPROFILE%\actions-runner` date from before the move to `C:\ci`, and 4 old APKs (393 MB) sit in `%TEMP%\local-ci-apk`. Auto mode denies a folder delete, so paste this in PowerShell:
+- [ ] Free 28 GB on C: (denied). The disk hit 0 GB free on 2026-11-16 and again on 2026-11-23. The 4 old `_work` folders in `%USERPROFILE%\actions-runner` held 28 GB on 2026-11-24. They date from 2026-10-30, and each runner now works in `C:\ci\<n>`. Also 4 old APKs (393 MB) sit in `%TEMP%\local-ci-apk`. Auto mode denies a folder delete, so paste this in PowerShell:
 
   ```powershell
   Remove-Item -Recurse -Force "$env:USERPROFILE\actions-runner\workbench-soft*\_work"; Remove-Item -Recurse -Force "$env:TEMP\local-ci-apk"; mise x -- uv cache clean
