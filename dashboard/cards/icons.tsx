@@ -1,5 +1,20 @@
 import type { Place } from '@/status/placement';
-import { Check, X, Ban, ChevronsRight, LoaderCircle, Clock, Monitor, Cloud, Server, Square, RotateCcw, Trash2, Smartphone, Package } from 'lucide-react';
+import {
+  Check,
+  X,
+  Ban,
+  ChevronsRight,
+  LoaderCircle,
+  Clock,
+  Monitor,
+  Cloud,
+  Server,
+  Square,
+  RotateCcw,
+  Trash2,
+  Smartphone,
+  Package,
+} from 'lucide-react';
 
 export type IconName =
   | 'success'
@@ -36,7 +51,16 @@ const icons = {
 
 export function Icon({ name, label, className = '' }: { name: IconName; label?: string; className?: string }) {
   const Component = icons[name];
-  return <Component className={`icon ${name} ${className}`} size={24} strokeWidth={2.2} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} />;
+  return (
+    <Component
+      className={`icon ${name} ${className}`}
+      size={24}
+      strokeWidth={2.2}
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
+    />
+  );
 }
 
 /** The label of each place, and a hint on who builds the job there. A finished run has no place. */
