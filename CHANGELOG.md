@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **Emulator leftovers cleaned** each Windows job start deletes the `.qcow2` disk overlays the Android emulator left in `%LOCALAPPDATA%\Temp\AndroidEmulator` more than a day ago. A launch check that ends the emulator leaves one each time, and they reached 12 GB in 8 days.
+
 - **Install Lumiere on LG TVs from LocalCI** a Releases toolbar button downloads the newest webOS `.ipk` and deploys it across the local network to paired LG TVs, using Lumiere's installer on the PC. First-time pairing stays in the double-click script.
 - **No empty releases** a push that changes no code since the last release, such as a `TODO.md` edit, cuts no release, so the update task installs nothing new.
 - **GitHub minutes read as used, not billed** the cloud card says `in finished jobs` where it said `billed`. GitHub Free charges $0 for them: the billing API shows the whole gross amount as discount, and past the 2000 GitHub cancels jobs in place of charging.

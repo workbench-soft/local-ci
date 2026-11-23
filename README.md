@@ -114,7 +114,9 @@ runner. The runner scripts also work alone:
   runner's repo checkouts in `C:\ci\<n>` unused for 3 days, and all but the
   current one when the drive has under 60 GB free. `RUNNER_CLEAN_DAYS` and
   `RUNNER_CLEAN_MIN_FREE_GB` change the limits. One background delete per
-  runner empties its `_trash-*` folders at below normal priority.
+  runner empties its `_trash-*` folders at below normal priority. It also
+  deletes the emulator's `.qcow2` overlays in `%LOCALAPPDATA%\Temp\AndroidEmulator`
+  untouched for a day.
 - **Automatic emergency cleanup** when the C: drive drops below 2 GB free, the
   five-minute update task runs the existing CI cleanup, but only while all CI
   workers are idle. It never kills an active build, and waits at least 30 minutes

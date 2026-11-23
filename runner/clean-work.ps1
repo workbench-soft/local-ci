@@ -6,7 +6,11 @@
 # such as C:\ci\3, and the jobs of the other runners stay untouched.
 # A repo folder unused for RUNNER_CLEAN_DAYS days goes, and every repo folder but the
 # current one goes when the drive has less than RUNNER_CLEAN_MIN_FREE_GB free.
-param([string]$Workspace = $env:RUNNER_WORKSPACE, [string]$DeleteTrash)
+param(
+	[string]$Workspace = $env:RUNNER_WORKSPACE,
+	[string]$DeleteTrash,
+	[string]$EmulatorTemp = (Join-Path $env:LOCALAPPDATA 'Temp\AndroidEmulator')
+)
 
 # The second run, started below: deletes the trash of one runner, one run at a time per runner.
 if ($DeleteTrash) {
@@ -59,6 +63,16 @@ try {
 		$p.PriorityClass = 'BelowNormal'
 	}
 	Write-Host ('clean-work: {0:N0} GB free on the drive of {1}' -f $freeGb, $root)
+
+	# The emulator leaves a .qcow2 disk overlay in its temp folder each time a launch check ends it:
+	# 12 GB in 8 days by 2026-11-24. One untouched for a day belongs to no running emulator, and a file
+	# an emulator holds open stays.
+	$overlays = @(Get-ChildItem -LiteralPath $EmulatorTemp -File -Filter '*.qcow2' -Force -ErrorAction SilentlyContinue |
+		Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) })
+	if ($overlays) {
+		Write-Host ('clean-work: removing {0} old emulator overlays, {1:N1} GB' -f $overlays.Count, (($overlays | Measure-Object Length -Sum).Sum / 1GB))
+		$overlays | Remove-Item -Force -ErrorAction SilentlyContinue
+	}
 
 	# An npm tool that a full disk cut short keeps its folder with no node_modules, and mise counts it
 	# installed: lumiere-player failed on "No executable found for configured tool: oxfmt" until a
