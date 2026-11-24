@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Trash cleanup script** `scripts/person-steps/delete-ci-trash.ps1` deletes the `_trash-*` folders the job start hook left in `C:\ci\<n>`, for when drive C fills up and builds fail with `ENOSPC`.
 - **Emulator leftovers cleaned** each Windows job start deletes the `.qcow2` disk overlays the Android emulator left in `%LOCALAPPDATA%\Temp\AndroidEmulator` more than a day ago. A launch check that ends the emulator leaves one each time, and they reached 12 GB in 8 days.
 
 - **Install Lumiere on LG TVs from LocalCI** a Releases toolbar button downloads the newest webOS `.ipk` and deploys it across the local network to paired LG TVs, using Lumiere's installer on the PC. First-time pairing stays in the double-click script.

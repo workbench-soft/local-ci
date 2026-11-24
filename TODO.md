@@ -78,3 +78,7 @@ Findings the audits of 2026-11-10 and 2026-11-11 left, no task yet:
 - Left: artifacts are kept only for `in_progress` and `queued` runs (unseen in about 2,900 runs).
 - Left: 6 commits carry a personal author email (history stays, `## Decisions` holds the reset).
 - Left: 10 tools of the PC's own mise config sit in `C:\ci\_mise\installs` from 2026-11-10 22:13, from a job that read `%USERPROFILE%\.config\mise\config.toml` as a local config before commit `792e980` reached the PC (disk only).
+
+## Drive C full (2026-11-24)
+
+- [ ] Delete the `_trash-*` folders in `C:\ci\<n>`, CI builds fail with ENOSPC (denied): `powershell -NoProfile -ExecutionPolicy Bypass -File "$env:WBS_ROOT\local-ci\scripts\person-steps\delete-ci-trash.ps1"`
