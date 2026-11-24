@@ -495,3 +495,23 @@ machine with several runners builds several jobs at once.
   count. `Install-CiMise` removes each empty version folder before
   `mise install`, which then fills it again.
 - **Limits** back to 2 when the PC runs out of memory with 3 heavy builds.
+
+### 2026-11-24 The trash delete outlives its job
+
+- **Why** on 2026-11-24 C: fell from 34 GB to 2 GB free in 2 hours, and a
+  guitar-upscale build failed with `ENOSPC`. 31 `_trash-*` folders sat in
+  `C:\ci\1` to `C:\ci\6`. The oldest, from 15:16, still held 103,867
+  entries, cut off in the middle of its `.pnpm` folder at `firebase`. No
+  `-DeleteTrash` run was alive while all 6 runners had jobs, so each delete
+  ended before its trash did, most likely with the job that started it.
+  The loop also stopped once the trash count didn't drop, which a new
+  folder from the same job's setup action can cause.
+- **Change** the hook starts the delete through `Win32_Process.Create`, so
+  the WMI service owns it and it leaves the job's process tree. The loop
+  stops only after a pass that removes no folder it listed. Each pass logs
+  to `_temp\clean-work-trash.log` in the runner's work folder.
+- **Steps**
+  1. This spec.
+  2. `runner/clean-work.ps1`, its test, and its copy in
+     `~/actions-runner/hooks`.
+  3. Docs and changelog.
