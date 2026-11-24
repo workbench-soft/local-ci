@@ -16,12 +16,22 @@ param(
 if ($DeleteTrash) {
 	$mutex = [Threading.Mutex]::new($false, "Global\WorkbenchSoftTrash-$(Split-Path -Leaf $DeleteTrash)")
 	try { if (-not $mutex.WaitOne(0)) { exit 0 } } catch [Threading.AbandonedMutexException] { }
-	# A folder moved to the trash while this runs gets deleted on the next pass.
+	# Each run starts the log anew, beside the runner's folders, which the hook moves only when they are folders.
+	$log = Join-Path $DeleteTrash 'clean-work-trash.log'
+	function Write-TrashLog([string]$Line) { Add-Content -LiteralPath $log -Value "$(Get-Date -Format 's') $Line" -ErrorAction SilentlyContinue }
+	Set-Content -LiteralPath $log -Value "$(Get-Date -Format 's') start, pid $PID" -ErrorAction SilentlyContinue
+	# A folder moved to the trash while this runs gets deleted on the next pass. The count of folders kept
+	# the loop going before, so a new folder from the job's setup action ended it with old trash left.
 	while ($trash = @(Get-ChildItem -LiteralPath $DeleteTrash -Directory -Force -Filter '_trash-*')) {
-		$trash | ForEach-Object { cmd /c "rd /s /q `"\\?\$($_.FullName)`"" 2>$null }
+		$gone = 0
+		foreach ($folder in $trash) {
+			cmd /c "rd /s /q `"\\?\$($folder.FullName)`"" 2>$null
+			if (Test-Path -LiteralPath $folder.FullName) { Write-TrashLog "kept $($folder.Name)" } else { $gone++; Write-TrashLog "deleted $($folder.Name)" }
+		}
 		# A folder that a locked file keeps waits for the next job's start.
-		if (@(Get-ChildItem -LiteralPath $DeleteTrash -Directory -Force -Filter '_trash-*').Count -ge $trash.Count) { break }
+		if ($gone -eq 0) { break }
 	}
+	Write-TrashLog 'end'
 	$mutex.ReleaseMutex()
 	exit 0
 }
@@ -55,12 +65,17 @@ try {
 		}
 
 	if (Get-ChildItem -LiteralPath $root -Directory -Force -Filter '_trash-*') {
-		# The runner ends the processes a job leaves behind, unless they lack its tracking id.
-		$env:RUNNER_TRACKING_ID = ''
 		# One delete per runner: a new one each job piled up 530 starved deletes at idle priority.
-		$p = Start-Process powershell -ArgumentList '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`"", '-DeleteTrash', "`"$root`"" -WindowStyle Hidden -PassThru
-		# Below normal ends between builds, and still yields to them.
-		$p.PriorityClass = 'BelowNormal'
+		# A child of the job ended with it and left a folder half deleted, so the WMI service starts it,
+		# outside the job's process tree and with no tracking id of the job. Hidden is 0. A PriorityClass
+		# in the startup settings left the process doing nothing, so the priority follows the start.
+		$startup = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{ ShowWindow = [uint16]0 }
+		$line = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -DeleteTrash `"$root`""
+		$made = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = $line; ProcessStartupInformation = $startup }
+		if ($made.ReturnValue -ne 0) { Write-Host "clean-work: the trash delete did not start, code $($made.ReturnValue)" }
+		# Below normal ends between builds, and still yields to them. On a low disk it took a minute just to
+		# start on a busy PC while the trash grew, so there it runs at normal priority.
+		elseif ($freeGb -ge $minFreeGb) { try { (Get-Process -Id $made.ProcessId -ErrorAction Stop).PriorityClass = 'BelowNormal' } catch { } }
 	}
 	Write-Host ('clean-work: {0:N0} GB free on the drive of {1}' -f $freeGb, $root)
 

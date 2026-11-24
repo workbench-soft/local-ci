@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- **Trash delete outlives its job** the job start hook starts its `_trash-*` delete through WMI, so the end of the job no longer cuts it off with a folder half deleted. It goes on until a pass removes nothing, runs at normal priority when the drive is low, and logs each folder to `C:\ci\<n>\clean-work-trash.log`.
 - **Trash cleanup script** `scripts/person-steps/delete-ci-trash.ps1` deletes the `_trash-*` folders the job start hook left in `C:\ci\<n>`, for when drive C fills up and builds fail with `ENOSPC`.
 - **Emulator leftovers cleaned** each Windows job start deletes the `.qcow2` disk overlays the Android emulator left in `%LOCALAPPDATA%\Temp\AndroidEmulator` more than a day ago. A launch check that ends the emulator leaves one each time, and they reached 12 GB in 8 days.
 

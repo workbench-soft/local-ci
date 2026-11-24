@@ -508,8 +508,13 @@ machine with several runners builds several jobs at once.
   folder from the same job's setup action can cause.
 - **Change** the hook starts the delete through `Win32_Process.Create`, so
   the WMI service owns it and it leaves the job's process tree. The loop
-  stops only after a pass that removes no folder it listed. Each pass logs
-  to `_temp\clean-work-trash.log` in the runner's work folder.
+  stops only after a pass that removes no folder it listed, and runs at
+  normal priority while the drive is under `RUNNER_CLEAN_MIN_FREE_GB`.
+  Each run logs every folder to `clean-work-trash.log` beside the runner's
+  folders in `C:\ci\<n>`, since the runner empties `_temp` each job.
+- **Found on the way** a `PriorityClass` in the `Win32_ProcessStartup`
+  settings left the new process doing nothing, so the hook sets the
+  priority after the start.
 - **Steps**
   1. This spec.
   2. `runner/clean-work.ps1`, its test, and its copy in

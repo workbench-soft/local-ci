@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readdirSync, utimesSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -69,3 +69,34 @@ test('the hook removes emulator overlays older than a day', { skip: process.plat
   await runHook(root, 0, emulator);
   assert.deepEqual(readdirSync(emulator).sort(), ['fresh.tmp.qcow2', 'old.dat']);
 });
+
+test(
+  'the trash delete empties every trash folder and logs each one',
+  { skip: process.platform !== 'win32' },
+  async () => {
+    const root = workFolder();
+    for (const name of ['_trash-1-old', '_trash-2-node_modules-old']) {
+      mkdirSync(join(root, name, 'a', 'b'), { recursive: true });
+      writeFileSync(join(root, name, 'a', 'b', 'file.txt'), 'x');
+    }
+    await new Promise<void>((resolve, reject) =>
+      execFile(
+        'powershell',
+        ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', hook, '-DeleteTrash', root],
+        (error) => (error ? reject(error) : resolve()),
+      ),
+    );
+    assert.deepEqual(readdirSync(root).sort(), [
+      '_actions',
+      '_temp',
+      'clean-work-trash.log',
+      'current',
+      'fresh',
+      'old',
+    ]);
+    const log = readFileSync(join(root, 'clean-work-trash.log'), 'utf8');
+    assert.match(log, /deleted _trash-1-old/);
+    assert.match(log, /deleted _trash-2-node_modules-old/);
+    assert.match(log, / end\r?\n?$/);
+  },
+);
