@@ -114,6 +114,9 @@ git config --global color.ui true
 git config --global push.autosetupremote true
 # input keeps LF on checkout, so bash scripts run in Git Bash and on the runner.
 git config --global core.autocrlf input
+# A clone makes real links, such as .claude/skills, and takes paths past 260 characters.
+git config --global core.symlinks true
+git config --global core.longpaths true
 if (-not (git config --global user.name)) { git config --global user.name (Read-Host 'git user.name') }
 if (-not (git config --global user.email)) { git config --global user.email (Read-Host 'git user.email') }
 
