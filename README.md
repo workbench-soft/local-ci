@@ -21,6 +21,15 @@ installer:
 $d = "$env:USERPROFILE\workbench-soft"; if (-not (Get-Command git -ErrorAction SilentlyContinue)) { winget install --id Git.Git --exact --source winget --silent --accept-source-agreements --accept-package-agreements; $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') }; if (Test-Path "$d\local-ci") { git -C "$d\local-ci" pull --ff-only } else { git clone https://github.com/workbench-soft/local-ci.git "$d\local-ci" }; powershell -NoProfile -ExecutionPolicy Bypass -File "$d\local-ci\install.ps1"
 ```
 
+A member of the `workbench-soft` org pastes this line instead. It runs
+[bootstrap.ps1](bootstrap.ps1): Git, the GitHub CLI, the GitHub login, the
+clone of the private `workspace` repo into `C:\WBS`, then its restore, which
+runs this installer and sets up the rest of the PC:
+
+```powershell
+irm https://raw.githubusercontent.com/workbench-soft/local-ci/main/bootstrap.ps1 | iex
+```
+
 - **What you get** the tools below, then
   [git-aliases](https://github.com/workbench-soft/git-aliases) and
   [agent-skills](https://github.com/workbench-soft/agent-skills) cloned beside
