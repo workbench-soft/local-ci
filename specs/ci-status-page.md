@@ -848,3 +848,29 @@ browser at each logon.
   doesn't block the cancel, since the entry is on disk first.
 - **Release on CI** the owner kept the button for apps with no release yet,
   as the 2026-11-11 entry asked.
+
+### 2026-11-26 The page keeps to a share of the GitHub limit
+
+- **Why** the page server alone took about 4600 of the 5000 calls an hour of
+  the gh token on 2026-11-26, with no tab open. Agents on the same token then
+  hit `API rate limit exceeded`. A status load with ETags costs 0 calls when
+  nothing changed, but the run history, the workflow files and the Blacksmith
+  count read with no ETag, and the history window moved each pass, so no
+  answer came back as 304.
+- **Changes**
+  - **ETags in `callGitHub`** every GET sends the ETag of its last answer,
+    whoever calls it. Up to 1500 answers stay in memory, the most recently
+    used kept.
+  - **History window** the run history reads from the start of an hour, so
+    its URLs stay the same for an hour and quiet repos answer 304.
+  - **Idle pace** a status load lasts 20 s while a tab looked at the page in
+    the last 2 minutes. With no tab, the sweep and the router reload every
+    60 s.
+  - **Low quota** below 30% of the limit until its reset, status loads last 2
+    minutes and the run history and billing counts wait for the reset.
+  - **Counter** `status/github-budget.ts` counts the paid calls by kind of
+    path and writes a line to `dashboard.log` every 10 minutes, with the
+    quota left.
+- **Steps** the spec, then the budget module and its test, `callGitHub`, the
+  pace in `fetchOrgStatus`, the history window and the guards.
+- **Docs** `docs/features.md` and `CHANGELOG.md`.
