@@ -156,6 +156,12 @@ icon: a white loop arrow round a check on a teal to violet gradient.
 - **In the launcher** the CI tab of the Workbench launcher shows the same
   page. Only the launcher on `http://127.0.0.1:47821` may frame it, and other
   sites get a blank frame.
+- **GitHub limit** agents share the page's gh token, so the page keeps its
+  calls low. Each read sends its ETag, and an unchanged answer costs nothing.
+  It reloads every 20 s while a tab is open and every 60 s with none. Below
+  30% of the 5000 calls an hour, it reloads every 2 minutes and the run
+  history and billing counts wait for the reset. `dashboard.log` gets a line
+  every 10 minutes with the calls paid by kind and the quota left.
 
 - **Headline** counts jobs on this PC first, then jobs on other runners, then
   jobs waiting on GitHub. Red when a runner of this PC is down, or sits idle

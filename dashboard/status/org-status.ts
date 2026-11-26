@@ -4,6 +4,7 @@ import { type JobTiming, toJobTimings } from './durations.ts';
 import { activeStatuses } from './placement.ts';
 import { countSteps, type StepCount, typicalDuration } from './progress.ts';
 import { type ApiRelease, type Release, releasesRepo, toRelease } from './releases.ts';
+import { noteAnswer, quotaLow } from './github-budget.ts';
 import { orgName } from './settings.ts';
 
 export type OrgRunner = {
@@ -77,12 +78,22 @@ export type OrgStatus =
 
 const execFileAsync = promisify(execFile);
 const cacheTtlMs = 20_000;
+// With no tab open only the sweep and the router read, and a minute is soon enough for them.
+const idleTtlMs = 60_000;
+const lowQuotaTtlMs = 120_000;
+const viewerMs = 120_000;
+
+/** How long a status lasts: 20 s while a tab watches, 60 s with none, 2 minutes while the quota runs low. */
+export function statusTtl(now: number, viewedAt: number | undefined): number {
+  if (quotaLow(now)) return lowQuotaTtlMs;
+  return viewedAt !== undefined && now - viewedAt < viewerMs ? cacheTtlMs : idleTtlMs;
+}
 const runsPerRepo = 5;
 // One call reads 30 runs as cheaply as 5, and an unfinished run sits among the recent ones.
 const runsRead = 30;
 const queuedJobsTtlMs = 60_000;
 
-// An expired status still shows while the next load runs, up to this age.
+// An expired status still shows while the next load runs, up to this long past its time.
 const staleMaxMs = 120_000;
 
 type Store = {
@@ -91,6 +102,8 @@ type Store = {
   etagged: Map<string, { etag: string; body: string }>;
   queuedJobs: Map<number, { at: number; updatedAt: string; jobs: Promise<RunJob[]> }>;
   finishedJobs: Map<number, { attempt: number; jobs: Promise<RunJob[]> }>;
+  /** When a tab last asked for the status. */
+  viewedAt?: number;
   /** Last successful release response; GitHub errors must not erase the inventory. */
   lastReleases?: Release[];
 };
@@ -108,14 +121,18 @@ const store: Store = ((globalThis as Record<symbol, Store | undefined>)[Symbol.f
 let ghToken: string | null = null;
 
 /**
- * The org's runners and the latest runs of its repos, kept for 20 s so open tabs and the sweep share one set of calls.
+ * The org's runners and the latest runs of its repos, kept for statusTtl so open tabs and the sweep share one set of calls.
+ * A tab passes viewer: true, which keeps the 20 s pace for 2 minutes.
  * After that the kept status still answers at once while a new load runs in the background.
  */
-export function fetchOrgStatus(): Promise<OrgStatus> {
+export function fetchOrgStatus({ viewer = false } = {}): Promise<OrgStatus> {
+  const now = Date.now();
+  if (viewer) store.viewedAt = now;
+  const ttl = statusTtl(now, store.viewedAt);
   const kept = store.cached;
-  const age = kept ? Date.now() - kept.at : Number.POSITIVE_INFINITY;
-  if (kept && age < cacheTtlMs) return kept.status;
-  if (kept && age < staleMaxMs) {
+  const age = kept ? now - kept.at : Number.POSITIVE_INFINITY;
+  if (kept && age < ttl) return kept.status;
+  if (kept && age < ttl + staleMaxMs) {
     refreshOrgStatus();
     return kept.status;
   }
@@ -460,25 +477,23 @@ export async function readJobTimings(repo: string, runId: number): Promise<JobTi
   return toJobTimings(jobs, Date.now());
 }
 
-// A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.
-const etagged = store.etagged;
-const etaggedMax = 500;
+/** A GET through callGitHub, so it shares the ETag of every other read of the same path. */
+export async function getJson<T>(path: string, accept?: string): Promise<T> {
+  return JSON.parse(await (await callGitHub(path, 'GET', accept ? { Accept: accept } : {})).text()) as T;
+}
 
-async function getJson<T>(path: string, accept?: string): Promise<T> {
-  const kept = etagged.get(path);
-  const response = await callGitHub(path, 'GET', {
-    ...(accept && { Accept: accept }),
-    ...(kept && { 'If-None-Match': kept.etag }),
-  });
-  if (response.status === 304 && kept) return JSON.parse(kept.body) as T;
-  const body = await response.text();
-  const etag = response.headers.get('etag');
-  if (etag) {
-    etagged.delete(path);
-    etagged.set(path, { etag, body });
-    if (etagged.size > etaggedMax) etagged.delete(etagged.keys().next().value as string);
-  }
-  return JSON.parse(body) as T;
+// A load every 20 s costs over 5000 calls an hour, the GitHub limit. A 304 answer to If-None-Match costs none.
+// The run history and the Blacksmith count read here too, so the store keeps more than one load's answers.
+const etagged = store.etagged;
+const etaggedMax = 1500;
+// A bigger answer is read again in full rather than kept.
+const etaggedBodyMax = 2_000_000;
+
+function keepAnswer(key: string, etag: string, body: string): void {
+  etagged.delete(key);
+  if (body.length > etaggedBodyMax) return;
+  etagged.set(key, { etag, body });
+  if (etagged.size > etaggedMax) etagged.delete(etagged.keys().next().value as string);
 }
 
 // Node waits 5 min for a stalled answer, and the sweep and the page would wait with it.
@@ -497,6 +512,9 @@ export async function callGitHub(
   extra: Record<string, string> = {},
   body?: unknown,
 ): Promise<Response> {
+  // Every GET sends the ETag of its last answer, so an unchanged answer costs no quota.
+  const key = method === 'GET' ? `${extra.Accept ?? ''} ${path}` : null;
+  const kept = key ? etagged.get(key) : undefined;
   const response = await fetch(`https://api.github.com${path}`, {
     method,
     ...(body !== undefined && { body: JSON.stringify(body) }),
@@ -504,11 +522,23 @@ export async function callGitHub(
       Authorization: `Bearer ${await resolveToken()}`,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
+      ...(kept && { 'If-None-Match': kept.etag }),
       ...extra,
     },
     cache: 'no-store',
     signal: AbortSignal.timeout(githubTimeoutMs),
   });
+  noteAnswer(path, response);
+  if (key && kept && response.status === 304) {
+    keepAnswer(key, kept.etag, kept.body);
+    return new Response(kept.body, { status: 200, headers: response.headers });
+  }
+  const etag = response.headers.get('etag');
+  if (key && etag && response.ok) {
+    const text = await response.text();
+    keepAnswer(key, etag, text);
+    return new Response(text, { status: response.status, headers: response.headers });
+  }
   if (!response.ok && response.status !== 304) {
     // A plain property, so the check works across the bundle copies of this module.
     throw Object.assign(new Error(`GitHub answered ${response.status} to ${method} ${path}.${githubHint(response)}`), {

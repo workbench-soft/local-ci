@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { callGitHub } from './org-status.ts';
+import { getJson } from './org-status.ts';
 import { blacksmithCpus } from './runner-kind.ts';
 import { orgName } from './settings.ts';
 
@@ -28,9 +28,6 @@ export function createdSince(ledger: Ledger): string {
   const last = ledger.checkedAt ? Date.parse(ledger.checkedAt) - lookBackMs : start;
   return new Date(Math.max(start, last)).toISOString().replace(/\.\d+Z$/, 'Z');
 }
-
-// These reads skip the ETag store of the page, so they can't push its entries out.
-const getJson = async <T>(path: string) => (await (await callGitHub(path)).json()) as T;
 
 /**
  * Blacksmith bills each job by the minute, rounded up, at its vCPU count over 2.

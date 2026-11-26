@@ -8,4 +8,6 @@ export async function register() {
   startCloudRouter();
   const { startRunHistory } = await import('./status/run-history.ts');
   startRunHistory();
+  const { startBudgetLog } = await import('./status/github-budget.ts');
+  startBudgetLog();
 }

@@ -1,4 +1,5 @@
-import { callGitHub } from './org-status.ts';
+import { quotaLow } from './github-budget.ts';
+import { getJson } from './org-status.ts';
 import { localRunnerNames } from './placement.ts';
 import {
   type HistoryRun,
@@ -14,6 +15,7 @@ import { orgName } from './settings.ts';
 import { readThisPc } from './this-pc.ts';
 
 const dayMs = 86_400_000;
+const hourMs = 3_600_000;
 const refreshMs = 10 * 60_000;
 const recentDays = 3;
 const jobsDays = 14;
@@ -59,8 +61,12 @@ export function refreshRunHistory(): Promise<void> {
     state.refreshing = true;
     try {
       const now = Date.now();
+      // Agents share the token, so a low quota waits for the reset. The next refresh comes in 10 minutes.
+      if (quotaLow(now)) return;
       const backfill = !state.history.backfilledAt;
-      const fresh = await listFinishedRuns(now - (backfill ? keepDays : recentDays) * dayMs, now + 3_600_000);
+      // The window starts on the hour, so its URLs repeat for an hour and an unchanged repo answers 304 for free.
+      const hour = Math.floor(now / hourMs) * hourMs;
+      const fresh = await listFinishedRuns(hour - (backfill ? keepDays : recentDays) * dayMs, hour + 2 * hourMs);
       const runs = mergeRuns(state.history.runs, fresh, now);
       await addJobs(runs, now);
       state.history = { backfilledAt: state.history.backfilledAt ?? new Date(now).toISOString(), runs };
@@ -90,10 +96,6 @@ type ApiRun = {
   updated_at: string;
   html_url: string;
 };
-
-async function getJson<T>(path: string): Promise<T> {
-  return (await (await callGitHub(path)).json()) as T;
-}
 
 async function listFinishedRuns(from: number, to: number): Promise<HistoryRun[]> {
   const repos = await getJson<{ name: string; archived: boolean }[]>(`/orgs/${orgName}/repos?per_page=100&sort=pushed`);

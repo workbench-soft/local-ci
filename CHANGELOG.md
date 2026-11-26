@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **The page leaves the GitHub limit to the agents** every GitHub read of the status page sends its ETag, so the run history, the workflow files and the Blacksmith count get free 304 answers too. A repeat history pass fell from 62 paid calls to 4. With no tab open it reloads every 60 s, below 30% of the quota every 2 minutes with the background counts paused, and `dashboard.log` shows the calls paid by kind every 10 minutes. The page took about 4600 of the 5000 calls an hour on 2026-11-26, and agents on the same token hit the rate limit.
+
 - **GitHub limit no longer drained** the Blacksmith minutes count reads only the runs since its last pass, every 15 minutes. It read all 20,872 runs of November every 5 minutes, about 150 calls, and after a timeout every minute, which used up the 5000 calls an hour twice on 2026-11-26 and held up a Lumiere release.
 
 - **One line for the org PC** `bootstrap.ps1` takes a bare Windows PC to the whole workspace from one pasted line: Git, the GitHub CLI, the login, the clone of `workspace` and its restore. `install.ps1` turns on `core.symlinks` and `core.longpaths` in the git config.

@@ -81,32 +81,48 @@ test('a failing repo list still makes the whole status fail', async () => {
 
 test('an expired status answers at once while a new load runs, then the new one answers', async () => {
   const { fetchOrgStatus } = await freshModule();
-  const first = fetchOrgStatus();
+  const first = fetchOrgStatus({ viewer: true });
   await first;
   const store = (globalThis as Record<symbol, { cached: { at: number } }>)[Symbol.for('local-ci.org-status')];
   store.cached.at -= 30_000;
   const repoCalls = () => calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length;
-  assert.equal(fetchOrgStatus(), first);
-  assert.equal(fetchOrgStatus(), first);
+  assert.equal(fetchOrgStatus({ viewer: true }), first);
+  assert.equal(fetchOrgStatus({ viewer: true }), first);
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(repoCalls(), 2);
-  assert.notEqual(fetchOrgStatus(), first);
+  assert.notEqual(fetchOrgStatus({ viewer: true }), first);
   assert.equal(repoCalls(), 2);
 });
 
 test('a background refresh that ends after a newer full load leaves the newer status in place', async () => {
   const { fetchOrgStatus } = await freshModule();
-  await fetchOrgStatus();
+  await fetchOrgStatus({ viewer: true });
   const store = (globalThis as Record<symbol, { cached: { at: number; status: unknown }; refreshing: unknown }>)[
     Symbol.for('local-ci.org-status')
   ];
   store.cached.at -= 30_000;
-  fetchOrgStatus();
+  fetchOrgStatus({ viewer: true });
   assert.ok(store.refreshing);
   store.cached.at -= 200_000;
-  const full = fetchOrgStatus();
+  const full = fetchOrgStatus({ viewer: true });
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.equal(store.cached.status, full);
+});
+
+test('with no tab watching, the sweep reloads after a minute rather than 20 s', async () => {
+  const { fetchOrgStatus } = await freshModule();
+  const first = fetchOrgStatus();
+  await first;
+  const store = (globalThis as Record<symbol, { cached: { at: number } }>)[Symbol.for('local-ci.org-status')];
+  store.cached.at -= 30_000;
+  const repoCalls = () => calls.filter((path) => path.includes('/orgs/workbench-soft/repos')).length;
+  const before = repoCalls();
+  assert.equal(fetchOrgStatus(), first);
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(repoCalls(), before);
+  fetchOrgStatus({ viewer: true });
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(repoCalls(), before + 1);
 });
 
 test('a GitHub error carries its status, and a used up rate limit says until when', async () => {

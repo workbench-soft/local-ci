@@ -48,7 +48,7 @@ export default async function StatusPage({
 }) {
   const [pc, org, count, query, cancels, jar] = await Promise.all([
     readThisPc(),
-    fetchOrgStatus(),
+    fetchOrgStatus({ viewer: true }),
     readRunnerCount(),
     searchParams,
     readCancels(),

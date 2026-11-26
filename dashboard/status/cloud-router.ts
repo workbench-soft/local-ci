@@ -1,6 +1,7 @@
 import { blacksmithMinutes } from './blacksmith-usage.ts';
 import { pickRoutes, type Routes, stuckOnBlacksmith, variablesToSet } from './cloud-route.ts';
 import { githubMinutes, runningMinutes } from './github-usage.ts';
+import { quotaLow } from './github-budget.ts';
 import { callGitHub, fetchOrgStatus, forgetOrgStatus } from './org-status.ts';
 import { orgName } from './settings.ts';
 
@@ -110,16 +111,18 @@ async function tick(now: number): Promise<void> {
   );
   // Each time goes down before its read, so a failed read waits its full period too.
   // A retry each minute ran the month's count 15 times in a row and used up the token's limit.
-  if (now - store.appsAt > appsMs) {
+  // A low quota keeps the last counts until the reset, so the agents on the same token keep theirs.
+  const low = quotaLow(now);
+  if (!low && now - store.appsAt > appsMs) {
     store.appsAt = now;
     const { installations } = await read<{ installations: { app_slug: string }[] }>(`/orgs/${orgName}/installations`);
     state.blacksmithInstalled = installations.some((app) => app.app_slug.includes('blacksmith'));
   }
-  if (state.blacksmithInstalled && now - store.usageAt > usageMs) {
+  if (!low && state.blacksmithInstalled && now - store.usageAt > usageMs) {
     store.usageAt = now;
     state.used = await blacksmithMinutes(new Date(now));
   }
-  if (now - store.githubAt > githubMs) {
+  if (!low && now - store.githubAt > githubMs) {
     store.githubAt = now;
     state.githubUsed = await githubMinutes(new Date(now));
   }
