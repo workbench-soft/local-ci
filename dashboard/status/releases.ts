@@ -17,7 +17,7 @@ export const releasesRepo = process.env.RELEASES_REPO || `${orgName}/${orgName}.
 // The memories repo was memories-mobile and took in media-organizer and shuttrix. Its apps keep the old release names, so installed copies keep updating.
 // The TV player of lumiere-player releases as lumiere, the phone app of app-updater as updater, and the
 // site of property-trends with its data as property-trends-web.
-export const releasePrefixes: Record<string, string[]> = {
+const releasePrefixes: Record<string, string[]> = {
   memories: ['memories-mobile', 'media-organizer', 'shuttrix'],
   'lumiere-player': ['lumiere', 'lumiere-webos'],
   spotthecam: ['spotthecam', 'speed-camera-map'],

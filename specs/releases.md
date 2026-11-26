@@ -2,6 +2,7 @@
 
 ## One-pager
 
+- **Moved** since 2026-11-26 the Release on CI, Build locally, Install and Install Dev buttons live in the Apps tab of Archon, the launcher in `workspace`. The local-ci status page dropped its Releases tab, so the sections below record how it worked until then. The release of this repo stays as written.
 - **Problem** a person needs a release on CI or an APK built from the newest `main` and installed on a phone.
 - **Fix** the Releases page dispatches supported CI releases, builds locally in a temporary clone and installs either APK through ADB. Install Dev also unlocks the developer settings of the app.
 - **How** CI runs target `main`; local builds use each supported app's build script and the latest fetched `main`.
@@ -197,3 +198,12 @@ settings with the key in `WORKBENCH_DEV_KEY`.
 - The **Find new TVs** button explicitly rescans SSDP even when saved profiles exist. New TVs are displayed as unpaired; they must be paired using the Lumiere double-click installer on the PC before browser-triggered installation.
 - The browser installation action delegates to Lumiere's shared `webos/scripts/install-all-tvs.ts` entrypoint. That script uses paired TV profiles before SSDP and can be told to rediscover via `LUMIERE_REFRESH_TVS=1` or the CMD `--refresh-tvs` argument. No passphrase is handled by the dashboard.
 - A stale or unreachable TV is reported as unavailable, not silently considered updated. Cache entries remain stable unless explicitly reconfigured in webOS CLI.
+
+### 2026-11-26 Moved to Archon
+
+- **Why** Archon's Apps and Sites tabs repeated these buttons, and the
+  Releases tab missed apps with no recent CI run.
+- **Changes** the status page drops the cards, the server actions and their
+  `status/*` modules. Spec: `specs/ci-status-page.md`.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `docs/user-flows.md`.

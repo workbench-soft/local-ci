@@ -12,18 +12,6 @@
     "steps": "scroll to Latest runs"
   },
   {
-    "name": "03-releases",
-    "platform": "web",
-    "caption": "The newest release of each app, ready to install on the phone",
-    "steps": "open the Releases tab"
-  },
-  {
-    "name": "04-release-reasons",
-    "platform": "web",
-    "caption": "Why a release failed or stopped, with the error and its log",
-    "steps": "open the Releases tab and scroll to the first errored row"
-  },
-  {
     "name": "05-trends",
     "platform": "web",
     "caption": "Runs a day by result, build time and the wait for a runner",

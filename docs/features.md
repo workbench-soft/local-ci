@@ -251,46 +251,18 @@ icon: a white loop arrow round a check on a teal to violet gradient.
   headline turns red and says when the page last updated. A stopped server
   shows the browser's error page instead, since Next reloads the tab. A
   hidden tab skips its refreshes.
-- **Instant tabs** a click on Releases, Status or Trends marks the tab and
+- **Instant tabs** a click on Status or Trends marks the tab and
   shows gray cards in its shape at once, until the server sends the page.
 - **Localhost only** the page answers on `localhost`, `127.0.0.1` and `[::1]`
   and refuses any other host name with 421. Other sites can't frame it.
-- **Release and Install** the Release column links to the release a run
-  published, on the one run of its repo that ended nearest to it. Install
-  Release puts its APK on the phone plugged in over USB through adb. adb's
-  error shows in a red box under the button. Needs exactly one phone in
-  `adb devices`.
-- **Releases tab** opens by default at `/`, with Status one click away at
-  `/?tab=status`. Each app gets a colored chip with the state of its release:
-  released, building (with the machine it builds on), queued, errored,
-  cancelled, held, or no release yet. Held means the release run skipped,
-  since its gate held it or its Checks failed. The apps sort by state, then
-  by name, with the ones in flight on top.
-- **Release progress** a building row gets a bar from the usual time of
-  past runs of the same workflow, and says how long is left or how far over
-  it already is. The jobs of the run show under it with their own bars. A
-  queued row says it waits for a runner.
-- **Cancel reason** a cancelled row says why and when, such as
-  `A newer commit started the same build · 22 min ago`, with links to the
-  causing run, commit and PR. The reasons come from
+- **Release** the Release column links to the release a run published, on the
+  one run of its repo that ended nearest to it.
+- **Apps and sites** live in Archon, the launcher in `workspace`. A line
+  under the tabs points to its Apps and Sites tabs.
+- **Cancel reason** a run stopped by Local CI says why in Cancellation
+  history, with links to the causing run, commit and PR. The reasons come from
   `dashboard\cancel-reasons.jsonl`, where each force cancel lands with its
   words, from Stop and Purge or from the sweep.
-- **Why it stopped** an errored or cancelled row says what happened in one
-  bold line, and its chip names the cause when one word can: PC went off,
-  Replaced, Disk full, Timed out or Stopped by Local CI. A failed step shows
-  the error line and the log of that step up to the error, with a link to
-  the full log. A run GitHub replaced through `concurrency` links the run
-  that took its place. A PC turned off shows the runner and the step it
-  stopped at.
-- **Release list** the tab title counts the apps on their way and the errored
-  ones. The newest release of each app sits beside its chip with its age, and
-  its notes under Changes. An app with no release yet shows from its repo's
-  runs. Tick apps, or All with an APK, and press Install: the APKs go on the
-  phone one by one, and each row shows Installed or adb's error.
-- **Limits** a release with several APKs installs the first. A run on `main`
-  counts toward a release when a push, a dispatch or a finished workflow
-  started it, so Dependabot runs stay out. The tab shows only the newest
-  release of each app.
 - **Failed step** a failed run names its failed job and step under the
   result, linked to that job's log.
 - **PR and branch** the branch of a run is a link. The PR column links each
@@ -335,38 +307,17 @@ Spec: [build-cancellation](../specs/build-cancellation.md).
 
 - **This repo** a tagged release follows each push to `main` once its Checks
   pass, on the [Releases page](https://github.com/workbench-soft/local-ci/releases).
-- **Release on CI** on the Releases tab, a person dispatches the release
-  workflow of any app on `main`, also when that commit is already released.
-  The page finds the workflow among the repo's workflows. The button stays gray while that
-  release runs, and the server refuses a second dispatch.
-- **Build locally** builds the APK of the latest `main` on this PC, for each
-  app whose clone has `scripts/build-apk.sh` at its root or in `apps/<app>`.
-  It builds in a temporary clone, then Install local puts it on
-  the phone. Force stop and Force stop local build end a release on CI or on
-  this PC.
-- **Install Dev** installs the published APK, then sends the app's unlock link
-  over adb so its developer settings show. Every app tag gets the button, with
-  the app id read from the tag. The key comes from `WORKBENCH_DEV_KEY` on this
-  PC and stays off the browser.
-- **Storage cleanup** Clean old APK releases & artifacts previews, then deletes
-  after a confirm, finished Actions artifacts and all but the newest APK
-  release of each app.
-- **Limits** local builds need a local app clone, its `scripts/build-apk.sh`
-  and any app signing key on this PC. ADB needs one authorized phone.
+- **Apps** Archon builds, installs and releases each app from its Apps tab.
+- **Storage cleanup** Clean old APK releases & artifacts on the Status tab
+  previews, then deletes after a confirm, finished Actions artifacts and all
+  but the newest APK release of each app.
 
 Spec: [releases](../specs/releases.md).
 
 ## Sites
 
-- **Deploy site** the Sites card on the Releases tab lists each org repo with
-  a site and gives it a button that starts its deploy workflow on `main`.
-- **Found by itself** the page reads each repo's workflows once an hour and
-  takes the one with `workflow_dispatch` that runs `wrangler deploy`,
-  `deploy-pages`, `mise run deploy` or a site push. A `deploy` file wins, then
-  `pages`, then `release`.
-- **Last deploy** each row shows the state and age of the workflow's last run.
-  The button stays gray while a deploy is queued or running.
-- **Limits** a deploy kept only in a mise task, with no workflow, doesn't show.
+- **Moved** Archon deploys each site from its Sites tab, from this PC or on
+  CI. The status page no longer lists sites.
 
 Spec: [site-deploy](../specs/site-deploy.md).
 
@@ -380,14 +331,12 @@ Spec: [site-deploy](../specs/site-deploy.md).
 - **Tables** each workflow with its failures and build times, each machine,
   and the steps that fail most, with a link to the last failed job.
 - **Filter** one repo, and 7, 30 or 90 days.
-- **In each card** each app on the Releases tab and each site shows its
-  workflow's runs, failed share and usual time over 30 days. Each run in
-  Latest runs says the usual time and marks one slower than 9 in 10. The
+- **In each card** each run in Latest runs says the usual time and marks one slower than 9 in 10. The
   Runners card gives each machine's runs, failures, build and wait over 14
   days. The Trends tab link shows the failed share of the last 7 days. Each
   line opens the Trends tab of its repo.
 - **Free** the page reads the GitHub API with its own token and keeps 90 days
-  in `dashboardun-history.json`. No account or service.
+  in `dashboard\run-history.json`. No account or service.
 - **Limits** the machine, the failed step and the wait come from the jobs of
   the last 14 days only.
 

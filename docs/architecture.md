@@ -32,11 +32,9 @@ machine it sets up, and it talks to package managers and GitHub. The page in
   the folder the running page doesn't serve, and `start.cmd` names the folder
   in `NEXT_DIST_DIR`. The page stops only for the swap, so the sweep of
   replaced runs keeps going through a build.
-- **Release controls** `dashboard/status/release-actions.ts` dispatches an
-  app's release workflow on `main`. `status/local-build-runner.ts` fetches the
-  app's latest `main`, builds in a temporary clone and retains only its APK.
-  `status/local-build.ts` installs that APK through ADB. Local build clones
-  are removed after the build; uninstalled APKs expire after 6 hours.
+- **Apps and sites** Archon, the launcher in `workspace`, builds,
+  installs and releases the apps and deploys the sites. The status page only
+  points there.
 - **Updates** `windows/update.ps1` moves the checkout to the newest release
   tag. It runs `dashboard/install.ps1` when `dashboard/` moved past
   `dashboard/.built-commit`, and `runner/install.ps1` when the runner files
@@ -66,8 +64,7 @@ flowchart LR
 | --- | --- |
 | Homebrew, winget | tools and apps |
 | npm through mise | the Copilot CLI and agent-browser |
-| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page, release dispatches and storage cleanup, the variables `CI_RUNNER`, `CI_HEAVY_RUNNER` and `CI_WINDOWS_RUNNER` |
-| adb | installs APKs on the phone plugged in over USB, and sends the Install Dev unlock link |
+| GitHub API | the clones, the runner release and its registration token, the runners and runs on the status page and storage cleanup, the variables `CI_RUNNER`, `CI_HEAVY_RUNNER` and `CI_WINDOWS_RUNNER` |
 | Blacksmith | cloud runners for the org, 3000 free 2 vCPU minutes a month |
 | Oracle Cloud | an Always Free ARM VM that runs `oracle` runners |
 | `github.com/actions/runner` releases | the runner download and its SHA256 |
@@ -151,15 +148,6 @@ The server renders the page for each request.
   under a pile of newer queued runs stays on the page. For each unfinished
   run it also reads the jobs, with the runner that took each one. The jobs of
   a queued run stay in memory while its `updated_at` holds, for up to 60 s.
-- **App releases** no list names the apps. `status/release-workflow.ts`
-  takes the workflow whose run published the app's newest release, found in
-  the repo's runs of the 6 hours before it. A file named for a release or
-  deploy, then a workflow whose YAML has `workflow_dispatch` and
-  `gh release create`, answer when no run does. Each input keeps its default.
-  `status/local-build-target.ts` finds `scripts/build-apk.sh` in the app's
-  clone, at the root or in `apps/<app>`, and the APK in `dist/` beside it.
-  A local build fetches `main` from the app clone, builds its APK in a temporary clone, and gives the ADB installer
-  an opaque token; the client never receives the file path.
 - **Rate limit** each GET sends back the ETag of its last answer. GitHub
   answers 304 when the data is the same, and a 304 costs no part of the 5000
   calls an hour.
@@ -207,29 +195,8 @@ The server renders the page for each request.
   `RELEASES_REPO` picks another repo. The call asks for
   `application/vnd.github.full+json`, so each release comes with its notes
   as cleaned HTML in `body_html`.
-- **Releases tab** `/` by default, Status at `/?tab=status`.
-  `status/latest-releases.ts` takes the app name from each tag, keeps the
-  newest release per app and maps the app to its repo. The run that made
-  the release names the app's release pipeline, the workflow that owns its
-  releases. The runs of the repo on the default branch newer than the
-  release decide the state, with runs of another app's pipeline in the same
-  repo left out: the newest says released, building, queued, errored or
-  cancelled, a skipped run of the pipeline says the gate held it, and a
-  failed run that made the pipeline skip says errored. The wait is the
-  whole life of the run so far, its queue time included, against the
-  Kaplan-Meier usual life of the workflow's finished runs. A repo with runs
-  and no release yet shows as an app once a workflow runs there after
-  another one. `cards/releases-card.tsx` calls the install action once per
-  ticked app, in turn. Each row is `cards/release-item.tsx`, with
-  `release-buttons.tsx` and `release-detail.tsx`.
-- **Stop reasons** `status/run-reason.ts` reads the annotations of the
-  failed or cancelled job of each errored or cancelled row, and its log when
-  the annotations name only the exit code. It keeps each job's answer, since
-  a finished job doesn't change. `status/run-failure.ts` sorts the
-  annotations into a kind, such as a shutdown signal or a concurrency cancel,
-  and cuts the log of the failed step up to its first `##[error]`.
-  `status/latest-releases.ts` finds the next run of the same workflow and
-  branch for a cancelled row. `cards/stop-reason.tsx` draws it.
+- **Tabs** Status at `/`, Trends at `/?tab=trends`. Any other `tab`
+  value opens Status.
 - **Cancel reasons** `status/cancel-log.ts` appends each force cancel to
   `dashboard/cancel-reasons.jsonl`: repo, run id, the words and the time.
   The sweep writes `A newer commit started the same build` or
@@ -237,17 +204,6 @@ The server renders the page for each request.
   and Purge write theirs, and the card reads the file back on each render.
   The append-only file keeps earlier evidence across restarts. `CANCEL_REASONS_FILE` in `.env.local`
   picks another file.
-- **Install** `status/install-apk.ts` holds the server actions, and
-  `status/adb.ts` the plain adb helpers a browser can't call. It checks
-  `adb devices` for one phone, downloads the release's `.apk` to
-  `%TEMP%\local-ci-apk`, runs `adb install -r -d` and deletes the file.
-  adb's output goes back to the button on failure.
-- **Install Dev** `installDeveloperRelease` installs the same APK, then
-  `status/dev-phone.ts` reads the app id from the tag, such as
-  `com.workbenchsoft.lumiere`, and builds the unlock link. The key comes from
-  `WORKBENCH_DEV_KEY` and goes to `adb shell` through stdin, so it stays out
-  of process arguments and the browser. The browser only learns whether the
-  key is set.
 - **Storage cleanup** `status/storage-cleanup-actions.ts` lists every artifact
   and APK release first, keeps a preview plan, then deletes in small batches
   after the confirm. `status/storage-cleanup.ts` keeps the newest APK
@@ -279,10 +235,6 @@ sequenceDiagram
   B->>N: a click on Took, a server action
   N->>G: the jobs of the run, with step times
   N-->>B: each job and step with its time
-  B->>N: Install, a server action
-  N->>G: the release by tag, then its APK
-  N->>W: adb devices, adb install -r -d
-  N-->>B: the device, or adb's error
 ```
 
 ## How the Trends tab gets its data
@@ -396,9 +348,9 @@ flowchart LR
 ### Status page: Next.js, rendered on the server
 
 - **Picked** `dashboard/` is a Next.js app on `localhost:4280`. Server
-  actions run PowerShell, adb and the GitHub calls.
+  actions run PowerShell and the GitHub calls.
 - **Why** the page needs a process on the PC that keeps the GitHub token,
-  reads the runner folders and runs `adb install`. A server render and server
+  and reads the runner folders. A server render and server
   actions give that in one app. No source records why Next.js won.
 - **Trade-off** the org stack names Vite for the web, so this app is off the
   list. Each update rebuilds it, and a Node process runs from boot.

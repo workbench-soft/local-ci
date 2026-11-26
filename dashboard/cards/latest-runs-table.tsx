@@ -9,7 +9,6 @@ import { type Place, placeOrder } from '@/status/placement';
 import type { Release } from '@/status/releases';
 import { kindNames, type RunnerKind } from '@/status/runner-kind';
 import { Icon, placeIcons, resultOf } from './icons';
-import { InstallButton } from './install-button';
 import { PurgeAllButton } from './purge-all-button';
 import { RunControls } from './run-controls';
 import { RunTimings } from './run-timings';
@@ -269,13 +268,10 @@ function RunRowItem({ run, now, purging }: { run: RunRow; now: number; purging: 
         </td>
         <td>
           {run.release && (
-            <>
-              <a className="release-link" href={run.release.url} target="_blank" rel="noreferrer">
-                <Icon name="package" />
-                {run.release.name}
-              </a>
-              {run.release.apk && <InstallButton tag={run.release.tag} name={run.release.name} />}
-            </>
+            <a className="release-link" href={run.release.url} target="_blank" rel="noreferrer">
+              <Icon name="package" />
+              {run.release.name}
+            </a>
           )}
         </td>
         <td>

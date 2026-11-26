@@ -1,0 +1,82 @@
+/* Storage cleanup is separate from the install buttons and always explains what it keeps. */
+.storage-cleanup {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 10px 0 16px;
+}
+
+/* The tabs under the heading. */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: -8px 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tabs a {
+  padding: 6px 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+}
+
+.tabs a[aria-current='page'] {
+  border-bottom-color: var(--busy);
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* The pill that says what an app's release pipeline does. The border and the
+
+/* A fail share of 25% or more is a warning, not an error. */
+.tabs .count.warn {
+  background: color-mix(in srgb, var(--warn) 18%, transparent);
+  color: var(--warn);
+}
+
+/* The pointer to Archon under the tabs. */
+.archon-note {
+  margin: 8px 0 0;
+}
+
+/* The gray cards a tab shows from the click until its page comes. */
+.skeleton {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  min-height: 120px;
+}
+
+.skeleton.tall {
+  min-height: 320px;
+}
+
+.skeleton span {
+  height: 14px;
+  border-radius: 4px;
+  background: var(--line);
+  animation: skeleton-pulse 1.2s ease-in-out infinite alternate;
+}
+
+.skeleton span:first-child {
+  width: 30%;
+  height: 18px;
+}
+
+.skeleton span:last-child {
+  width: 60%;
+}
+
+@keyframes skeleton-pulse {
+  to {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton span {
+    animation: none;
+  }
+}

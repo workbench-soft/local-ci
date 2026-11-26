@@ -16,16 +16,11 @@ browser at each logon.
 4. The person filters, searches and sorts the runs table.
 5. The person presses Stop on an unfinished run to cancel it, or Purge to
    force cancel it and delete it from GitHub with its logs and artifacts.
-6. A run that published a release shows it in the Release column. The person
-   opens the release, or presses Install to put its APK on the phone plugged
-   in over USB. The Releases tab, open by default, lists each app with the
-   state of its release pipeline: released, building, queued, errored,
-   cancelled with the reason, or held while a PR is open. A row says how long
-   the current run took so far and, when a past run gives the usual time, how
-   long until the release. The person ticks several apps and presses Install
-   to put them all on the phone.
+6. A run that published a release links to it in the Release column. Apps
+   and sites live in Archon: a line under the tabs points to its Apps and
+   Sites tabs.
 7. A failed run names its failed job and step under the result, with a link
-   to that job's log. A failed install shows adb's error under the button.
+   to that job's log.
 8. The branch of a run opens on GitHub, and so does its PR.
 
 ## How it works: modules, files, data
@@ -75,9 +70,6 @@ browser at each logon.
   `<repo>-v<version>`. `GET /repos/{public}/releases` gives them. A run owns
   the release of its repo created between its start and its last update.
   Of several such runs, the one whose last update came nearest owns it.
-- **Install** a server action in `status/install-apk.ts` downloads the `.apk`
-  asset of the release to a temp folder and runs `adb install -r`. adb comes
-  from `ADB_PATH`, `PATH`, `ANDROID_HOME` or `%LOCALAPPDATA%\Android\Sdk`.
 - **Failed step** for a failed run the page reads its jobs and names the
   first failed job and step.
 - **PR and branch** `pull_requests` of a run gives its PR numbers. GitHub
@@ -112,8 +104,6 @@ browser at each logon.
   Now card stops its whole run.
 - **Token scope** Stop and Purge need write access to Actions. The `repo`
   scope of a gh login gives it.
-- **One phone** Install needs one device in `adb devices`. With none or
-  several, the button shows adb's error.
 - **Last 3** the public repo keeps 3 releases per app, so older runs lose
   their release link.
 
@@ -874,3 +864,32 @@ browser at each logon.
 - **Steps** the spec, then the budget module and its test, `callGitHub`, the
   pace in `fetchOrgStatus`, the history window and the guards.
 - **Docs** `docs/features.md` and `CHANGELOG.md`.
+
+### 2026-11-26 Apps and sites move to Archon
+
+- **Why** the Releases tab built its app list from CI runs, so an app with no
+  recent run, such as Guitar Upscale, went missing. Its Release on CI, Build
+  locally, Install and Deploy site buttons also repeated the Apps and Sites
+  tabs of Archon, the launcher in `workspace` (workbench-soft/workspace#324).
+  The page keeps the CI view: runners, runs, cloud usage, trends.
+- **Changes**
+  - **Tabs** the page shows Status and Trends, and Status opens first.
+    `/?tab=releases` falls back to Status.
+  - **Pointer** one line under the tabs reads "Apps and sites live in Archon:
+    Apps and Sites tabs.", with no buttons.
+  - **Removed cards** `releases-card.tsx`, `release-*.tsx`, `sites-card.tsx`,
+    `install-button.tsx`, `local-main-button.tsx`, `dev-key-notice.tsx`,
+    `webos-install.tsx`, with their CSS.
+  - **Removed modules** the server actions and `status/*` modules only those
+    cards read, with their tests, once `knip` and `tsc` show no other import.
+    The Release column of the runs table keeps `releases.ts` and its link,
+    without the Install button.
+  - **Storage cleanup** Clean old APK releases & artifacts sat on the
+    Releases tab. It frees CI storage, so it moves to the Status tab.
+  - **Demo** the screenshots of the Releases tab go from `demo/` and the
+    README.
+- **Steps** the spec, then the page and the tab switch, then the dead cards
+  and modules, then the docs.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `docs/user-flows.md`, `specs/releases.md`, `specs/site-deploy.md`,
+  `CHANGELOG.md`.
