@@ -24,7 +24,8 @@ export type RouterState = {
 };
 
 const tickMs = 60_000;
-const usageMs = 5 * 60_000;
+// Each count reads every repo, about 50 calls, so it runs 4 times an hour.
+const usageMs = 15 * 60_000;
 const appsMs = 10 * 60_000;
 const downMs = 60 * 60_000;
 const syncMs = 30 * 60_000;
@@ -107,18 +108,20 @@ async function tick(now: number): Promise<void> {
   state.oracleOnline = (status.runners ?? []).some(
     (runner) => runner.status === 'online' && runner.labels.some((label) => label.toLowerCase() === 'oracle'),
   );
+  // Each time goes down before its read, so a failed read waits its full period too.
+  // A retry each minute ran the month's count 15 times in a row and used up the token's limit.
   if (now - store.appsAt > appsMs) {
+    store.appsAt = now;
     const { installations } = await read<{ installations: { app_slug: string }[] }>(`/orgs/${orgName}/installations`);
     state.blacksmithInstalled = installations.some((app) => app.app_slug.includes('blacksmith'));
-    store.appsAt = now;
   }
-  if (state.blacksmithInstalled && (state.used === null || now - store.usageAt > usageMs)) {
-    state.used = await blacksmithMinutes(new Date(now));
+  if (state.blacksmithInstalled && now - store.usageAt > usageMs) {
     store.usageAt = now;
+    state.used = await blacksmithMinutes(new Date(now));
   }
   if (now - store.githubAt > githubMs) {
-    state.githubUsed = await githubMinutes(new Date(now));
     store.githubAt = now;
+    state.githubUsed = await githubMinutes(new Date(now));
   }
   state.githubRunning = runningMinutes(status.runs, now);
   const stuck = stuckOnBlacksmith(status.runs, now);

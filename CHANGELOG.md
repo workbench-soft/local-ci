@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- **GitHub limit no longer drained** the Blacksmith minutes count reads only the runs since its last pass, every 15 minutes. It read all 20,872 runs of November every 5 minutes, about 150 calls, and after a timeout every minute, which used up the 5000 calls an hour twice on 2026-11-26 and held up a Lumiere release.
+
 - **One line for the org PC** `bootstrap.ps1` takes a bare Windows PC to the whole workspace from one pasted line: Git, the GitHub CLI, the login, the clone of `workspace` and its restore. `install.ps1` turns on `core.symlinks` and `core.longpaths` in the git config.
 - **Trash delete outlives its job** the job start hook starts its `_trash-*` delete through WMI, so the end of the job no longer cuts it off with a folder half deleted. It goes on until a pass removes nothing, runs at normal priority when the drive is low, and logs each folder to `C:\ci\<n>\clean-work-trash.log`.
 - **Trash cleanup script** `scripts/person-steps/delete-ci-trash.ps1` deletes the `_trash-*` folders the job start hook left in `C:\ci\<n>`, for when drive C fills up and builds fail with `ENOSPC`.

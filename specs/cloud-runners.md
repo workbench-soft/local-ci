@@ -44,7 +44,10 @@ GitHub.
   of the month once and keeps the counted minutes in
   `dashboard/cloud-usage.json`. A job counts its minutes rounded up, times
   its vCPU count over 2, as Blacksmith bills. The file starts over each
-  month.
+  month. A count runs every 15 minutes and reads only the runs created since
+  the last full count, less 12 hours, so it costs about 50 calls. A failed
+  count waits the full 15 minutes too. The whole month at each minute drained
+  the 5000 calls an hour of the token on 2026-11-26.
 - **Blacksmith on** the router uses Blacksmith only when the Blacksmith app is
   installed in the org, seen through `GET /orgs/{org}/installations`.
 - **Budget** `BLACKSMITH_BUDGET` in `.env.local`, 2700 of the 3000 free
