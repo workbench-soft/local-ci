@@ -132,34 +132,16 @@ flowchart TD
    match. The count of purged runs and the first error show beside it.
 7. A failed run names its failed job and step. Click it to read the log.
    Click the time in Took to see how long each job and step took.
-8. Plug the phone in over USB with USB debugging on. Press Install Release in
-   the Release column. The button says the device, or shows adb's error in red.
-   For several apps, read the Releases tab, the one the page opens on: each
-   app says whether its release builds, waits, failed or was cancelled. A
-   failed or cancelled app says why: the error with its log, the run that
-   replaced it, a stop by Local CI, or a PC turned off mid build. A
-   building app shows a progress bar and the time left. Read what changed
-   under Changes, tick the apps and press Install. Each row says Installed or
-   shows adb's error.
-9. On the Releases tab, act on one app:
-   - **Install Dev** installs the release, then unlocks the app's developer
-     settings on the phone. Open Install Dev: WORKBENCH_DEV_KEY first when the
-     tab says the key is missing.
-   - **Release on CI** starts the app's release workflow on `main`, also
-     when that commit is already released. Force stop ends it.
-   - **Build locally** builds the latest `main` on this PC. Install local
-     then sends its APK to the phone.
-   - **Rerun build** or **Retry failed jobs** runs an errored release again.
-   - **Deploy site** on the Sites card starts a repo's site deploy workflow
-     on `main`. The row then shows the run as Queued or Deploying.
-10. To free GitHub Actions storage, press **Clean old APK releases &
-    artifacts**. The page counts what goes and what stays, then asks to
-    confirm. Cleanup runs in small batches with progress. Runs, logs and the
-    newest APK of each app stay.
-11. Click the branch or the PR link to open it on GitHub. Open Cancellation
+8. To build, install or release an app, or deploy a site, open Archon: its
+   Apps and Sites tabs. The line under the tabs here points there.
+9. To free GitHub Actions storage, press **Clean old APK releases &
+   artifacts** on the Status tab. The page counts what goes and what stays, then asks to
+   confirm. Cleanup runs in small batches with progress. Runs, logs and the
+   newest APK of each app stay.
+10. Click the branch or the PR link to open it on GitHub. Open Cancellation
     history on either tab to read a saved stop reason. Follow its links to
     the replacement build, failed Checks, commit or PR.
-12. To change the number of runners, type it in Runners on this PC, or press
+11. To change the number of runners, type it in Runners on this PC, or press
     Use with the suggested count. Press Apply, and watch
     `runner\install.ps1` add or remove runners in its window.
 
@@ -178,15 +160,8 @@ flowchart TD
   H -- Stop --> I[Stopping: force cancel] --> I2[Stopped: the runner takes the next job]
   H -- Purge, confirmed --> J[force cancel, wait, delete the run]
   H -- Purge all, confirmed --> P[gray the rows, purge them 5 at a time, reload, repeat until none match]
-  H -- Install --> K[adb devices, download the APK, adb install]
-  K --> L[installed on the device, or adb's error in red]
-  F --> RT[Releases tab, open by default: each app's release state, its wait, the cancel reason]
-  RT -- tick apps, Install --> K2[one install after another] --> K
-  RT -- Install Dev --> DV[install the APK, send the unlock link over adb]
-  RT -- Release on CI --> DS[dispatch the app's release workflow on main]
-  RT -- Build locally --> LB[build the APK in a temporary clone] --> LI[Install local]
-  RT -- Deploy site --> SD[dispatch the repo's site deploy workflow on main]
-  RT -- Clean, confirmed --> CL[delete old artifacts and APK releases in batches]
+  F --> ST[Status tab, open by default: runners, live jobs, cloud, latest runs]
+  ST -- Clean, confirmed --> CL[delete old artifacts and APK releases in batches]
   H -- Apply runner count --> R[write runner-count, start the count task]
   R --> T[runner/install.ps1 as admin adds or removes runners]
   I & J & P & T --> G

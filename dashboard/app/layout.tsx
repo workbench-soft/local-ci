@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import './styles.css';
-import './releases.css';
+import './tabs.css';
 import './trends.css';
 import './machines.css';
 

@@ -49,8 +49,6 @@ irm https://raw.githubusercontent.com/workbench-soft/local-ci/main/bootstrap.ps1
 
 <p><img src="docs/screenshots/01-status.png" width="400" alt="What builds now, on this PC and in the cloud">
 <img src="docs/screenshots/02-latest-runs.png" width="400" alt="The latest runs of every repo, with where each one built"></p>
-<p><img src="docs/screenshots/03-releases.png" width="400" alt="The newest release of each app, ready to install on the phone">
-<img src="docs/screenshots/04-release-reasons.png" width="400" alt="Why a release failed or stopped, with the error and its log"></p>
 <p><img src="docs/screenshots/05-trends.png" width="400" alt="Runs a day by result, build time and the wait for a runner"></p>
 
 `mise run demo` takes them again from `next dev`, with made up runs and runners from `dashboard/demo/fake-github.ts`.
@@ -235,33 +233,23 @@ once, from the main checkout:
   commit. The cancellation history links the causing build, commit and PR.
   Requests are saved before GitHub is called. `CANCEL_SUPERSEDED=off` in
   `dashboard\.env.local` turns it off. A rerun of the install script keeps it.
-- **Release and Install** a run that published a release links to it in the
-  Release column. Install Release puts its APK on the phone plugged in over
-  USB, through `adb install -r -d`. adb comes from `ADB_PATH`, `PATH` or the
-  Android SDK.
-- **Releases tab** opens by default at `http://localhost:4280`, with Status
-  one click away at `/?tab=status`. Each app shows the state of its release:
-  released, building, queued, errored, stopped, held, or no release yet. A
-  released app gets a green row, an errored one a red row, a stopped one a
-  gray row. A key under the tabs says what each color means, and red marks
-  errors only. Machine chips there show one machine on every tab: This PC,
-  Oracle, Blacksmith or GitHub.
-  Held means the release run skipped, since its gate held it or its Checks
-  failed. A building row shows a progress bar, the machine it builds on and
-  the time left, from the usual time of past runs. A stopped row says why:
-  each force cancel, from the page or from the sweep, writes its reason to
-  `dashboard\cancel-reasons.jsonl`. The newest release of each app sits
-  beside its state with its notes under Changes. Tick several apps and
-  press Install to put their APKs on the phone one after another.
+- **Release** a run that published a release links to it in the Release
+  column.
+- **Status tab** opens by default at `http://localhost:4280`. A key under
+  the tabs says what each color means, and red marks errors only. Machine
+  chips there show one machine on every tab: This PC, Oracle, Blacksmith or
+  GitHub. A stopped run says why: each force cancel, from the page or from
+  the sweep, writes its reason to `dashboard\cancel-reasons.jsonl`.
+- **Apps and sites** live in Archon, the launcher in `workspace`: its Apps
+  tab builds, installs and releases each app, its Sites tab deploys each
+  site. A line under the tabs points there.
 - **Trends tab** `/?tab=trends` charts the org's CI: runs a day by result,
   the share that failed, the build time, the wait for a runner, the steps that
   fail most and each machine. It reads 90 days from the GitHub API once, then
-  the new runs every 10 minutes, into `dashboardun-history.json`. No
-  account or service is needed. The same numbers sit in the cards: each app
-  and site shows its failed share and usual time, each run its usual time,
-  and the Runners card each machine.
-- **Errors** a failed run names its failed job and step, linked to the log. A
-  failed install shows adb's error in a red box under the button.
+  the new runs every 10 minutes, into `dashboard\run-history.json`. No
+  account or service is needed. The same numbers sit in the cards: each run
+  shows its usual time, and the Runners card each machine.
+- **Errors** a failed run names its failed job and step, linked to the log.
 - **Links** the branch and the PR of each run open on GitHub.
 - **Opens** after the install build, and at logon through a shortcut in the
   Startup folder. Delete `local-ci dashboard.lnk` there to stop it.
@@ -298,31 +286,15 @@ Each push to `main` that passes Checks gets a release on the
 - **By hand** a run of Release started by hand checks Checks of the commit
   once, and stops unless they passed.
 
-The Releases tab of the status page also ships the org's Android apps:
+The org's apps and sites ship from Archon, the launcher in `workspace`. The
+Status tab keeps one storage button:
 
-- **Install Lumiere on all LG TVs** on the Releases tab downloads the latest webOS `.ipk` and installs it on every already-paired LG webOS TV discovered from this PC. The first pairing happens once through Lumiere's `INSTALL-LUMIERE-WEBOS-ALL-TVS.cmd` script, with Developer Mode and Key Server enabled on each TV. The PC must have the Lumiere repository with webOS dependencies installed. Partial failures are reported; the button never uses Android `adb`.
-- **Release on CI** dispatches the app's release workflow on `main`, for
-  every app on the tab and also when `main` is already released. The
-  button stays gray while that release is queued or running, and the server
-  refuses a second dispatch.
-- **Force stop** confirms, then force cancels the app's running release.
-- **Build locally** shows for each app whose clone on this PC has
-  `scripts/build-apk.sh`, at the root or in `apps/<app>`. It fetches the
-  latest `main` and builds the APK in a temporary clone, with the app's release key when this PC has it.
-  **Force stop local build** ends the build and its child processes, and
-  **Install local** sends the APK to the phone.
-- **Deploy site** on the Sites card starts the deploy workflow of each org
-  repo with a site, on `main`. The page finds the workflow by itself.
-- **Install Release and Install Dev** put a published APK on the phone. Install
-  Dev then opens the app's unlock link, so its developer settings show. It
-  needs `WORKBENCH_DEV_KEY` on this PC, and the tab explains how to set it.
 - **Clean old APK releases & artifacts** previews, then deletes after a
   confirm, the finished Actions artifacts of the org repos and old APK releases
   of the shared releases repo. The newest APK release of each app stays, and
   so do runs, logs, drafts, prereleases and non-APK releases.
 
-Install needs one authorized phone in `adb devices`. A local build also needs
-the app clone and its Android SDK. Cleanup needs a token with Actions write
+Cleanup needs a token with Actions write
 on the app repos and Contents write on the releases repo.
 
 ## Updates by themselves

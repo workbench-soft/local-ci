@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createContext, startTransition, use, useOptimistic, type ReactNode } from 'react';
 
-export type Tab = 'releases' | 'status' | 'trends';
+export type Tab = 'status' | 'trends';
 export type TabLink = { tab: Tab; href: string; label: ReactNode };
 
 // The tab the page shows: the clicked one until the server's page for it comes.
@@ -46,7 +46,6 @@ export function TabLinks({ links }: { links: TabLink[] }) {
 
 // Wide cards in the shape of each tab, so the page doesn't jump when the real one comes.
 const shapes: Record<Tab, string[]> = {
-  releases: ['wide tall', 'wide', 'wide'],
   status: ['wide', '', '', 'wide tall'],
   trends: ['wide', 'wide tall', 'wide tall', 'wide'],
 };

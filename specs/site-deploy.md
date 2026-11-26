@@ -2,6 +2,7 @@
 
 ## One-pager
 
+- **Moved** since 2026-11-26 the Sites tab of Archon, the launcher in `workspace`, deploys each site from this PC or on CI. The local-ci status page dropped its Sites card, so the sections below record how it worked until then.
 - **Problem** each org repo with a site deploys it its own way, and a person had to open GitHub to deploy one again.
 - **Fix** a Sites card on the Releases tab lists each repo with a site and gives it a Deploy site button.
 - **How** the page finds the workflow that deploys the site and dispatches it on `main`, as Release on CI does.
@@ -59,3 +60,12 @@ workflow already has.
 - **Steps** this spec, then the code and tests, then the docs.
 - **Docs** `docs/features.md`, `docs/user-flows.md`, `README.md`,
   `CHANGELOG.md`.
+
+### 2026-11-26 Moved to Archon
+
+- **Why** Archon's Apps and Sites tabs repeated these buttons, and the
+  Releases tab missed apps with no recent CI run.
+- **Changes** the status page drops the cards, the server actions and their
+  `status/*` modules. Spec: `specs/ci-status-page.md`.
+- **Docs** `README.md`, `docs/features.md`, `docs/architecture.md`,
+  `docs/user-flows.md`.

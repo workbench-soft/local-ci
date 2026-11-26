@@ -26,11 +26,7 @@ async function shot(page: Page, name: string, url: string, scrollTo?: string, se
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 }, locale: 'en-US', colorScheme: 'light' });
-// Releases is the tab the page opens on; the status card sits one click away.
-await shot(page, '01-status', `${site}?tab=status`);
-await shot(page, '02-latest-runs', `${site}?tab=status`, 'Latest runs');
-await shot(page, '03-releases', site);
-// The errored and cancelled rows say what stopped them.
-await shot(page, '04-release-reasons', site, undefined, '.stop-reason');
+await shot(page, '01-status', site);
+await shot(page, '02-latest-runs', site, 'Latest runs');
 await shot(page, '05-trends', `${site}?tab=trends`);
 await browser.close();

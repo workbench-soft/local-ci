@@ -14,7 +14,7 @@ process.env.GITHUB_TOKEN = 'demo';
 const now = Date.now();
 const ago = (minutes: number) => new Date(now - minutes * 60_000).toISOString();
 
-// The Releases tab reads the reasons of cancelled runs from a JSONL file, so the demo points that
+// Cancellation history reads the reasons of cancelled runs from a JSONL file, so the demo points that
 // read at a file of its own and writes the story of run 301 into it.
 const cancelFile = join(tmpdir(), 'local-ci-demo-cancel-reasons.jsonl');
 process.env.CANCEL_REASONS_FILE = cancelFile;
@@ -299,7 +299,7 @@ function answer(path: string): unknown {
     const found = runs.find((r) => r.id === Number(parts[5]));
     return { jobs: found ? apiJobs(found) : [] };
   }
-  // Each repo has a deploy workflow, so the Sites card lists them all.
+  // Each repo has a deploy workflow.
   if (parts[4] === 'workflows' && parts.length === 5) {
     return { workflows: [{ id: 900, name: 'Deploy', path: '.github/workflows/deploy.yml', state: 'active' }] };
   }
