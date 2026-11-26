@@ -874,3 +874,26 @@ browser at each logon.
 - **Steps** the spec, then the budget module and its test, `callGitHub`, the
   pace in `fetchOrgStatus`, the history window and the guards.
 - **Docs** `docs/features.md` and `CHANGELOG.md`.
+
+### 2026-11-26 Apps and sites move to Archon
+
+- **Why** the Releases tab built its app list from CI runs, so an app with no
+  recent run, such as Guitar Upscale, went missing. Its Release on CI, Build
+  locally, Install and Deploy site buttons also repeated the Apps and Sites
+  tabs of Archon, the launcher in `workspace` (workbench-soft/workspace#324).
+  The page keeps the CI view: runners, runs, cloud usage, trends.
+- **Changes**
+  - **Tabs** the page shows Status and Trends, and Status opens first.
+    `/?tab=releases` falls back to Status.
+  - **Pointer** one line under the tabs reads "Apps and sites live in Archon:
+    Apps and Sites tabs.", with no buttons.
+  - **Removed cards** `releases-card.tsx`, `release-*.tsx`, `sites-card.tsx`,
+    `install-button.tsx`, `local-main-button.tsx`, `dev-key-notice.tsx`,
+    `webos-install.tsx`, with their CSS.
+  - **Removed modules** the server actions and `status/*` modules only those
+    cards read, with their tests, once `knip` and `tsc` show no other import.
+    The Release column of the runs table keeps `releases.ts`.
+- **Steps** the spec, then the page and the tab switch, then the dead cards
+  and modules, then the docs.
+- **Docs** `README.md`, `docs/features.md`, `specs/releases.md`,
+  `specs/site-deploy.md`, `CHANGELOG.md`.
